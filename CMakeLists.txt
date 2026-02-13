@@ -32,7 +32,7 @@ add_executable(CosmoDownloader WIN32 ${SOURCES})
 # Include
 target_include_directories(CosmoDownloader PRIVATE 
     src
-    res              # <--- EKLENDİ
+    res
 )
 
 target_compile_definitions(CosmoDownloader PRIVATE UNICODE _UNICODE)
