@@ -65,7 +65,7 @@ The application handles the orchestration of external tools automatically.
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/yourusername/cosmo-downloader.git
+git clone https://github.com/seckinaktunc/cosmo-downloader.git
 cd cosmo-downloader
 ```
 
