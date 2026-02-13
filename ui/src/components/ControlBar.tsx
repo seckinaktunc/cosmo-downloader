@@ -1,0 +1,89 @@
+import { useMemo } from "react";
+import { useStartDownload } from "../hooks/useStartDownload";
+import { useDownloadStore } from "../stores/downloadStore";
+import { useGlobalStore } from "../stores/globalStore";
+import { validateUrl } from "../utils/validateUrl";
+import Box from "./Box";
+import Button from "./Button";
+import InputBox from "./InputBox";
+
+export default function ControlBar() {
+  const startDownload = useStartDownload();
+
+  const status = useDownloadStore((state) => state.status);
+  const url = useDownloadStore((state) => state.url);
+
+  const setUrl = useDownloadStore((state) => state.setUrl);
+  const reset = useDownloadStore((state) => state.reset);
+
+  const isPreferencesOpen = useGlobalStore((state) => state.isPreferencesOpen);
+  const togglePreferences = useGlobalStore((state) => state.togglePreferences);
+
+  const isSettingsOpen = useGlobalStore((state) => state.isSettingsOpen);
+  const toggleSettings = useGlobalStore((state) => state.toggleSettings);
+
+  const isDownloading = status === "downloading";
+
+  const validation = useMemo(() => {
+    return validateUrl(url, {
+      allowedProtocols: ["https:"],
+      allowedHosts: ["youtube.com", "youtu.be", "tiktok.com", "instagram.com"],
+      allowLocalhost: false,
+      allowHash: false,
+    });
+  }, [url]);
+
+  const isDisabled =
+    isDownloading || !url || !validation.isValid;
+
+  const handleDownload = () => {
+    if (isDisabled) return;
+    startDownload();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !isDisabled) {
+      handleDownload();
+    }
+  };
+
+  return (
+    <Box>
+      <InputBox
+        type="text"
+        value={url}
+        onChange={(event) => setUrl(event.target.value)}
+        disabled={isDownloading}
+        placeholder="Herhangi bir video linki yapıştır"
+        containerClassName="flex-1"
+        onClear={() => reset()}
+        onKeyDown={handleKeyDown}
+      />
+
+      <Button
+        variant="primary"
+        onClick={handleDownload}
+        disabled={isDownloading || isDisabled}
+        icon="download"
+        label={isDownloading ? "İndiriliyor..." : "İndir"}
+        loading={isDownloading}
+      />
+
+      <Button
+        variant="secondary"
+        isIcon
+        ghost={isPreferencesOpen ? false : true}
+        icon="preferences"
+        onClick={togglePreferences}
+      />
+      <Button
+        variant="secondary"
+        isIcon
+        ghost={isSettingsOpen ? false : true}
+        icon={isSettingsOpen ? "settingsFilled" : "settings"}
+        className="[&_svg]:transition-transform hover:[&_svg]:rotate-90"
+        onClick={toggleSettings}
+      />
+    </Box>
+  );
+}

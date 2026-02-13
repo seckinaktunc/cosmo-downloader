@@ -1,0 +1,37 @@
+@import "tailwindcss";
+@plugin "@toolwind/corner-shape";
+
+@theme {
+    --color-primary: rgb(255, 96, 92);
+    --color-info: rgb(0, 156, 223);
+
+    --color-yellow: rgb(255, 189, 68);
+
+    --color-black: rgb(0, 0, 0);
+    --color-dark: rgb(20, 20, 20);
+    --color-gray: rgb(50, 50, 50);
+    --color-white: rgb(255, 255, 255);
+
+    --inset-shadow-glow: inset 0 0 8px rgba(var(--color-primary));
+}
+
+:root {
+    font-family: 'Google Sans', sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: rgba(0, 0, 0, 0) !important;
+    overflow: hidden;
+    user-select: none;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+    cursor: pointer;
+}
