@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { type ReactNode, type MouseEvent } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
 
 interface BoxProps {
     children: ReactNode;

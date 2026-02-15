@@ -1,14 +1,16 @@
 import { useMemo } from "react";
-import { useStartDownload } from "../hooks/useStartDownload";
-import { useDownloadStore } from "../stores/downloadStore";
-import { useGlobalStore } from "../stores/globalStore";
-import { validateUrl } from "../utils/validateUrl";
-import Box from "./Box";
-import Button from "./Button";
-import InputBox from "./InputBox";
+import { useStartDownload } from "../../hooks/useStartDownload";
+import { useDownloadStore } from "../../stores/downloadStore";
+import { useGlobalStore } from "../../stores/globalStore";
+import { validateUrl } from "../../utils/validateUrl";
+import { useLocale } from "../../locale";
+import Box from "../ui/Box";
+import Button from "../Button";
+import InputBox from "../InputBox";
 
 export default function ControlBar() {
   const startDownload = useStartDownload();
+  const { locale } = useLocale();
 
   const status = useDownloadStore((state) => state.status);
   const url = useDownloadStore((state) => state.url);
@@ -54,7 +56,7 @@ export default function ControlBar() {
         value={url}
         onChange={(event) => setUrl(event.target.value)}
         disabled={isDownloading}
-        placeholder="Herhangi bir video linki yapıştır"
+        placeholder={locale.controlBar.urlPlaceholder}
         containerClassName="flex-1"
         onClear={() => reset()}
         onKeyDown={handleKeyDown}
@@ -65,7 +67,7 @@ export default function ControlBar() {
         onClick={handleDownload}
         disabled={isDownloading || isDisabled}
         icon="download"
-        label={isDownloading ? "İndiriliyor..." : "İndir"}
+        label={isDownloading ? locale.controlBar.downloading : locale.controlBar.download}
         loading={isDownloading}
       />
 

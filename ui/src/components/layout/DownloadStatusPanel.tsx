@@ -1,24 +1,26 @@
-import { useDownloadState } from "../hooks/useDownloadState";
-import { useDownloadStore } from "../stores/downloadStore";
-import Box from "./Box";
-import Button from "./Button";
+import { useDownloadState } from "../../hooks/useDownloadState";
+import { useLocale } from "../../locale";
+import { useDownloadStore } from "../../stores/downloadStore";
+import Box from "../ui/Box";
+import Button from "../Button";
 
 export default function DownloadStatusPanel() {
   const state = useDownloadState();
+  const { locale } = useLocale();
   const reset = useDownloadStore((state) => state.reset);
   if (state.status === "idle") return null;
 
   const isDownloading = state.status === "downloading";
   const progressWidth = isDownloading ? `${state.progress}%` : "100%";
 
-  let title = "Tamamlandı";
-  let description = "Video başarıyla seçtiğiniz klasöre kaydedildi.";
+  let title = locale.downloadStatus.doneTitle;
+  let description = locale.downloadStatus.doneDescription;
   if (isDownloading) {
-    title = "İNDİRİLİYOR...";
-    description = "Arka planda video verileri birleştiriliyor...";
+    title = locale.downloadStatus.downloadingTitle;
+    description = locale.downloadStatus.downloadingDescription;
   } else if (state.status === "error") {
-    title = "Hata";
-    description = "İndirme tamamlanamadı. Lütfen tekrar deneyin.";
+    title = locale.downloadStatus.errorTitle;
+    description = locale.downloadStatus.errorDescription;
   }
 
   return (
@@ -26,7 +28,7 @@ export default function DownloadStatusPanel() {
       <div className="flex w-full justify-between items-end px-1">
         {!isDownloading &&
           <Button
-            variant="icon"
+            isIcon
             size="md"
             icon="close"
             iconSize={16}

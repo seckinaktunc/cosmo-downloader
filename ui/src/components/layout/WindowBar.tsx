@@ -1,10 +1,12 @@
 import { type MouseEvent } from 'react';
-import { postWebViewMessage } from '../lib/webview';
-import { useGlobalStore } from '../stores/globalStore';
-import Box from './Box';
-import Button from './Button';
+import { postWebViewMessage } from '@/lib/webview';
+import { useLocale } from '@/locale';
+import { useGlobalStore } from '@/stores/globalStore';
+import Box from '@/components/ui/Box';
+import Button from '@/components/Button';
 
 export default function WindowBar() {
+    const { locale } = useLocale();
     const setVisible = useGlobalStore((state) => state.setVisible);
     const setExitAction = useGlobalStore((state) => state.setExitAction);
 
@@ -45,7 +47,10 @@ export default function WindowBar() {
                     stopPropagation
                 />
             </div>
-            <span className="flex text-sm opacity-50 justify-center text-nowrap">Cosmo Downloader v2.01.06</span>
+            <div className='flex justify-center items-center gap-3 opacity-50 hover:opacity-100'>
+                <img src='/icon.ico' className='max-h-5' />
+                <span className="text-sm text-nowrap">{locale.windowBar.title}</span>
+            </div>
             <div className="flex justify-end gap-1.5 p-1">
                 <Button
                     variant="secondary"
