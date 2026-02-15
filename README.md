@@ -71,13 +71,15 @@ cd cosmo-downloader
 ```
 
 2. **Build the Frontend (React):**
-```cd ui  # or wherever your package.json is
+```bash
+cd ui
 npm install
 npm run build
 cd ..
 ```
 
 3. **Configure and Build (C++):**
-```cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>/scripts/buildsystems/vcpkg.cmake
+```bash
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>/scripts/buildsystems/vcpkg.cmake
 cmake --build build --config Release
 ```
