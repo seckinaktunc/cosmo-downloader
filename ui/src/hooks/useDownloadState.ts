@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
+import { getLocaleMessages } from "../locale";
 import { subscribeWebViewMessages } from "../lib/webview";
 import { useDownloadStore } from "../stores/downloadStore";
+import { useSettingsStore } from "../stores/settingsStore";
 import type { DownloadState } from "../types/download";
 import { sendNativeNotification } from "../utils/notification";
 
@@ -57,7 +59,12 @@ export function useDownloadEvents(): void {
       }
 
       if (message === "status:done") {
-        sendNativeNotification("İndirme tamamlandı!", "İndirmekte olduğun video başarıyla indirildi ve seçtiğin klasöre kaydedildi.")
+        const currentLanguage = useSettingsStore.getState().language;
+        const locale = getLocaleMessages(currentLanguage);
+        sendNativeNotification(
+          locale.notifications.downloadCompletedTitle,
+          locale.notifications.downloadCompletedMessage,
+        );
         markDone();
         return;
       }

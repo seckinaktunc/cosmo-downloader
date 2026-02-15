@@ -1,3 +1,11 @@
+import { getLocaleMessages } from "@/locale";
+import { useSettingsStore } from "@/stores/settingsStore";
+
+function getClipboardLocale() {
+    const language = useSettingsStore.getState().language;
+    return getLocaleMessages(language).clipboard;
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
     if (!text) return false;
 
@@ -7,7 +15,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
             return true;
         }
 
-        throw new Error("Clipboard API not supported");
+        throw new Error();
     } catch (err) {
         try {
             const textArea = document.createElement("textarea");
@@ -26,7 +34,8 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 
             return successful;
         } catch (fallbackErr) {
-            console.error("Kopyalama başarısız:", fallbackErr);
+            const clipboardLocale = getClipboardLocale();
+            console.error(`${clipboardLocale.copyFailed}:`, fallbackErr);
             return false;
         }
     }
@@ -39,10 +48,12 @@ export async function readFromClipboard(): Promise<string | null> {
             return text;
         }
 
-        console.warn("Clipboard okuma izni yok veya tarayıcı desteklemiyor.");
+        const clipboardLocale = getClipboardLocale();
+        console.warn(clipboardLocale.readUnavailable);
         return null;
     } catch (err) {
-        console.error("Panodan okuma hatası:", err);
+        const clipboardLocale = getClipboardLocale();
+        console.error(`${clipboardLocale.readError}:`, err);
         return null;
     }
 }

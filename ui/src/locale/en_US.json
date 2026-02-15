@@ -1,0 +1,80 @@
+{
+  "windowBar": {
+    "title": "Cosmo Downloader v2.01.06"
+  },
+  "controlBar": {
+    "urlPlaceholder": "Paste any video link",
+    "download": "Download",
+    "downloading": "Downloading..."
+  },
+  "common": {
+    "activeDownloadNotice": "A download is currently in progress.",
+    "format": "Format",
+    "fps": "FPS",
+    "kbps": "kbps",
+    "notSelected": "Not selected yet"
+  },
+  "preferences": {
+    "resolution": "Resolution",
+    "frameRate": "Frame rate",
+    "audioQuality": "Audio quality",
+    "fpsStandard": "Standard"
+  },
+  "formats": {
+    "helpers": {
+      "mp4": "Common video",
+      "mkv": "Lossless video",
+      "webm": "Smaller size",
+      "mp3": "Common audio",
+      "wav": "Lossless audio"
+    }
+  },
+  "settings": {
+    "language": "Interface language",
+    "selectLanguage": "Select language",
+    "cookiesBrowser": "Browser to use for cookies",
+    "selectBrowser": "Select browser",
+    "alwaysAskDownloadDirectory": "Always ask for download location",
+    "defaultDownloadDirectory": "Default download location",
+    "selectDownloadDirectory": "Choose download location",
+    "hardwareAcceleration": "Hardware acceleration",
+    "autoCheckUpdates": "Check for updates automatically",
+    "selectFolderDialogLog": "Folder picker dialog will open..."
+  },
+  "downloadStatus": {
+    "doneTitle": "Completed",
+    "doneDescription": "The video was saved successfully to your selected folder.",
+    "downloadingTitle": "DOWNLOADING...",
+    "downloadingDescription": "Video streams are being merged in the background...",
+    "errorTitle": "Error",
+    "errorDescription": "Download could not be completed. Please try again."
+  },
+  "notifications": {
+    "downloadCompletedTitle": "Download completed!",
+    "downloadCompletedMessage": "Your video was downloaded successfully and saved to the selected folder."
+  },
+  "languages": {
+    "tr_TR": "Türkçe",
+    "en_US": "English"
+  },
+  "browsers": {
+    "default": "System default",
+    "brave": "Brave",
+    "chrome": "Google Chrome",
+    "chromium": "Chromium",
+    "edge": "Microsoft Edge",
+    "firefox": "Mozilla Firefox",
+    "opera": "Opera",
+    "safari": "Safari",
+    "vivaldi": "Vivaldi",
+    "whale": "Naver Whale"
+  },
+  "dropdown": {
+    "placeholder": "Select"
+  },
+  "clipboard": {
+    "copyFailed": "Copy failed",
+    "readUnavailable": "Clipboard read permission is unavailable or unsupported by the browser.",
+    "readError": "Clipboard read error"
+  }
+}

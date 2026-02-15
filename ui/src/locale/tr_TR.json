@@ -1,0 +1,80 @@
+{
+  "windowBar": {
+    "title": "Cosmo Downloader v2.01.06"
+  },
+  "controlBar": {
+    "urlPlaceholder": "Herhangi bir video linki yapıştır",
+    "download": "İndir",
+    "downloading": "İndiriliyor..."
+  },
+  "common": {
+    "activeDownloadNotice": "Şu anda devam eden bir indirme mevcut.",
+    "format": "Format",
+    "fps": "FPS",
+    "kbps": "kbps",
+    "notSelected": "Henüz seçilmedi"
+  },
+  "preferences": {
+    "resolution": "Çözünürlük",
+    "frameRate": "Kare hızı",
+    "audioQuality": "Ses kalitesi",
+    "fpsStandard": "Standart"
+  },
+  "formats": {
+    "helpers": {
+      "mp4": "En yaygın video",
+      "mkv": "Kayıpsız video",
+      "webm": "Düşük boyut",
+      "mp3": "En yaygın ses",
+      "wav": "Kayıpsız ses"
+    }
+  },
+  "settings": {
+    "language": "Arayüz dili",
+    "selectLanguage": "Dil seç",
+    "cookiesBrowser": "Çerezler için kullanılacak tarayıcı",
+    "selectBrowser": "Tarayıcı seç",
+    "alwaysAskDownloadDirectory": "Her zaman indirme yolunu sor",
+    "defaultDownloadDirectory": "Varsayılan indirme konumu",
+    "selectDownloadDirectory": "İndirme konumu seç",
+    "hardwareAcceleration": "Donanım hızlandırma",
+    "autoCheckUpdates": "Güncellemeleri otomatik kontrol et",
+    "selectFolderDialogLog": "Klasör seçme diyaloğu açılacak..."
+  },
+  "downloadStatus": {
+    "doneTitle": "Tamamlandı",
+    "doneDescription": "Video başarıyla seçtiğiniz klasöre kaydedildi.",
+    "downloadingTitle": "İndiriliyor...",
+    "downloadingDescription": "Arka planda video verileri birleştiriliyor...",
+    "errorTitle": "Hata",
+    "errorDescription": "İndirme tamamlanamadı. Lütfen tekrar deneyin."
+  },
+  "notifications": {
+    "downloadCompletedTitle": "İndirme tamamlandı!",
+    "downloadCompletedMessage": "İndirmekte olduğun video başarıyla indirildi ve seçtiğin klasöre kaydedildi."
+  },
+  "languages": {
+    "tr_TR": "Türkçe",
+    "en_US": "English"
+  },
+  "browsers": {
+    "default": "Sistem varsayılanı",
+    "brave": "Brave",
+    "chrome": "Google Chrome",
+    "chromium": "Chromium",
+    "edge": "Microsoft Edge",
+    "firefox": "Mozilla Firefox",
+    "opera": "Opera",
+    "safari": "Safari",
+    "vivaldi": "Vivaldi",
+    "whale": "Naver Whale"
+  },
+  "dropdown": {
+    "placeholder": "Sec"
+  },
+  "clipboard": {
+    "copyFailed": "Kopyalama başarısız",
+    "readUnavailable": "Clipboard okuma izni yok veya tarayıcı desteklemiyor.",
+    "readError": "Panodan okuma hatası"
+  }
+}
