@@ -1,12 +1,30 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+
+export type LocaleCode = "tr_TR" | "en_US";
+const FALLBACK_LANGUAGE: LocaleCode = "tr_TR";
+
+function normalizeLanguage(value: unknown): LocaleCode {
+    if (value === "en" || value === "en_US") {
+        return "en_US";
+    }
+
+    if (value === "tr" || value === "tr_TR") {
+        return "tr_TR";
+    }
+
+    return FALLBACK_LANGUAGE;
+}
 
 interface SettingsStore {
+    language: LocaleCode;
     browserForCookies: string;
     alwaysAskDownloadDirectory: boolean;
     defaultDownloadDirectory: string;
     isHWACCELOn: boolean;
     autoCheckUpdates: boolean;
 
+    setLanguage: (language: LocaleCode) => void;
     setBrowserForCookies: (browserForCookies: string) => void;
     setDefaultDownloadDirectory: (defaultDownloadDirectory: string) => void;
     toggleAlwaysAskDownloadDirectory: () => void;
@@ -14,30 +32,57 @@ interface SettingsStore {
     toggleAutoCheckUpdates: () => void;
 }
 
-export const useSettingsStore = create<SettingsStore>((set) => ({
-    browserForCookies: "default",
-    alwaysAskDownloadDirectory: false,
-    defaultDownloadDirectory: "",
-    isHWACCELOn: true,
-    autoCheckUpdates: true,
+export const useSettingsStore = create<SettingsStore>()(
+    persist(
+        (set) => ({
+            language: "tr_TR",
+            browserForCookies: "default",
+            alwaysAskDownloadDirectory: false,
+            defaultDownloadDirectory: "",
+            isHWACCELOn: true,
+            autoCheckUpdates: true,
 
-    setBrowserForCookies: (browserForCookies) => set({
-        browserForCookies: browserForCookies
-    }),
+            setLanguage: (language) => set({ language: language }),
 
-    toggleAlwaysAskDownloadDirectory: () => set((state) => ({
-        alwaysAskDownloadDirectory: !state.alwaysAskDownloadDirectory,
-    })),
+            setBrowserForCookies: (browserForCookies) => set({
+                browserForCookies: browserForCookies
+            }),
 
-    setDefaultDownloadDirectory: (defaultDownloadDirectory) => set({
-        defaultDownloadDirectory: defaultDownloadDirectory
-    }),
+            toggleAlwaysAskDownloadDirectory: () => set((state) => ({
+                alwaysAskDownloadDirectory: !state.alwaysAskDownloadDirectory,
+            })),
 
-    toggleHWACCEL: () => set((state) => ({
-        isHWACCELOn: !state.isHWACCELOn,
-    })),
+            setDefaultDownloadDirectory: (defaultDownloadDirectory) => set({
+                defaultDownloadDirectory: defaultDownloadDirectory
+            }),
 
-    toggleAutoCheckUpdates: () => set((state) => ({
-        autoCheckUpdates: !state.autoCheckUpdates,
-    })),
-}))
+            toggleHWACCEL: () => set((state) => ({
+                isHWACCELOn: !state.isHWACCELOn,
+            })),
+
+            toggleAutoCheckUpdates: () => set((state) => ({
+                autoCheckUpdates: !state.autoCheckUpdates,
+            })),
+        }),
+        {
+            name: "cosmo-settings",
+            storage: createJSONStorage(() => localStorage),
+            version: 2,
+            migrate: (persistedState) => {
+                const previous = (persistedState as Partial<SettingsStore> | undefined) ?? {};
+                return {
+                    ...previous,
+                    language: normalizeLanguage(previous.language),
+                };
+            },
+            partialize: (state) => ({
+                language: state.language,
+                browserForCookies: state.browserForCookies,
+                alwaysAskDownloadDirectory: state.alwaysAskDownloadDirectory,
+                defaultDownloadDirectory: state.defaultDownloadDirectory,
+                isHWACCELOn: state.isHWACCELOn,
+                autoCheckUpdates: state.autoCheckUpdates,
+            }),
+        },
+    ),
+)
