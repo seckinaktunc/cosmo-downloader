@@ -1,4 +1,4 @@
-import { IconAdjustmentsHorizontal, IconBackspace, IconChevronsDown, IconDownload, IconFileImport, IconLoader2, IconPin, IconPinFilled, IconSettings, IconSettingsFilled, IconX } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconBackspace, IconBrandChrome, IconBrandEdge, IconBrandFirefox, IconBrandOpera, IconBrandSafari, IconBrandVivaldi, IconChevronDown, IconChevronsDown, IconDownload, IconFileImport, IconLoader2, IconPin, IconPinFilled, IconSettings, IconSettingsFilled, IconX } from '@tabler/icons-react';
 import React from 'react';
 
 interface IconProps {
@@ -19,7 +19,14 @@ const iconMap: Record<string, React.ElementType> = {
     preferences: IconAdjustmentsHorizontal,
     settings: IconSettings,
     settingsFilled: IconSettingsFilled,
+    chevronDown: IconChevronDown,
     chevronsDown: IconChevronsDown,
+    chrome: IconBrandChrome,
+    firefox: IconBrandFirefox,
+    edge: IconBrandEdge,
+    opera: IconBrandOpera,
+    safari: IconBrandSafari,
+    vivaldi: IconBrandVivaldi,
 };
 
 export default function Icon({ name, size = 20, ...props }: IconProps) {
