@@ -48,6 +48,7 @@ The application handles the orchestration of external tools automatically.
 - [ ] FFmpeg integration
 - [ ] Download history
 - [ ] Clipboard detection
+- [x] Multi-language support *(currently 3)*
 - [ ] MacOS support (via WebKit)
 - [ ] Linux support (via WebKitGTK)
 <br>
