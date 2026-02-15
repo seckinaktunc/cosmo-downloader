@@ -1,0 +1,81 @@
+{
+  "windowBar": {
+    "title": "Cosmo Downloader v2.01.06"
+  },
+  "controlBar": {
+    "urlPlaceholder": "粘贴任意视频链接",
+    "download": "下载",
+    "downloading": "正在下载..."
+  },
+  "common": {
+    "activeDownloadNotice": "当前已有正在进行的下载任务。",
+    "format": "格式",
+    "fps": "FPS",
+    "kbps": "kbps",
+    "notSelected": "尚未选择"
+  },
+  "preferences": {
+    "resolution": "分辨率",
+    "frameRate": "帧率",
+    "audioQuality": "音质",
+    "fpsStandard": "标准"
+  },
+  "formats": {
+    "helpers": {
+      "mp4": "最常见的视频格式",
+      "mkv": "无损视频",
+      "webm": "较小体积",
+      "mp3": "最常见的音频格式",
+      "wav": "无损音频"
+    }
+  },
+  "settings": {
+    "language": "界面语言",
+    "selectLanguage": "选择语言",
+    "cookiesBrowser": "用于读取 Cookie 的浏览器",
+    "selectBrowser": "选择浏览器",
+    "alwaysAskDownloadDirectory": "始终询问下载目录",
+    "defaultDownloadDirectory": "默认下载位置",
+    "selectDownloadDirectory": "选择下载位置",
+    "hardwareAcceleration": "硬件加速",
+    "autoCheckUpdates": "自动检查更新",
+    "selectFolderDialogLog": "即将打开文件夹选择对话框..."
+  },
+  "downloadStatus": {
+    "doneTitle": "已完成",
+    "doneDescription": "视频已成功保存到您选择的文件夹。",
+    "downloadingTitle": "正在下载...",
+    "downloadingDescription": "正在后台合并视频数据...",
+    "errorTitle": "错误",
+    "errorDescription": "下载未完成。请重试。"
+  },
+  "notifications": {
+    "downloadCompletedTitle": "下载完成！",
+    "downloadCompletedMessage": "您正在下载的视频已成功下载并保存到所选文件夹。"
+  },
+  "languages": {
+    "tr_TR": "Türkçe",
+    "en_US": "English",
+    "zh_CN": "简体中文"
+  },
+  "browsers": {
+    "default": "系统默认",
+    "brave": "Brave",
+    "chrome": "Google Chrome",
+    "chromium": "Chromium",
+    "edge": "Microsoft Edge",
+    "firefox": "Mozilla Firefox",
+    "opera": "Opera",
+    "safari": "Safari",
+    "vivaldi": "Vivaldi",
+    "whale": "Naver Whale"
+  },
+  "dropdown": {
+    "placeholder": "选择"
+  },
+  "clipboard": {
+    "copyFailed": "复制失败",
+    "readUnavailable": "无剪贴板读取权限或浏览器不支持。",
+    "readError": "读取剪贴板时出错"
+  }
+}

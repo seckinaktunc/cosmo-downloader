@@ -1,17 +1,13 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export type LocaleCode = "tr_TR" | "en_US";
-const FALLBACK_LANGUAGE: LocaleCode = "tr_TR";
+export type LocaleCode = "tr_TR" | "en_US" | "zh_CN";
+const FALLBACK_LANGUAGE: LocaleCode = "en_US";
 
 function normalizeLanguage(value: unknown): LocaleCode {
-    if (value === "en" || value === "en_US") {
-        return "en_US";
-    }
-
-    if (value === "tr" || value === "tr_TR") {
-        return "tr_TR";
-    }
+    if (value === "en" || value === "en_US") return "en_US";
+    if (value === "tr" || value === "tr_TR") return "tr_TR";
+    if (value === "cn" || value === "zh_CN") return "zh_CN";
 
     return FALLBACK_LANGUAGE;
 }
