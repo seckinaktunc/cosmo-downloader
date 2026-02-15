@@ -1,18 +1,20 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
-import ControlBar from "./components/ControlBar";
-import DownloadStatusPanel from "./components/DownloadStatusPanel";
-import Preferences from "./components/Preferences";
-import WindowBar from "./components/WindowBar";
-import { useDownloadEvents } from "./hooks/useDownloadState";
-import { useWindowResize } from "./hooks/useWindowResize";
-import { useGlobalStore } from "./stores/globalStore";
-import Settings from "./components/Settings";
+import ControlBar from "@/components/layout/ControlBar";
+import DownloadStatusPanel from "@/components/layout/DownloadStatusPanel";
+import Preferences from "@/components/layout/Preferences";
+import Settings from "@/components/layout/Settings";
+import WindowBar from "@/components/layout/WindowBar";
+import { useDownloadEvents } from "@/hooks/useDownloadState";
+import { useWindowResize } from "@/hooks/useWindowResize";
+import { useGlobalStore } from "@/stores/globalStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isVisible = useGlobalStore((state) => state.isVisible);
   const isPinned = useGlobalStore((state) => state.isPinned);
+  const language = useSettingsStore((state) => state.language);
   const exitAction = useGlobalStore((state) => state.exitAction);
   const setVisible = useGlobalStore((state) => state.setVisible);
   const setExitAction = useGlobalStore((state) => state.setExitAction);
@@ -49,6 +51,10 @@ export default function App() {
       window.chrome?.webview?.removeEventListener?.('message', handleMessage);
     };
   }, [setVisible, setExitAction]);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const onExitComplete = () => {
     if (exitAction === 'minimize') {
