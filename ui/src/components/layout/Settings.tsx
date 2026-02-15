@@ -49,8 +49,9 @@ export default function Settings() {
     ];
 
     const languageOptions: DropdownOption[] = [
-        { value: "tr_TR", label: locale.languages.tr_TR, icon: "settings" },
-        { value: "en_US", label: locale.languages.en_US, icon: "settings" },
+        { value: "tr_TR", label: locale.languages.tr_TR, icon: "flagTR" },
+        { value: "en_US", label: locale.languages.en_US, icon: "flagEN" },
+        { value: "zh_CN", label: locale.languages.zh_CN, icon: "flagCN" },
     ];
 
     if (!isSettingsOpen) return null;
