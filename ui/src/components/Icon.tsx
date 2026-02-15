@@ -1,5 +1,8 @@
 import { IconAdjustmentsHorizontal, IconBackspace, IconBrandChrome, IconBrandEdge, IconBrandFirefox, IconBrandOpera, IconBrandSafari, IconBrandVivaldi, IconChevronDown, IconChevronsDown, IconDownload, IconFileImport, IconLoader2, IconPin, IconPinFilled, IconSettings, IconSettingsFilled, IconX } from '@tabler/icons-react';
 import React from 'react';
+import { USEnglishFlagIcon } from './icons/USEnglishFlagIcon';
+import { TurkishFlagIcon } from './icons/TurkishFlagIcon';
+import { ChinaFlagIcon } from './icons/ChinaFlagIcon';
 
 interface IconProps {
     name: string;
@@ -9,6 +12,9 @@ interface IconProps {
 }
 
 const iconMap: Record<string, React.ElementType> = {
+    flagTR: TurkishFlagIcon,
+    flagEN: USEnglishFlagIcon,
+    flagCN: ChinaFlagIcon,
     download: IconDownload,
     close: IconX,
     backspace: IconBackspace,
