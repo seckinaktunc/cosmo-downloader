@@ -3,9 +3,10 @@
 
 @theme {
     --color-primary: rgb(255, 96, 92);
-    --color-info: rgb(0, 156, 223);
-
     --color-yellow: rgb(255, 189, 68);
+    --color-green: rgb(0, 202, 78);
+    --color-blue: rgb(0, 156, 223);
+    --color-purple: rgb(156, 94, 218);
 
     --color-black: rgb(0, 0, 0);
     --color-dark: rgb(20, 20, 20);
@@ -34,4 +35,19 @@
 
 button {
     cursor: pointer;
+}
+
+::-webkit-scrollbar {
+    width: 0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(90, 90, 90);
+    border-radius: 16px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0);
+    border-radius: 16px;
+    overflow: hidden;
 }
