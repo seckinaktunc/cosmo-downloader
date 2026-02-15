@@ -1,5 +1,5 @@
 import React from "react";
-import Row from "../Row";
+import Row from "../ui/Row";
 
 export interface SliderOption {
     label: string;
