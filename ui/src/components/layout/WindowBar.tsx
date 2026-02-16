@@ -4,6 +4,7 @@ import { useLocale } from '@/locale';
 import { useGlobalStore } from '@/stores/globalStore';
 import Box from '@/components/ui/Box';
 import Button from '@/components/Button';
+import icon from '../../../../res/icon.ico';
 
 export default function WindowBar() {
     const { locale } = useLocale();
@@ -48,7 +49,7 @@ export default function WindowBar() {
                 />
             </div>
             <div className='flex justify-center items-center gap-3 opacity-50 hover:opacity-100'>
-                <img src='/icon.ico' className='max-h-5' />
+                <img src={icon} className='max-h-5' />
                 <span className="text-sm text-nowrap">{locale.windowBar.title}</span>
             </div>
             <div className="flex justify-end gap-1.5 p-1">
