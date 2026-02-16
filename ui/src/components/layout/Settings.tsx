@@ -1,3 +1,5 @@
+import { useEffect, useMemo } from 'react';
+import { createBrowserOptions, type BrowserOptionValue } from '@/constants/browserOptions';
 import { useDownloadState } from '@/hooks/useDownloadState';
 import { useLocale } from '@/locale';
 import { useGlobalStore } from '@/stores/globalStore';
@@ -18,6 +20,8 @@ export default function Settings() {
     const setLanguage = useSettingsStore((state) => state.setLanguage);
 
     const browserForCookies = useSettingsStore((state) => state.browserForCookies);
+    const installedBrowsers = useSettingsStore((state) => state.installedBrowsers);
+    const hasLoadedInstalledBrowsers = useSettingsStore((state) => state.hasLoadedInstalledBrowsers);
     const setBrowserForCookies = useSettingsStore((state) => state.setBrowserForCookies);
 
     const alwaysAskDownloadDirectory = useSettingsStore((state) => state.alwaysAskDownloadDirectory);
@@ -35,18 +39,28 @@ export default function Settings() {
         console.log(locale.settings.selectFolderDialogLog);
     };
 
-    const browserOptions: DropdownOption[] = [
-        { value: "default", label: locale.browsers.default, icon: "settings" },
-        { value: "brave", label: locale.browsers.brave, icon: "chrome" },
-        { value: "chrome", label: locale.browsers.chrome, icon: "chrome" },
-        { value: "chromium", label: locale.browsers.chromium, icon: "chrome" },
-        { value: "edge", label: locale.browsers.edge, icon: "edge" },
-        { value: "firefox", label: locale.browsers.firefox, icon: "firefox" },
-        { value: "opera", label: locale.browsers.opera, icon: "opera" },
-        { value: "safari", label: locale.browsers.safari, icon: "safari" },
-        { value: "vivaldi", label: locale.browsers.vivaldi, icon: "vivaldi" },
-        { value: "whale", label: locale.browsers.whale, icon: "chrome" },
-    ];
+    const browserOptions = useMemo(() => createBrowserOptions(locale), [locale]);
+    const visibleBrowserOptions = useMemo(() => {
+        if (!hasLoadedInstalledBrowsers) {
+            return browserOptions;
+        }
+
+        const installedBrowserSet = new Set(installedBrowsers);
+        return browserOptions.filter((option) => (
+            option.value === "default" || installedBrowserSet.has(option.value)
+        ));
+    }, [browserOptions, hasLoadedInstalledBrowsers, installedBrowsers]);
+
+    useEffect(() => {
+        if (!hasLoadedInstalledBrowsers) {
+            return;
+        }
+
+        const hasSelectedBrowser = visibleBrowserOptions.some((option) => option.value === browserForCookies);
+        if (!hasSelectedBrowser) {
+            setBrowserForCookies("default");
+        }
+    }, [browserForCookies, hasLoadedInstalledBrowsers, setBrowserForCookies, visibleBrowserOptions]);
 
     const languageOptions: DropdownOption[] = [
         { value: "tr_TR", label: locale.languages.tr_TR, icon: "flagTR" },
@@ -83,9 +97,9 @@ export default function Settings() {
                 <div className='flex w-full justify-between items-center gap-2'>
                     <span className='text-sm text-white/50'>{locale.settings.cookiesBrowser}</span>
                     <Dropdown
-                        options={browserOptions}
+                        options={visibleBrowserOptions}
                         value={browserForCookies}
-                        onChange={setBrowserForCookies}
+                        onChange={(value) => setBrowserForCookies(value as BrowserOptionValue)}
                         placeholder={locale.settings.selectBrowser}
                     />
                 </div>
