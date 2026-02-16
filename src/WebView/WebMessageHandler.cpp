@@ -1,10 +1,12 @@
 #include "WebMessageHandler.h"
 
 #include "Core/WindowManager.h"
+#include "Utils/BrowserDetector.h"
 #include "Utils/FolderDialog.h"
 #include "Utils/NotificationService.h"
 #include "Utils/YtDlpRunner.h"
 #include <thread>
+#include <vector>
 #include <wil/com.h>
 #include <wil/resource.h>
 
@@ -16,6 +18,30 @@ namespace {
         int bitrate = 192;
         int fps = 30;
     };
+
+    std::wstring JoinWithComma(const std::vector<std::wstring>& values) {
+        if (values.empty()) {
+            return L"";
+        }
+
+        std::wstring joined;
+        for (size_t index = 0; index < values.size(); ++index) {
+            if (index > 0) {
+                joined += L",";
+            }
+            joined += values[index];
+        }
+
+        return joined;
+    }
+
+    void PostWebMessage(ICoreWebView2* webview, const std::wstring& message) {
+        if (webview == nullptr) {
+            return;
+        }
+
+        webview->PostWebMessageAsString(message.c_str());
+    }
 
     bool ParseResizePayload(const std::wstring& payload, int& width, int& height) {
         const size_t commaPosition = payload.find(L",");
@@ -155,6 +181,12 @@ namespace {
             }
             }).detach();
     }
+
+    void HandleInstalledBrowsersRequest(ICoreWebView2* webview) {
+        const std::vector<std::wstring> installedBrowsers = DetectInstalledBrowsers();
+        const std::wstring payload = JoinWithComma(installedBrowsers);
+        PostWebMessage(webview, L"installed_browsers:" + payload);
+    }
 }
 
 void HandleWebMessage(
@@ -213,5 +245,10 @@ void HandleWebMessage(
 
     if (message.rfind(L"download:", 0) == 0) {
         HandleDownloadMessage(hWnd, message, webview);
+        return;
+    }
+
+    if (message == L"request_installed_browsers") {
+        HandleInstalledBrowsersRequest(webview);
     }
 }

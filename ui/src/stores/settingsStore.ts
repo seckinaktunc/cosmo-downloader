@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { isBrowserOptionValue, type BrowserOptionValue } from "@/constants/browserOptions";
 
 export type LocaleCode = "tr_TR" | "en_US" | "zh_CN";
 const FALLBACK_LANGUAGE: LocaleCode = "en_US";
+const FALLBACK_BROWSER: BrowserOptionValue = "default";
 
 function normalizeLanguage(value: unknown): LocaleCode {
     if (value === "en" || value === "en_US") return "en_US";
@@ -12,16 +14,27 @@ function normalizeLanguage(value: unknown): LocaleCode {
     return FALLBACK_LANGUAGE;
 }
 
+function normalizeBrowser(value: unknown): BrowserOptionValue {
+    if (typeof value === "string" && isBrowserOptionValue(value)) {
+        return value;
+    }
+
+    return FALLBACK_BROWSER;
+}
+
 interface SettingsStore {
     language: LocaleCode;
-    browserForCookies: string;
+    browserForCookies: BrowserOptionValue;
+    installedBrowsers: BrowserOptionValue[];
+    hasLoadedInstalledBrowsers: boolean;
     alwaysAskDownloadDirectory: boolean;
     defaultDownloadDirectory: string;
     isHWACCELOn: boolean;
     autoCheckUpdates: boolean;
 
     setLanguage: (language: LocaleCode) => void;
-    setBrowserForCookies: (browserForCookies: string) => void;
+    setBrowserForCookies: (browserForCookies: BrowserOptionValue) => void;
+    setInstalledBrowsers: (installedBrowsers: BrowserOptionValue[]) => void;
     setDefaultDownloadDirectory: (defaultDownloadDirectory: string) => void;
     toggleAlwaysAskDownloadDirectory: () => void;
     toggleHWACCEL: () => void;
@@ -33,6 +46,8 @@ export const useSettingsStore = create<SettingsStore>()(
         (set) => ({
             language: "tr_TR",
             browserForCookies: "default",
+            installedBrowsers: [],
+            hasLoadedInstalledBrowsers: false,
             alwaysAskDownloadDirectory: false,
             defaultDownloadDirectory: "",
             isHWACCELOn: true,
@@ -41,7 +56,12 @@ export const useSettingsStore = create<SettingsStore>()(
             setLanguage: (language) => set({ language: language }),
 
             setBrowserForCookies: (browserForCookies) => set({
-                browserForCookies: browserForCookies
+                browserForCookies: normalizeBrowser(browserForCookies),
+            }),
+
+            setInstalledBrowsers: (installedBrowsers) => set({
+                installedBrowsers: Array.from(new Set(installedBrowsers)),
+                hasLoadedInstalledBrowsers: true,
             }),
 
             toggleAlwaysAskDownloadDirectory: () => set((state) => ({
@@ -69,6 +89,7 @@ export const useSettingsStore = create<SettingsStore>()(
                 return {
                     ...previous,
                     language: normalizeLanguage(previous.language),
+                    browserForCookies: normalizeBrowser(previous.browserForCookies),
                 };
             },
             partialize: (state) => ({

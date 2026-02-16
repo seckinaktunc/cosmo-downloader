@@ -6,6 +6,7 @@ import Preferences from "@/components/layout/Preferences";
 import Settings from "@/components/layout/Settings";
 import WindowBar from "@/components/layout/WindowBar";
 import { useDownloadEvents } from "@/hooks/useDownloadState";
+import { useInstalledBrowsers } from "@/hooks/useInstalledBrowsers";
 import { useWindowResize } from "@/hooks/useWindowResize";
 import { useGlobalStore } from "@/stores/globalStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -21,6 +22,7 @@ export default function App() {
 
   useWindowResize(containerRef, isVisible);
   useDownloadEvents();
+  useInstalledBrowsers();
 
   useEffect(() => {
     const handleMessage = (event: any) => {
