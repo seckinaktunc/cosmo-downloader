@@ -1,5 +1,6 @@
-export function ChinaFlagIcon({ size }: { size: number }) {
-    return (
+import type { FC } from "react";
+
+const ChinaFlagIcon: FC<{ size: number }> = ({ size }) => (
         <svg
             xmlns="http://www.w3.org/2000/svg"
             width={size}
@@ -17,5 +18,7 @@ export function ChinaFlagIcon({ size }: { size: number }) {
                 />
             </g>
         </svg>
-    );
-};
+);
+
+export default ChinaFlagIcon;
+
