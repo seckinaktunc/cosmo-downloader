@@ -18,6 +18,7 @@ set(SOURCES
     src/Core/WindowProc.cpp
     src/WebView/WebViewManager.cpp
     src/WebView/WebMessageHandler.cpp
+    src/Utils/BrowserDetector.cpp
     src/Utils/FolderDialog.cpp
     src/Utils/NotificationService.cpp
     src/Utils/YtDlpRunner.cpp
