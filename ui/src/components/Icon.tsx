@@ -1,8 +1,17 @@
-import { IconAdjustmentsHorizontal, IconBackspace, IconBrandChrome, IconBrandEdge, IconBrandFirefox, IconBrandOpera, IconBrandSafari, IconBrandVivaldi, IconChevronDown, IconChevronsDown, IconDownload, IconFileImport, IconLoader2, IconPin, IconPinFilled, IconSettings, IconSettingsFilled, IconX } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconBackspace, IconChevronDown, IconChevronsDown, IconDownload, IconFileImport, IconLoader2, IconPin, IconPinFilled, IconSettings, IconSettingsFilled, IconX } from '@tabler/icons-react';
 import React from 'react';
-import { USEnglishFlagIcon } from './icons/USEnglishFlagIcon';
-import { TurkishFlagIcon } from './icons/TurkishFlagIcon';
-import { ChinaFlagIcon } from './icons/ChinaFlagIcon';
+import BraveIcon from './icons/BraveIcon';
+import ChinaFlagIcon from './icons/ChinaFlagIcon';
+import ChromeIcon from './icons/ChromeIcon';
+import ChromiumIcon from './icons/ChromiumIcon';
+import EdgeIcon from './icons/EdgeIcon';
+import FirefoxIcon from './icons/FirefoxIcon';
+import OperaIcon from './icons/OperaIcon';
+import SafariIcon from './icons/SafariIcon';
+import TurkishFlagIcon from './icons/TurkishFlagIcon';
+import USEnglishFlagIcon from './icons/USEnglishFlagIcon';
+import VivaldiIcon from './icons/VivaldiIcon';
+import WhaleIcon from './icons/WhaleIcon';
 
 interface IconProps {
     name: string;
@@ -27,12 +36,15 @@ const iconMap: Record<string, React.ElementType> = {
     settingsFilled: IconSettingsFilled,
     chevronDown: IconChevronDown,
     chevronsDown: IconChevronsDown,
-    chrome: IconBrandChrome,
-    firefox: IconBrandFirefox,
-    edge: IconBrandEdge,
-    opera: IconBrandOpera,
-    safari: IconBrandSafari,
-    vivaldi: IconBrandVivaldi,
+    chrome: ChromeIcon,
+    chromium: ChromiumIcon,
+    firefox: FirefoxIcon,
+    edge: EdgeIcon,
+    opera: OperaIcon,
+    safari: SafariIcon,
+    vivaldi: VivaldiIcon,
+    brave: BraveIcon,
+    whale: WhaleIcon,
 };
 
 export default function Icon({ name, size = 20, ...props }: IconProps) {
