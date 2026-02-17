@@ -18,9 +18,47 @@
     "resolution": "Resolution",
     "frameRate": "Frame rate",
     "audioQuality": "Audio quality",
-    "fpsStandard": "Standard"
+    "fpsStandard": "Standard",
+    "videoCodec": "Video codec",
+    "audioCodec": "Audio codec"
+  },
+  "codecs": {
+    "auto": "Auto",
+    "video": {
+      "labels": {
+        "av01": "AV1",
+        "vp9": "VP9",
+        "h265": "H.265",
+        "h264": "H.264"
+      },
+      "helpers": {
+        "auto": "Best match",
+        "av01": "Most efficient",
+        "vp9": "High quality",
+        "h265": "High compression",
+        "h264": "Most common"
+      }
+    },
+    "audio": {
+      "labels": {
+        "opus": "Opus",
+        "vorbis": "Vorbis",
+        "aac": "AAC",
+        "mp4a": "M4A",
+        "mp3": "MP3"
+      },
+      "helpers": {
+        "auto": "Best match",
+        "opus": "High quality",
+        "vorbis": "Web codec",
+        "aac": "Mobile",
+        "mp4a": "MPEG-4",
+        "mp3": "Universal"
+      }
+    }
   },
   "formats": {
+    "actionButtonLabel": "Download thumbnail",
     "helpers": {
       "mp4": "Common video",
       "mkv": "Lossless video",

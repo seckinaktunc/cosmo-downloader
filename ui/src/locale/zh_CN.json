@@ -18,7 +18,44 @@
     "resolution": "分辨率",
     "frameRate": "帧率",
     "audioQuality": "音质",
-    "fpsStandard": "标准"
+    "fpsStandard": "标准",
+    "videoCodec": "视频编解码",
+    "audioCodec": "音频编解码"
+  },
+  "codecs": {
+    "auto": "自动",
+    "video": {
+      "labels": {
+        "av01": "AV1",
+        "vp9": "VP9",
+        "h265": "H.265",
+        "h264": "H.264"
+      },
+      "helpers": {
+        "auto": "最合适",
+        "av01": "最高效率",
+        "vp9": "高质量",
+        "h265": "高压缩",
+        "h264": "最常见"
+      }
+    },
+    "audio": {
+      "labels": {
+        "opus": "Opus",
+        "vorbis": "Vorbis",
+        "aac": "AAC",
+        "mp4a": "M4A",
+        "mp3": "MP3"
+      },
+      "helpers": {
+        "auto": "最合适",
+        "opus": "高质量",
+        "vorbis": "网页编码",
+        "aac": "移动端",
+        "mp4a": "MPEG-4",
+        "mp3": "通用"
+      }
+    }
   },
   "formats": {
     "helpers": {
