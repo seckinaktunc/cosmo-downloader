@@ -7,12 +7,14 @@ interface GlobalStore {
     exitAction: ExitAction;
     isPinned: boolean;
     isPreferencesOpen: boolean;
+    isAdvancedPreferencesOpen: boolean;
     isSettingsOpen: boolean;
 
     setExitAction: (exitAction: ExitAction) => void;
     setVisible: (isVisible: boolean) => void;
     togglePin: () => void;
     togglePreferences: () => void;
+    toggleAdvancedPreferences: () => void;
     toggleSettings: () => void;
 }
 
@@ -21,6 +23,7 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
     exitAction: null,
     isPinned: false,
     isPreferencesOpen: false,
+    isAdvancedPreferencesOpen: false,
     isSettingsOpen: false,
 
     setVisible: (isVisible) => set({ isVisible: isVisible }),
@@ -34,6 +37,10 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
     togglePreferences: () => set((state) => ({
         isPreferencesOpen: !state.isPreferencesOpen,
         isSettingsOpen: false,
+    })),
+
+    toggleAdvancedPreferences: () => set((state) => ({
+        isAdvancedPreferencesOpen: !state.isAdvancedPreferencesOpen
     })),
 
     toggleSettings: () => set((state) => ({
