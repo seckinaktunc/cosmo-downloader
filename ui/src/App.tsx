@@ -6,7 +6,9 @@ import Preferences from "@/components/layout/Preferences";
 import Settings from "@/components/layout/Settings";
 import WindowBar from "@/components/layout/WindowBar";
 import { useDownloadEvents } from "@/hooks/useDownloadState";
+import { useClipboardTracker } from "@/hooks/useClipboardTracker";
 import { useInstalledBrowsers } from "@/hooks/useInstalledBrowsers";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { useWindowResize } from "@/hooks/useWindowResize";
 import { useGlobalStore } from "@/stores/globalStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -22,7 +24,9 @@ export default function App() {
 
   useWindowResize(containerRef, isVisible);
   useDownloadEvents();
+  useClipboardTracker();
   useInstalledBrowsers();
+  useSystemSettings();
 
   useEffect(() => {
     const handleMessage = (event: any) => {
