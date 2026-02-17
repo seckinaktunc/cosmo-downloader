@@ -3,8 +3,12 @@
 > **Currently only available for Windows**
 
 <p align="center">
-  <img src="assets/screenshot1.png" width="49%" style="margin-right:8px;" />
-  <img src="assets/screenshot2.png" width="49%" />
+  <img src="assets/screenshot1.png"
+       width="49%"
+       style="margin-right:8px; vertical-align:top;" />
+  <img src="assets/screenshot2.png"
+       width="49%"
+       style="vertical-align:top;" />
 </p>
 
 **Cosmo Downloader** is a high-performance video downloader designed for power users who value speed and aesthetics.
