@@ -35,19 +35,19 @@ The application handles the orchestration of external tools automatically.
 ## To-Do
 - [x] C++ & WebView + React architecture
 - [x] Basic IPC (Inter-Process Communication)
-- [x] Preferences UI & implementation *(WIP)*
-- [x] Settings UI & implementation *(WIP)*
-- [ ] Browser selection for cookies
+- [x] Preferences UI & implementation
+- [x] Settings UI & implementation
+- [x] Browser selection for cookies
 - [x] YouTube downloader
 - [x] Instagram downloader *(WIP)*
 - [x] TikTok downloader *(WIP)*
-- [ ] Batch downloading
-- [ ] Audio extraction
-- [ ] Thumbnail downloader
+- [x] Batch downloading
+- [x] Audio extraction
+- [x] Thumbnail downloader
 - [ ] Subtitle support
 - [ ] FFmpeg integration
 - [ ] Download history
-- [ ] Clipboard detection
+- [x] Clipboard detection
 - [x] Multi-language support *(currently 3)*
 - [ ] MacOS support (via WebKit)
 - [ ] Linux support (via WebKitGTK)
