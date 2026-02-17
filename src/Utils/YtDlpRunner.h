@@ -10,5 +10,9 @@ void RunYtDlp(
     int resolution,
     int bitrate,
     int fps,
+    const std::wstring& videoCodec,
+    const std::wstring& audioCodec,
+    const std::wstring& browserForCookies,
+    bool isHardwareAccelerationEnabled,
     ICoreWebView2* webviewPtr
 );

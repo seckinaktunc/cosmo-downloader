@@ -1,14 +1,121 @@
 #include "YtDlpRunner.h"
 
+#include <array>
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cwctype>
 #include <string>
 #include <vector>
 #include <wil/resource.h>
 #include <windows.h>
 
 namespace {
+    int ParseProgressPercent(const std::string& line);
+
+    bool IsSupportedVideoCodec(const std::wstring& codec) {
+        return codec == L"auto"
+            || codec == L"av01"
+            || codec == L"vp9"
+            || codec == L"h265"
+            || codec == L"h264";
+    }
+
+    bool IsSupportedAudioCodec(const std::wstring& codec) {
+        return codec == L"auto"
+            || codec == L"opus"
+            || codec == L"vorbis"
+            || codec == L"aac"
+            || codec == L"mp4a"
+            || codec == L"mp3";
+    }
+
+    std::wstring NormalizeVideoCodec(const std::wstring& codec) {
+        if (IsSupportedVideoCodec(codec)) {
+            return codec;
+        }
+
+        return L"auto";
+    }
+
+    std::wstring NormalizeAudioCodec(const std::wstring& codec) {
+        if (IsSupportedAudioCodec(codec)) {
+            return codec;
+        }
+
+        return L"auto";
+    }
+
+    bool IsSupportedCookieBrowser(const std::wstring& browser) {
+        static const std::array<std::wstring, 9> supportedBrowsers = {
+            L"brave",
+            L"chrome",
+            L"chromium",
+            L"edge",
+            L"firefox",
+            L"opera",
+            L"safari",
+            L"vivaldi",
+            L"whale",
+        };
+
+        return std::find(supportedBrowsers.begin(), supportedBrowsers.end(), browser) != supportedBrowsers.end();
+    }
+
+    std::wstring NormalizeCookieBrowser(const std::wstring& browser) {
+        if (browser.empty()) {
+            return L"";
+        }
+
+        std::wstring normalized = browser;
+        std::transform(
+            normalized.begin(),
+            normalized.end(),
+            normalized.begin(),
+            [](wchar_t ch) { return static_cast<wchar_t>(std::towlower(ch)); }
+        );
+
+        if (normalized == L"default") {
+            return L"";
+        }
+
+        return IsSupportedCookieBrowser(normalized) ? normalized : L"";
+    }
+
+    std::wstring JoinWithComma(const std::vector<std::wstring>& values) {
+        if (values.empty()) {
+            return L"";
+        }
+
+        std::wstring joined;
+        for (size_t index = 0; index < values.size(); ++index) {
+            if (index > 0) {
+                joined += L",";
+            }
+            joined += values[index];
+        }
+
+        return joined;
+    }
+
+    std::wstring BuildFormatSortExpression(
+        bool isAudioDownload,
+        const std::wstring& videoCodec,
+        const std::wstring& audioCodec
+    ) {
+        std::vector<std::wstring> sortFields;
+
+        if (!isAudioDownload && videoCodec != L"auto") {
+            sortFields.push_back(L"vcodec:" + videoCodec);
+        }
+
+        if (audioCodec != L"auto") {
+            sortFields.push_back(L"acodec:" + audioCodec);
+        }
+
+        return JoinWithComma(sortFields);
+    }
+
     void PostStatus(ICoreWebView2* webviewPtr, const wchar_t* statusMessage) {
         if (webviewPtr != nullptr) {
             webviewPtr->PostWebMessageAsString(statusMessage);
@@ -32,11 +139,21 @@ namespace {
         const std::wstring& format,
         int resolution,
         int bitrate,
-        int fps
+        int fps,
+        const std::wstring& videoCodec,
+        const std::wstring& audioCodec,
+        const std::wstring& browserForCookies,
+        bool useCookiesFromBrowser,
+        bool isHardwareAccelerationEnabled
     ) {
         std::wstring command = L"\"" + ytDlpPath + L"\" --newline --progress";
 
         const bool isAudio = (format == L"mp3" || format == L"wav");
+        const std::wstring safeVideoCodec = NormalizeVideoCodec(videoCodec);
+        const std::wstring safeAudioCodec = NormalizeAudioCodec(audioCodec);
+        const std::wstring safeCookieBrowser = NormalizeCookieBrowser(browserForCookies);
+        const std::wstring formatSortExpression = BuildFormatSortExpression(isAudio, safeVideoCodec, safeAudioCodec);
+
         if (isAudio) {
             command += L" -x --audio-format " + format;
             if (bitrate > 0) {
@@ -50,8 +167,119 @@ namespace {
             command += L" --merge-output-format " + format;
         }
 
+        if (!formatSortExpression.empty()) {
+            command += L" -S \"" + formatSortExpression + L"\"";
+        }
+
+        if (useCookiesFromBrowser && !safeCookieBrowser.empty()) {
+            command += L" --cookies-from-browser " + safeCookieBrowser;
+        }
+
+        command += isHardwareAccelerationEnabled
+            ? L" --postprocessor-args \"-hwaccel auto\""
+            : L" --postprocessor-args \"-hwaccel none\"";
+
         command += L" -o \"" + outputPath + L"\" \"" + url + L"\"";
         return command;
+    }
+
+    bool ExecuteYtDlpCommand(
+        const std::wstring& commandLine,
+        ICoreWebView2* webviewPtr,
+        int& lastProgress
+    ) {
+        std::vector<wchar_t> commandBuffer(commandLine.begin(), commandLine.end());
+        commandBuffer.push_back(L'\0');
+
+        SECURITY_ATTRIBUTES securityAttributes = {};
+        securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+        securityAttributes.bInheritHandle = TRUE;
+
+        HANDLE readPipe = nullptr;
+        HANDLE writePipe = nullptr;
+
+        if (!CreatePipe(&readPipe, &writePipe, &securityAttributes, 0)) {
+            return false;
+        }
+
+        if (!SetHandleInformation(readPipe, HANDLE_FLAG_INHERIT, 0)) {
+            CloseHandle(readPipe);
+            CloseHandle(writePipe);
+            return false;
+        }
+
+        STARTUPINFO startupInfo = {};
+        startupInfo.cb = sizeof(STARTUPINFO);
+        startupInfo.dwFlags = STARTF_USESTDHANDLES;
+        startupInfo.hStdOutput = writePipe;
+        startupInfo.hStdError = writePipe;
+        startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+        PROCESS_INFORMATION processInfo = {};
+        const BOOL processCreated = CreateProcessW(
+            nullptr,
+            commandBuffer.data(),
+            nullptr,
+            nullptr,
+            TRUE,
+            CREATE_NO_WINDOW,
+            nullptr,
+            nullptr,
+            &startupInfo,
+            &processInfo
+        );
+
+        CloseHandle(writePipe);
+
+        if (!processCreated) {
+            CloseHandle(readPipe);
+            return false;
+        }
+
+        std::string pendingLine;
+        char buffer[4096] = {};
+        DWORD bytesRead = 0;
+
+        while (ReadFile(readPipe, buffer, sizeof(buffer), &bytesRead, nullptr) && bytesRead > 0) {
+            pendingLine.append(buffer, buffer + bytesRead);
+
+            size_t newlinePosition = pendingLine.find('\n');
+            while (newlinePosition != std::string::npos) {
+                std::string line = pendingLine.substr(0, newlinePosition);
+                if (!line.empty() && line.back() == '\r') {
+                    line.pop_back();
+                }
+
+                const int progress = ParseProgressPercent(line);
+                if (progress >= 0 && progress != lastProgress) {
+                    lastProgress = progress;
+                    PostProgress(webviewPtr, lastProgress);
+                }
+
+                pendingLine.erase(0, newlinePosition + 1);
+                newlinePosition = pendingLine.find('\n');
+            }
+        }
+
+        if (!pendingLine.empty()) {
+            const int progress = ParseProgressPercent(pendingLine);
+            if (progress >= 0 && progress != lastProgress) {
+                lastProgress = progress;
+                PostProgress(webviewPtr, lastProgress);
+            }
+        }
+
+        CloseHandle(readPipe);
+
+        WaitForSingleObject(processInfo.hProcess, INFINITE);
+
+        DWORD exitCode = 1;
+        GetExitCodeProcess(processInfo.hProcess, &exitCode);
+
+        CloseHandle(processInfo.hProcess);
+        CloseHandle(processInfo.hThread);
+
+        return exitCode == 0;
     }
 
     int ParseProgressPercent(const std::string& line) {
@@ -124,6 +352,10 @@ void RunYtDlp(
     int resolution,
     int bitrate,
     int fps,
+    const std::wstring& videoCodec,
+    const std::wstring& audioCodec,
+    const std::wstring& browserForCookies,
+    bool isHardwareAccelerationEnabled,
     ICoreWebView2* webviewPtr
 ) {
     const HRESULT coInitializeResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
@@ -144,99 +376,45 @@ void RunYtDlp(
     }
 
     const std::wstring outputPath = path + L"\\%(title)s.%(ext)s";
-    const std::wstring commandLine = BuildYtDlpCommand(ytDlpPath, url, outputPath, format, resolution, bitrate, fps);
-
-    std::vector<wchar_t> commandBuffer(commandLine.begin(), commandLine.end());
-    commandBuffer.push_back(L'\0');
-
-    SECURITY_ATTRIBUTES securityAttributes = {};
-    securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-    securityAttributes.bInheritHandle = TRUE;
-
-    HANDLE readPipe = nullptr;
-    HANDLE writePipe = nullptr;
-
-    if (!CreatePipe(&readPipe, &writePipe, &securityAttributes, 0)) {
-        PostStatus(webviewPtr, L"status:error");
-        return;
-    }
-
-    SetHandleInformation(readPipe, HANDLE_FLAG_INHERIT, 0);
-
-    STARTUPINFO startupInfo = {};
-    startupInfo.cb = sizeof(STARTUPINFO);
-    startupInfo.dwFlags = STARTF_USESTDHANDLES;
-    startupInfo.hStdOutput = writePipe;
-    startupInfo.hStdError = writePipe;
-    startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-
-    PROCESS_INFORMATION processInfo = {};
-    const BOOL processCreated = CreateProcessW(
-        nullptr,
-        commandBuffer.data(),
-        nullptr,
-        nullptr,
-        TRUE,
-        CREATE_NO_WINDOW,
-        nullptr,
-        nullptr,
-        &startupInfo,
-        &processInfo
+    const std::wstring commandLine = BuildYtDlpCommand(
+        ytDlpPath,
+        url,
+        outputPath,
+        format,
+        resolution,
+        bitrate,
+        fps,
+        videoCodec,
+        audioCodec,
+        browserForCookies,
+        true,
+        isHardwareAccelerationEnabled
     );
 
-    CloseHandle(writePipe);
-
-    if (!processCreated) {
-        CloseHandle(readPipe);
-        PostStatus(webviewPtr, L"status:error");
-        return;
-    }
-
     int lastProgress = 0;
-    std::string pendingLine;
-    char buffer[4096] = {};
-    DWORD bytesRead = 0;
+    bool completed = ExecuteYtDlpCommand(commandLine, webviewPtr, lastProgress);
 
-    while (ReadFile(readPipe, buffer, sizeof(buffer), &bytesRead, nullptr) && bytesRead > 0) {
-        pendingLine.append(buffer, buffer + bytesRead);
+    const bool hasSelectedCookieBrowser = !NormalizeCookieBrowser(browserForCookies).empty();
+    if (!completed && hasSelectedCookieBrowser) {
+        const std::wstring fallbackCommandLine = BuildYtDlpCommand(
+            ytDlpPath,
+            url,
+            outputPath,
+            format,
+            resolution,
+            bitrate,
+            fps,
+            videoCodec,
+            audioCodec,
+            browserForCookies,
+            false,
+            isHardwareAccelerationEnabled
+        );
 
-        size_t newlinePosition = pendingLine.find('\n');
-        while (newlinePosition != std::string::npos) {
-            std::string line = pendingLine.substr(0, newlinePosition);
-            if (!line.empty() && line.back() == '\r') {
-                line.pop_back();
-            }
-
-            const int progress = ParseProgressPercent(line);
-            if (progress >= 0 && progress != lastProgress) {
-                lastProgress = progress;
-                PostProgress(webviewPtr, lastProgress);
-            }
-
-            pendingLine.erase(0, newlinePosition + 1);
-            newlinePosition = pendingLine.find('\n');
-        }
+        completed = ExecuteYtDlpCommand(fallbackCommandLine, webviewPtr, lastProgress);
     }
 
-    if (!pendingLine.empty()) {
-        const int progress = ParseProgressPercent(pendingLine);
-        if (progress >= 0 && progress != lastProgress) {
-            lastProgress = progress;
-            PostProgress(webviewPtr, lastProgress);
-        }
-    }
-
-    CloseHandle(readPipe);
-
-    WaitForSingleObject(processInfo.hProcess, INFINITE);
-
-    DWORD exitCode = 1;
-    GetExitCodeProcess(processInfo.hProcess, &exitCode);
-
-    CloseHandle(processInfo.hProcess);
-    CloseHandle(processInfo.hThread);
-
-    if (exitCode == 0) {
+    if (completed) {
         if (lastProgress < 100) {
             PostProgress(webviewPtr, 100);
         }

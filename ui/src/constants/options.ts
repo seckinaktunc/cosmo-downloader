@@ -5,3 +5,7 @@ export const VIDEO_FPS_OPTIONS = [24, 30, 60, 120] as const;
 export const AUDIO_BITRATE_OPTIONS = [64, 128, 192, 256, 320] as const;
 
 export const FORMAT_OPTIONS = ["mp4", "mkv", "webm", "mp3", "wav"] as const;
+
+// Supported by yt-dlp format sorting fields: vcodec / acodec
+export const VIDEO_CODEC_OPTIONS = ["auto", "av01", "vp9", "h265", "h264"] as const;
+export const AUDIO_CODEC_OPTIONS = ["auto", "opus", "vorbis", "aac", "mp4a", "mp3"] as const;
