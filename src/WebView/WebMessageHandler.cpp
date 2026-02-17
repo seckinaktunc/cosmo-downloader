@@ -2,8 +2,10 @@
 
 #include "Core/WindowManager.h"
 #include "Utils/BrowserDetector.h"
+#include "Utils/Clipboard.h"
 #include "Utils/FolderDialog.h"
 #include "Utils/NotificationService.h"
+#include "Utils/SystemSettings.h"
 #include "Utils/YtDlpRunner.h"
 #include <thread>
 #include <vector>
@@ -17,7 +19,55 @@ namespace {
         int resolution = 1080;
         int bitrate = 192;
         int fps = 30;
+        std::wstring videoCodec = L"auto";
+        std::wstring audioCodec = L"auto";
+        bool alwaysAskDownloadDirectory = true;
+        std::wstring defaultDownloadDirectory;
+        std::wstring browserForCookies = L"default";
+        bool isHardwareAccelerationEnabled = true;
     };
+
+    std::vector<std::wstring> SplitByPipe(const std::wstring& value) {
+        std::vector<std::wstring> parts;
+        size_t start = 0;
+
+        while (start <= value.size()) {
+            const size_t separator = value.find(L'|', start);
+            if (separator == std::wstring::npos) {
+                parts.emplace_back(value.substr(start));
+                break;
+            }
+
+            parts.emplace_back(value.substr(start, separator - start));
+            start = separator + 1;
+        }
+
+        return parts;
+    }
+
+    void TryParseIntegerField(const std::vector<std::wstring>& fields, size_t index, int& target) {
+        if (index >= fields.size()) {
+            return;
+        }
+
+        try {
+            target = std::stoi(fields[index]);
+        }
+        catch (...) {
+        }
+    }
+
+    bool ParseBooleanField(const std::wstring& value, bool fallbackValue) {
+        if (value == L"true" || value == L"1") {
+            return true;
+        }
+
+        if (value == L"false" || value == L"0") {
+            return false;
+        }
+
+        return fallbackValue;
+    }
 
     std::wstring JoinWithComma(const std::vector<std::wstring>& values) {
         if (values.empty()) {
@@ -99,43 +149,43 @@ namespace {
 
     DownloadRequest ParseDownloadPayload(const std::wstring& payload) {
         DownloadRequest request;
-        request.url = payload;
-
-        const size_t firstSeparator = payload.find(L"|");
-        if (firstSeparator == std::wstring::npos) {
+        const std::vector<std::wstring> fields = SplitByPipe(payload);
+        if (fields.empty()) {
             return request;
         }
 
-        request.url = payload.substr(0, firstSeparator);
-        const std::wstring remainingAfterUrl = payload.substr(firstSeparator + 1);
+        request.url = fields[0];
 
-        const size_t secondSeparator = remainingAfterUrl.find(L"|");
-        if (secondSeparator == std::wstring::npos) {
-            return request;
+        if (fields.size() > 1 && !fields[1].empty()) {
+            request.format = fields[1];
         }
 
-        request.format = remainingAfterUrl.substr(0, secondSeparator);
-        const std::wstring remainingAfterFormat = remainingAfterUrl.substr(secondSeparator + 1);
+        TryParseIntegerField(fields, 2, request.resolution);
+        TryParseIntegerField(fields, 3, request.bitrate);
+        TryParseIntegerField(fields, 4, request.fps);
 
-        const size_t thirdSeparator = remainingAfterFormat.find(L"|");
-        if (thirdSeparator == std::wstring::npos) {
-            return request;
+        if (fields.size() > 5 && !fields[5].empty()) {
+            request.videoCodec = fields[5];
         }
 
-        try {
-            request.resolution = std::stoi(remainingAfterFormat.substr(0, thirdSeparator));
-            const std::wstring remainingAfterResolution = remainingAfterFormat.substr(thirdSeparator + 1);
-
-            const size_t fourthSeparator = remainingAfterResolution.find(L"|");
-            if (fourthSeparator != std::wstring::npos) {
-                request.bitrate = std::stoi(remainingAfterResolution.substr(0, fourthSeparator));
-                request.fps = std::stoi(remainingAfterResolution.substr(fourthSeparator + 1));
-            }
-            else {
-                request.bitrate = std::stoi(remainingAfterResolution);
-            }
+        if (fields.size() > 6 && !fields[6].empty()) {
+            request.audioCodec = fields[6];
         }
-        catch (...) {
+
+        if (fields.size() > 7) {
+            request.alwaysAskDownloadDirectory = ParseBooleanField(fields[7], true);
+        }
+
+        if (fields.size() > 8) {
+            request.defaultDownloadDirectory = fields[8];
+        }
+
+        if (fields.size() > 9 && !fields[9].empty()) {
+            request.browserForCookies = fields[9];
+        }
+
+        if (fields.size() > 10) {
+            request.isHardwareAccelerationEnabled = ParseBooleanField(fields[10], true);
         }
 
         return request;
@@ -147,7 +197,21 @@ namespace {
         }
 
         const DownloadRequest request = ParseDownloadPayload(message.substr(9));
-        const std::wstring savePath = SelectFolder(hWnd);
+        std::wstring savePath;
+        if (request.alwaysAskDownloadDirectory) {
+            savePath = SelectFolder(hWnd);
+        }
+        else {
+            savePath = request.defaultDownloadDirectory;
+            if (savePath.empty()) {
+                savePath = GetDefaultDownloadDirectory();
+            }
+
+            if (savePath.empty()) {
+                savePath = SelectFolder(hWnd);
+            }
+        }
+
         if (savePath.empty()) {
             return;
         }
@@ -176,6 +240,10 @@ namespace {
                     request.resolution,
                     request.bitrate,
                     request.fps,
+                    request.videoCodec,
+                    request.audioCodec,
+                    request.browserForCookies,
+                    request.isHardwareAccelerationEnabled,
                     webviewOnWorker.get()
                 );
             }
@@ -186,6 +254,32 @@ namespace {
         const std::vector<std::wstring> installedBrowsers = DetectInstalledBrowsers();
         const std::wstring payload = JoinWithComma(installedBrowsers);
         PostWebMessage(webview, L"installed_browsers:" + payload);
+    }
+
+    void HandleHardwareAccelerationSupportRequest(ICoreWebView2* webview) {
+        const bool isSupported = IsHardwareAccelerationSupported();
+        PostWebMessage(
+            webview,
+            std::wstring(L"hardware_acceleration_supported:") + (isSupported ? L"true" : L"false")
+        );
+    }
+
+    void HandleDefaultDownloadDirectoryRequest(ICoreWebView2* webview) {
+        const std::wstring path = GetDefaultDownloadDirectory();
+        PostWebMessage(webview, L"default_download_directory:" + path);
+    }
+
+    void HandleSelectDefaultDownloadDirectoryMessage(HWND hWnd, ICoreWebView2* webview) {
+        const std::wstring selectedPath = SelectFolder(hWnd);
+        if (selectedPath.empty()) {
+            return;
+        }
+
+        PostWebMessage(webview, L"default_download_directory_selected:" + selectedPath);
+    }
+
+    void HandleClipboardTextRequest(ICoreWebView2* webview) {
+        PostWebMessage(webview, L"clipboard_updated:" + GetClipboardText());
     }
 }
 
@@ -250,5 +344,25 @@ void HandleWebMessage(
 
     if (message == L"request_installed_browsers") {
         HandleInstalledBrowsersRequest(webview);
+        return;
+    }
+
+    if (message == L"request_hardware_acceleration_support") {
+        HandleHardwareAccelerationSupportRequest(webview);
+        return;
+    }
+
+    if (message == L"request_default_download_directory") {
+        HandleDefaultDownloadDirectoryRequest(webview);
+        return;
+    }
+
+    if (message == L"select_default_download_directory") {
+        HandleSelectDefaultDownloadDirectoryMessage(hWnd, webview);
+        return;
+    }
+
+    if (message == L"request_clipboard_text") {
+        HandleClipboardTextRequest(webview);
     }
 }
