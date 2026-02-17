@@ -14,6 +14,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     icon?: string;
     iconSize?: number;
     iconColor?: string;
+    iconClassName?: string;
     loading?: boolean;
     active?: boolean;
     stopPropagation?: boolean;
@@ -29,6 +30,7 @@ export default function Button({
     icon,
     iconSize = 20,
     iconColor,
+    iconClassName = "",
     className = "",
     disabled,
     loading = false,
@@ -107,6 +109,7 @@ export default function Button({
                             name={icon}
                             size={iconSize}
                             color={resolvedIconColor}
+                            className={iconClassName}
                         />
                     )}
                     {label || children}
