@@ -29,15 +29,7 @@ export default function SliderSelector({
     };
 
     return (
-        <Row orientation="vertical">
-            <div className="flex w-full justify-between items-end">
-                <div className="text-xs font-bold uppercase tracking-widest text-white/50">
-                    {title}
-                </div>
-                <span className="text-xs text-white/50">
-                    {options[safeCurrentIndex]?.label}
-                </span>
-            </div>
+        <Row orientation="vertical" title={title} hint={options[safeCurrentIndex]?.label}>
 
             <div className="relative flex flex-col w-full pt-2 pb-6">
                 <input
