@@ -48,7 +48,7 @@ export default function WindowBar() {
                     stopPropagation
                 />
             </div>
-            <div className='flex justify-center items-center gap-3 opacity-50 hover:opacity-100'>
+            <div className='flex justify-center items-center gap-2 opacity-50 hover:opacity-100'>
                 <img src={icon} className='max-h-5' />
                 <span className="text-sm text-nowrap">{locale.windowBar.title}</span>
             </div>
