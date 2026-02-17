@@ -3,6 +3,7 @@ import Icon from "@/components/Icon";
 import { cn } from "@/utils/cn";
 import Button from "./Button";
 import Box from "./ui/Box";
+import type { ClassValue } from "clsx";
 
 export interface DropdownOption {
     value: string;
@@ -18,7 +19,8 @@ interface DropdownProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
-    menuClassName?: string;
+    buttonClassName?: ClassValue;
+    menuClassName?: ClassValue;
 }
 
 const baseOptionStyles = "flex items-center gap-2 h-9 p-2 w-full";
@@ -33,6 +35,7 @@ export default function Dropdown({
     placeholder = "",
     disabled = false,
     className = "",
+    buttonClassName = "",
     menuClassName = "",
 }: DropdownProps) {
     const [isOpen, setOpen] = useState(false);
@@ -87,7 +90,7 @@ export default function Dropdown({
                 onClick={() => setOpen((prev) => !prev)}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
-                className="pr-3"
+                className={cn("pr-3", buttonClassName)}
             >
                 <span className={cn("flex-1 truncate", selectedOption ? "text-white" : "text-white/50")}>
                     {selectedOption?.label ?? placeholder}
@@ -105,7 +108,7 @@ export default function Dropdown({
             {isOpen && (
                 <Box
                     className={cn(
-                        "absolute right-0 z-40 mt-1 flex max-h-42 w-max min-w-full max-w-96 flex-col items-start gap-0 overflow-y-scroll rounded-2xl border-white/25 p-0 divide-y divide-white/5",
+                        "absolute right-0 z-40 mt-1 flex max-h-42 w-max min-w-full max-w-96 flex-col items-start gap-0 overflow-y-scroll rounded-2xl border-white/20 p-0 divide-y bg-dark",
                         menuClassName,
                     )}
                 >
