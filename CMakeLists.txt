@@ -19,8 +19,10 @@ set(SOURCES
     src/WebView/WebViewManager.cpp
     src/WebView/WebMessageHandler.cpp
     src/Utils/BrowserDetector.cpp
+    src/Utils/Clipboard.cpp
     src/Utils/FolderDialog.cpp
     src/Utils/NotificationService.cpp
+    src/Utils/SystemSettings.cpp
     src/Utils/YtDlpRunner.cpp
     res/app.rc
     res/resource.h
@@ -48,6 +50,7 @@ target_link_libraries(CosmoDownloader PRIVATE
     shell32
     ole32
     oleaut32
+    d3d11
 )
 
 # Copy DLL
