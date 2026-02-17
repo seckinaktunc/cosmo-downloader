@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { createBrowserOptions, type BrowserOptionValue } from '@/constants/browserOptions';
 import { useDownloadState } from '@/hooks/useDownloadState';
+import { postWebViewMessage } from '@/lib/webview';
 import { useLocale } from '@/locale';
 import { useGlobalStore } from '@/stores/globalStore';
 import { useSettingsStore, type LocaleCode } from '@/stores/settingsStore';
@@ -28,6 +29,7 @@ export default function Settings() {
     const toggleAlwaysAskDownloadDirectory = useSettingsStore((state) => state.toggleAlwaysAskDownloadDirectory);
 
     const defaultDownloadDirectory = useSettingsStore((state) => state.defaultDownloadDirectory);
+    const hardwareAccelerationSupported = useSettingsStore((state) => state.hardwareAccelerationSupported);
 
     const autoCheckUpdates = useSettingsStore((state) => state.autoCheckUpdates);
     const toggleAutoCheckUpdates = useSettingsStore((state) => state.toggleAutoCheckUpdates);
@@ -35,8 +37,8 @@ export default function Settings() {
     const isHWACCELOn = useSettingsStore((state) => state.isHWACCELOn);
     const toggleHWACCEL = useSettingsStore((state) => state.toggleHWACCEL);
 
-    const handleSelectFolder = async () => {
-        console.log(locale.settings.selectFolderDialogLog);
+    const handleSelectFolder = () => {
+        postWebViewMessage("select_default_download_directory");
     };
 
     const browserOptions = useMemo(() => createBrowserOptions(locale), [locale]);
@@ -72,9 +74,9 @@ export default function Settings() {
 
     return (
         <Box className='flex-col'>
-            {state.status !== "idle" && (
+            {state.status === "downloading" && (
                 <div className='absolute inset-0 z-20 bg-dark/85 flex flex-col backdrop-blur-xs justify-center items-center p-4 gap-2 text-center rounded-xl border border-white/5'>
-                    <Icon name='spinner' size={32} className='animate-spin' />
+                    <Icon name='spinner' size={32} className='animate-spin' color='var(--color-primary)' />
                     <span className='text-sm text-white/25'>
                         {locale.common.activeDownloadNotice}
                     </span>
@@ -82,57 +84,55 @@ export default function Settings() {
             )}
 
             <Row>
-                <div className='flex w-full justify-between items-center gap-2'>
-                    <span className='text-sm text-white/50'>{locale.settings.language}</span>
-                    <Dropdown
-                        options={languageOptions}
-                        value={language}
-                        onChange={(value) => setLanguage(value as LocaleCode)}
-                        placeholder={locale.settings.selectLanguage}
-                    />
-                </div>
+                <span className='text-sm text-white/50'>{locale.settings.language}</span>
+                <Dropdown
+                    options={languageOptions}
+                    value={language}
+                    onChange={(value) => setLanguage(value as LocaleCode)}
+                    placeholder={locale.settings.selectLanguage}
+                    buttonClassName='rounded-md'
+                    menuClassName='rounded-md'
+                />
             </Row>
 
             <Row>
-                <div className='flex w-full justify-between items-center gap-2'>
-                    <span className='text-sm text-white/50'>{locale.settings.cookiesBrowser}</span>
-                    <Dropdown
-                        options={visibleBrowserOptions}
-                        value={browserForCookies}
-                        onChange={(value) => setBrowserForCookies(value as BrowserOptionValue)}
-                        placeholder={locale.settings.selectBrowser}
-                    />
-                </div>
+                <span className='text-sm text-white/50'>{locale.settings.cookiesBrowser}</span>
+                <Dropdown
+                    options={visibleBrowserOptions}
+                    value={browserForCookies}
+                    onChange={(value) => setBrowserForCookies(value as BrowserOptionValue)}
+                    placeholder={locale.settings.selectBrowser}
+                    buttonClassName='rounded-md'
+                    menuClassName='rounded-md'
+                />
             </Row>
 
             <Row>
-                <div className='flex w-full justify-between items-center gap-2'>
-                    <span className='text-sm text-white/50'>{locale.settings.alwaysAskDownloadDirectory}</span>
-                    <ToggleSwitch id='alwaysAskDownloadDirectory' value={alwaysAskDownloadDirectory} onChange={toggleAlwaysAskDownloadDirectory} />
-                </div>
+                <span className='text-sm text-white/50'>{locale.settings.alwaysAskDownloadDirectory}</span>
+                <ToggleSwitch id='alwaysAskDownloadDirectory' value={alwaysAskDownloadDirectory} onChange={toggleAlwaysAskDownloadDirectory} />
             </Row>
 
             {!alwaysAskDownloadDirectory && (
                 <Row>
-                    <div className='flex w-full justify-between items-center'>
-                        <div className='flex flex-col overflow-hidden'>
-                            <span className='text-sm text-white/50'>{locale.settings.defaultDownloadDirectory}</span>
-                            <span className='text-xs text-white/25'>{defaultDownloadDirectory || locale.common.notSelected}</span>
-                        </div>
-                        <Button
-                            variant='secondary'
-                            size='sm'
-                            label={locale.settings.selectDownloadDirectory}
-                            onClick={handleSelectFolder}
-                        />
+                    <div className='flex flex-col overflow-hidden'>
+                        <span className='text-sm text-white/50'>{locale.settings.defaultDownloadDirectory}</span>
+                        <span className='text-xs text-white/25'>{defaultDownloadDirectory || locale.common.notSelected}</span>
                     </div>
+                    <Button
+                        variant='secondary'
+                        size='sm'
+                        label={locale.settings.selectDownloadDirectory}
+                        onClick={handleSelectFolder}
+                    />
                 </Row>
             )}
 
-            <Row>
-                <span className='text-sm text-white/50'>{locale.settings.hardwareAcceleration}</span>
-                <ToggleSwitch id='isHWACCELOn' value={isHWACCELOn} onChange={toggleHWACCEL} />
-            </Row>
+            {hardwareAccelerationSupported && (
+                <Row>
+                    <span className='text-sm text-white/50'>{locale.settings.hardwareAcceleration}</span>
+                    <ToggleSwitch id='isHWACCELOn' value={isHWACCELOn} onChange={toggleHWACCEL} />
+                </Row>
+            )}
 
             <Row>
                 <span className='text-sm text-white/50'>{locale.settings.autoCheckUpdates}</span>
