@@ -2,14 +2,16 @@
 > **This project is currently under-development, it WILL NOT WORK if you try to use it.**<br>
 > **Currently only available for Windows**
 
-<p align="center">
-  <img src="assets/screenshot1.png"
-       width="49%"
-       style="margin-right:8px; vertical-align:top;" />
-  <img src="assets/screenshot2.png"
-       width="49%"
-       style="vertical-align:top;" />
-</p>
+<table width="100%">
+<tr valign="top">
+<td width="50%">
+<img src="assets/screenshot1.png" />
+</td>
+<td width="50%" style="padding-left:8px;">
+<img src="assets/screenshot2.png" />
+</td>
+</tr>
+</table>
 
 **Cosmo Downloader** is a high-performance video downloader designed for power users who value speed and aesthetics.
 It combines the raw power of **yt-dlp** and **FFmpeg** with a native **C++** backend and a sleek **WebView + React** user interface.
