@@ -28,6 +28,7 @@ export default function DownloadStatusPanel() {
       <div className="flex w-full justify-between items-end px-1">
         {!isDownloading &&
           <Button
+            variant="secondary"
             isIcon
             size="md"
             icon="close"
