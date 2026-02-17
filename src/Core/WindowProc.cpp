@@ -1,6 +1,7 @@
 #include "WindowProc.h"
 
 #include "WebView/WebViewManager.h"
+#include "Utils/Clipboard.h"
 
 LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
@@ -18,7 +19,11 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             WebViewManager::GetInstance().PostMessageToWeb(L"window_restored");
         }
         break;
+    case WM_CLIPBOARDUPDATE:
+        WebViewManager::GetInstance().PostMessageToWeb(L"clipboard_updated:" + GetClipboardText());
+        return 0;
     case WM_DESTROY:
+        RemoveClipboardFormatListener(hWnd);
         PostQuitMessage(0);
         break;
     default:

@@ -63,6 +63,7 @@ HWND InitWindow(HINSTANCE hInstance, int nCmdShow) {
         MARGINS margins = { -1 };
         DwmExtendFrameIntoClientArea(hWnd, &margins);
         ResizeAndCenterWindow(hWnd, initialClientWidth, initialClientHeight);
+        AddClipboardFormatListener(hWnd);
 
         // Force icon
         SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)wcex.hIcon);

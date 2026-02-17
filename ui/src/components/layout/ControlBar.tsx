@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useStartDownload } from "../../hooks/useStartDownload";
+import { useClipboardStore } from "../../stores/clipboardStore";
 import { useDownloadStore } from "../../stores/downloadStore";
 import { useGlobalStore } from "../../stores/globalStore";
 import { validateUrl } from "../../utils/validateUrl";
@@ -14,6 +15,7 @@ export default function ControlBar() {
 
   const status = useDownloadStore((state) => state.status);
   const url = useDownloadStore((state) => state.url);
+  const clipboardText = useClipboardStore((state) => state.text);
 
   const setUrl = useDownloadStore((state) => state.setUrl);
   const reset = useDownloadStore((state) => state.reset);
@@ -37,6 +39,7 @@ export default function ControlBar() {
 
   const isDisabled =
     isDownloading || !url || !validation.isValid;
+  const canPasteFromClipboard = !isDownloading && clipboardText.trim().length > 0;
 
   const handleDownload = () => {
     if (isDisabled) return;
@@ -49,6 +52,14 @@ export default function ControlBar() {
     }
   };
 
+  const handlePasteFromClipboard = () => {
+    if (!canPasteFromClipboard) {
+      return;
+    }
+
+    setUrl(clipboardText.trim());
+  };
+
   return (
     <Box>
       <InputBox
@@ -59,6 +70,7 @@ export default function ControlBar() {
         placeholder={locale.controlBar.urlPlaceholder}
         containerClassName="flex-1"
         onClear={() => reset()}
+        onPaste={canPasteFromClipboard ? handlePasteFromClipboard : undefined}
         onKeyDown={handleKeyDown}
       />
 
