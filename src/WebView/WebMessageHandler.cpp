@@ -3,6 +3,7 @@
 #include "Core/WindowManager.h"
 #include "Utils/BrowserDetector.h"
 #include "Utils/Clipboard.h"
+#include "Utils/FFmpegRunner.h"
 #include "Utils/FolderDialog.h"
 #include "Utils/NotificationService.h"
 #include "Utils/SystemSettings.h"
@@ -24,7 +25,19 @@ namespace {
         bool alwaysAskDownloadDirectory = true;
         std::wstring defaultDownloadDirectory;
         std::wstring browserForCookies = L"default";
-        bool isHardwareAccelerationEnabled = true;
+        std::wstring hardwareAccelerationMode = L"none";
+    };
+
+    struct MetadataRequest {
+        std::wstring url;
+        std::wstring browserForCookies = L"default";
+    };
+
+    struct ThumbnailRequest {
+        std::wstring url;
+        bool alwaysAskDownloadDirectory = true;
+        std::wstring defaultDownloadDirectory;
+        std::wstring browserForCookies = L"default";
     };
 
     std::vector<std::wstring> SplitByPipe(const std::wstring& value) {
@@ -80,6 +93,23 @@ namespace {
                 joined += L",";
             }
             joined += values[index];
+        }
+
+        return joined;
+    }
+
+    std::wstring JoinIntegersWithComma(const std::vector<int>& values) {
+        if (values.empty()) {
+            return L"";
+        }
+
+        std::wstring joined;
+        for (size_t index = 0; index < values.size(); ++index) {
+            if (index > 0) {
+                joined += L",";
+            }
+
+            joined += std::to_wstring(values[index]);
         }
 
         return joined;
@@ -185,10 +215,70 @@ namespace {
         }
 
         if (fields.size() > 10) {
-            request.isHardwareAccelerationEnabled = ParseBooleanField(fields[10], true);
+            const std::wstring rawMode = fields[10];
+            if (!rawMode.empty()) {
+                request.hardwareAccelerationMode = rawMode;
+            }
         }
 
         return request;
+    }
+
+    MetadataRequest ParseMetadataPayload(const std::wstring& payload) {
+        MetadataRequest request;
+        const std::vector<std::wstring> fields = SplitByPipe(payload);
+        if (fields.empty()) {
+            return request;
+        }
+
+        request.url = fields[0];
+
+        if (fields.size() > 1 && !fields[1].empty()) {
+            request.browserForCookies = fields[1];
+        }
+
+        return request;
+    }
+
+    ThumbnailRequest ParseThumbnailPayload(const std::wstring& payload) {
+        ThumbnailRequest request;
+        const std::vector<std::wstring> fields = SplitByPipe(payload);
+        if (fields.empty()) {
+            return request;
+        }
+
+        request.url = fields[0];
+
+        if (fields.size() > 1) {
+            request.alwaysAskDownloadDirectory = ParseBooleanField(fields[1], true);
+        }
+
+        if (fields.size() > 2) {
+            request.defaultDownloadDirectory = fields[2];
+        }
+
+        if (fields.size() > 3 && !fields[3].empty()) {
+            request.browserForCookies = fields[3];
+        }
+
+        return request;
+    }
+
+    std::wstring ResolveSavePath(HWND hWnd, bool alwaysAskDownloadDirectory, const std::wstring& defaultDownloadDirectory) {
+        if (alwaysAskDownloadDirectory) {
+            return SelectFolder(hWnd);
+        }
+
+        std::wstring savePath = defaultDownloadDirectory;
+        if (savePath.empty()) {
+            savePath = GetDefaultDownloadDirectory();
+        }
+
+        if (savePath.empty()) {
+            savePath = SelectFolder(hWnd);
+        }
+
+        return savePath;
     }
 
     void HandleDownloadMessage(HWND hWnd, const std::wstring& message, ICoreWebView2* webview) {
@@ -197,20 +287,11 @@ namespace {
         }
 
         const DownloadRequest request = ParseDownloadPayload(message.substr(9));
-        std::wstring savePath;
-        if (request.alwaysAskDownloadDirectory) {
-            savePath = SelectFolder(hWnd);
-        }
-        else {
-            savePath = request.defaultDownloadDirectory;
-            if (savePath.empty()) {
-                savePath = GetDefaultDownloadDirectory();
-            }
-
-            if (savePath.empty()) {
-                savePath = SelectFolder(hWnd);
-            }
-        }
+        std::wstring savePath = ResolveSavePath(
+            hWnd,
+            request.alwaysAskDownloadDirectory,
+            request.defaultDownloadDirectory
+        );
 
         if (savePath.empty()) {
             return;
@@ -243,7 +324,101 @@ namespace {
                     request.videoCodec,
                     request.audioCodec,
                     request.browserForCookies,
-                    request.isHardwareAccelerationEnabled,
+                    request.hardwareAccelerationMode,
+                    webviewOnWorker.get()
+                );
+            }
+            }).detach();
+    }
+
+    void HandleFetchMetadataMessage(const std::wstring& message, ICoreWebView2* webview) {
+        if (webview == nullptr) {
+            return;
+        }
+
+        const MetadataRequest request = ParseMetadataPayload(message.substr(15));
+        if (request.url.empty()) {
+            return;
+        }
+
+        IStream* marshaledWebView = nullptr;
+        if (!SUCCEEDED(CoMarshalInterThreadInterfaceInStream(IID_ICoreWebView2, webview, &marshaledWebView))) {
+            return;
+        }
+
+        std::thread([request, marshaledWebView]() {
+            const HRESULT coInitializeResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+            const bool shouldCoUninitialize = SUCCEEDED(coInitializeResult) || coInitializeResult == RPC_E_CHANGED_MODE;
+            const auto coUninitializeScope = wil::scope_exit([shouldCoUninitialize]() {
+                if (shouldCoUninitialize) {
+                    CoUninitialize();
+                }
+                });
+
+            wil::com_ptr<ICoreWebView2> webviewOnWorker;
+            if (!SUCCEEDED(CoGetInterfaceAndReleaseStream(
+                marshaledWebView, IID_ICoreWebView2, reinterpret_cast<void**>(webviewOnWorker.put())))) {
+                return;
+            }
+
+            YtDlpMetadata metadata;
+            if (FetchYtDlpMetadata(request.url, request.browserForCookies, metadata)) {
+                PostWebMessage(
+                    webviewOnWorker.get(),
+                    L"metadata:success:" +
+                    request.url +
+                    L"|" + JoinIntegersWithComma(metadata.availableResolutions) +
+                    L"|" + JoinIntegersWithComma(metadata.availableFps) +
+                    L"|" + JoinIntegersWithComma(metadata.availableAudioBitrates) +
+                    L"|" + metadata.thumbnailUrl
+                );
+                return;
+            }
+
+            PostWebMessage(webviewOnWorker.get(), L"metadata:error:" + request.url);
+            }).detach();
+    }
+
+    void HandleDownloadThumbnailMessage(HWND hWnd, const std::wstring& message, ICoreWebView2* webview) {
+        if (webview == nullptr) {
+            return;
+        }
+
+        const ThumbnailRequest request = ParseThumbnailPayload(message.substr(19));
+        if (request.url.empty()) {
+            return;
+        }
+
+        const std::wstring savePath = ResolveSavePath(
+            hWnd,
+            request.alwaysAskDownloadDirectory,
+            request.defaultDownloadDirectory
+        );
+        if (savePath.empty()) {
+            return;
+        }
+
+        IStream* marshaledWebView = nullptr;
+        if (!SUCCEEDED(CoMarshalInterThreadInterfaceInStream(IID_ICoreWebView2, webview, &marshaledWebView))) {
+            return;
+        }
+
+        std::thread([request, savePath, marshaledWebView]() {
+            const HRESULT coInitializeResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+            const bool shouldCoUninitialize = SUCCEEDED(coInitializeResult) || coInitializeResult == RPC_E_CHANGED_MODE;
+            const auto coUninitializeScope = wil::scope_exit([shouldCoUninitialize]() {
+                if (shouldCoUninitialize) {
+                    CoUninitialize();
+                }
+                });
+
+            wil::com_ptr<ICoreWebView2> webviewOnWorker;
+            if (SUCCEEDED(CoGetInterfaceAndReleaseStream(
+                marshaledWebView, IID_ICoreWebView2, reinterpret_cast<void**>(webviewOnWorker.put())))) {
+                RunYtDlpThumbnailDownload(
+                    request.url,
+                    savePath,
+                    request.browserForCookies,
                     webviewOnWorker.get()
                 );
             }
@@ -256,12 +431,11 @@ namespace {
         PostWebMessage(webview, L"installed_browsers:" + payload);
     }
 
-    void HandleHardwareAccelerationSupportRequest(ICoreWebView2* webview) {
-        const bool isSupported = IsHardwareAccelerationSupported();
-        PostWebMessage(
-            webview,
-            std::wstring(L"hardware_acceleration_supported:") + (isSupported ? L"true" : L"false")
-        );
+    void HandleHardwareAccelerationOptionsRequest(ICoreWebView2* webview) {
+        std::vector<std::wstring> options = { L"none" };
+        const std::vector<std::wstring> ffmpegOptions = GetAvailableFFmpegHardwareAccelerationOptions();
+        options.insert(options.end(), ffmpegOptions.begin(), ffmpegOptions.end());
+        PostWebMessage(webview, L"hardware_acceleration_options:" + JoinWithComma(options));
     }
 
     void HandleDefaultDownloadDirectoryRequest(ICoreWebView2* webview) {
@@ -342,13 +516,28 @@ void HandleWebMessage(
         return;
     }
 
+    if (message == L"cancel_download") {
+        CancelActiveYtDlpDownload();
+        return;
+    }
+
+    if (message.rfind(L"fetch_metadata:", 0) == 0) {
+        HandleFetchMetadataMessage(message, webview);
+        return;
+    }
+
+    if (message.rfind(L"download_thumbnail:", 0) == 0) {
+        HandleDownloadThumbnailMessage(hWnd, message, webview);
+        return;
+    }
+
     if (message == L"request_installed_browsers") {
         HandleInstalledBrowsersRequest(webview);
         return;
     }
 
-    if (message == L"request_hardware_acceleration_support") {
-        HandleHardwareAccelerationSupportRequest(webview);
+    if (message == L"request_hardware_acceleration_options") {
+        HandleHardwareAccelerationOptionsRequest(webview);
         return;
     }
 
@@ -359,6 +548,11 @@ void HandleWebMessage(
 
     if (message == L"select_default_download_directory") {
         HandleSelectDefaultDownloadDirectoryMessage(hWnd, webview);
+        return;
+    }
+
+    if (message == L"open_download_logs") {
+        OpenDownloadLogInDefaultEditor();
         return;
     }
 
