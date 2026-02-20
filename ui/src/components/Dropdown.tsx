@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Icon from "@/components/Icon";
 import { cn } from "@/utils/cn";
 import Button from "./Button";
-import Box from "./ui/Box";
 import type { ClassValue } from "clsx";
 
 export interface DropdownOption {
@@ -40,6 +40,8 @@ export default function Dropdown({
 }: DropdownProps) {
     const [isOpen, setOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
     const closeDropdown = () => setOpen(false);
 
     const selectedOption = useMemo(
@@ -49,7 +51,11 @@ export default function Dropdown({
 
     useEffect(() => {
         const handlePointerDown = (event: MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (
+                !rootRef.current?.contains(target) &&
+                !menuRef.current?.contains(target)
+            ) {
                 setOpen(false);
             }
         };
@@ -68,6 +74,58 @@ export default function Dropdown({
             window.removeEventListener("keydown", handleEscape);
         };
     }, []);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        const updateMenuPosition = () => {
+            const root = rootRef.current;
+            if (!root) {
+                return;
+            }
+
+            const rect = root.getBoundingClientRect();
+            const viewportPadding = 8;
+            const menuGap = 4;
+
+            const availableBelow = window.innerHeight - rect.bottom - viewportPadding - menuGap;
+            const availableAbove = rect.top - viewportPadding - menuGap;
+            const shouldOpenUpward = availableBelow < 180 && availableAbove > availableBelow;
+            const availableHeight = Math.max(0, shouldOpenUpward ? availableAbove : availableBelow);
+
+            const nextStyle: CSSProperties = {
+                position: "fixed",
+                right: Math.max(viewportPadding, window.innerWidth - rect.right),
+                minWidth: rect.width,
+                maxWidth: Math.min(384, rect.right - viewportPadding),
+                maxHeight: availableHeight,
+                zIndex: 1000,
+            };
+
+            if (shouldOpenUpward) {
+                nextStyle.bottom = window.innerHeight - rect.top + menuGap;
+            } else {
+                nextStyle.top = rect.bottom + menuGap;
+            }
+
+            setMenuStyle(nextStyle);
+        };
+
+        const schedulePositionUpdate = () => {
+            requestAnimationFrame(updateMenuPosition);
+        };
+
+        updateMenuPosition();
+        window.addEventListener("resize", schedulePositionUpdate);
+        window.addEventListener("scroll", schedulePositionUpdate, true);
+
+        return () => {
+            window.removeEventListener("resize", schedulePositionUpdate);
+            window.removeEventListener("scroll", schedulePositionUpdate, true);
+        };
+    }, [isOpen, options.length]);
 
     const handleSelect = (nextValue: string, optionDisabled?: boolean) => {
         if (disabled || optionDisabled) {
@@ -105,10 +163,13 @@ export default function Dropdown({
                 />
             </Button>
 
-            {isOpen && (
-                <Box
+            {isOpen && createPortal(
+                <div
+                    ref={menuRef}
+                    style={menuStyle}
                     className={cn(
-                        "absolute right-0 z-40 mt-1 flex max-h-42 w-max min-w-full max-w-96 flex-col items-start gap-0 overflow-y-scroll rounded-2xl border-white/20 p-0 divide-y bg-dark",
+                        "z-1000 flex w-max min-w-full max-w-96 flex-col items-start gap-0 overflow-y-auto rounded-2xl corner-squircle border border-white/20 p-0 divide-y bg-dark",
+                        "shadow-[0_0_8px_rgb(0,0,0,0.2),inset_0_0_16px_rgb(255,255,255,0.05)]",
                         menuClassName,
                     )}
                 >
@@ -148,7 +209,8 @@ export default function Dropdown({
                             </button>
                         );
                     })}
-                </Box>
+                </div>,
+                document.body
             )}
         </div>
     );
