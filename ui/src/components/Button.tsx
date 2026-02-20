@@ -5,7 +5,7 @@ import { cn } from "../utils/cn";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: "primary" | "secondary";
+    variant?: "primary" | "secondary" | "tertiary";
     isIcon?: boolean;
     size?: ButtonSize;
     ghost?: boolean;
@@ -76,6 +76,13 @@ export default function Button({
             if (active) return `${layout} border border-white/25 bg-white/5 text-white shadow-white/25`;
             if (ghost) return `${layout} text-white/50 hover:text-white hover:brightness-125 border-0 border-transparent`;
             return `${layout} text-white/50 bg-white/5 border border-white/25 shadow-white/25 hover:bg-white/15 hover:border-white/35 hover:text-white`;
+        }
+
+        if (variant === "tertiary") {
+            if (disabled) return `${layout} border border-primary/10 bg-primary/5 text-white/20 cursor-not-allowed`;
+            if (active) return `${layout} border border-primary/25 bg-primary/5 text-white shadow-primary/25`;
+            if (ghost) return `${layout} text-primary border border-transparent hover:bg-primary/10`;
+            return `${layout} border-none bg-none shadow-none p-0 h-auto w-auto text-xs text-primary hover:underline gap-1`;
         }
 
         return "";
