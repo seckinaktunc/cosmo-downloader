@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { DownloadState, DownloadStatus } from "../types/download";
+import {
+  isActiveDownloadStatus,
+  type ActiveDownloadStatus,
+  type DownloadState,
+  type DownloadStatus,
+} from "../types/download";
 import {
   AUDIO_BITRATE_OPTIONS,
   AUDIO_CODEC_OPTIONS,
@@ -36,12 +41,27 @@ interface DownloadStore extends DownloadState {
   setVideoCodec: (videoCodec: VideoCodecOption) => void;
   setAudioCodec: (audioCodec: AudioCodecOption) => void;
   markDownloading: () => void;
+  markMerging: () => void;
+  markConverting: () => void;
   setProgress: (progress: number) => void;
+  setPlaylistProgress: (current: number, total: number) => void;
+  markIdle: () => void;
 
   markDone: () => void;
   markError: () => void;
 
   reset: () => void;
+}
+
+function transitionToActiveStatus(
+  previousState: DownloadStore,
+  nextStatus: ActiveDownloadStatus,
+) {
+  return {
+    status: nextStatus,
+    progress: isActiveDownloadStatus(previousState.status) ? previousState.progress : 0,
+    playlistProgress: isActiveDownloadStatus(previousState.status) ? previousState.playlistProgress : null,
+  };
 }
 
 export const useDownloadStore = create<DownloadStore>()(
@@ -50,6 +70,7 @@ export const useDownloadStore = create<DownloadStore>()(
       url: "",
       status: "idle",
       progress: 0,
+      playlistProgress: null,
       format: "mp4",
       resolution: 1080,
       bitrate: 192,
@@ -65,24 +86,31 @@ export const useDownloadStore = create<DownloadStore>()(
       setVideoCodec: (videoCodec) => set({ videoCodec }),
       setAudioCodec: (audioCodec) => set({ audioCodec }),
 
-      markDownloading: () =>
-        set((prev) => ({
-          status: "downloading",
-          progress: prev.status === "downloading" ? prev.progress : 0,
-        })),
+      markDownloading: () => set((prev) => transitionToActiveStatus(prev, "downloading")),
+      markMerging: () => set((prev) => transitionToActiveStatus(prev, "merging")),
+      markConverting: () => set((prev) => transitionToActiveStatus(prev, "converting")),
 
       setProgress: (progress) => {
         const clamped = Math.min(100, Math.max(0, progress));
         set((prev) => ({
-          status: "downloading",
-          progress: Math.max(prev.progress, clamped),
+          status: isActiveDownloadStatus(prev.status) ? prev.status : "downloading",
+          progress: clamped,
         }));
       },
 
-      markDone: () => set({ status: "done", progress: 100 }),
-      markError: () => set({ status: "error", progress: 0 }),
+      setPlaylistProgress: (current, total) => {
+        const safeTotal = Math.max(1, Math.trunc(total));
+        const safeCurrent = Math.min(safeTotal, Math.max(1, Math.trunc(current)));
+        set({
+          playlistProgress: safeTotal > 1 ? { current: safeCurrent, total: safeTotal } : null,
+        });
+      },
 
-      reset: () => set({ url: "", status: "idle", progress: 0 }),
+      markIdle: () => set({ status: "idle", progress: 0, playlistProgress: null }),
+      markDone: () => set({ status: "done", progress: 100, playlistProgress: null }),
+      markError: () => set({ status: "error", progress: 0, playlistProgress: null }),
+
+      reset: () => set({ url: "", status: "idle", progress: 0, playlistProgress: null }),
     }),
     {
       name: "cosmo-download-preferences",
