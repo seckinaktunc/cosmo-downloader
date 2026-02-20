@@ -5,6 +5,7 @@ import { isBrowserOptionValue, type BrowserOptionValue } from "@/constants/brows
 export type LocaleCode = "tr_TR" | "en_US" | "zh_CN";
 const FALLBACK_LANGUAGE: LocaleCode = "en_US";
 const FALLBACK_BROWSER: BrowserOptionValue = "default";
+const FALLBACK_HARDWARE_ACCELERATION_MODE = "none";
 
 function normalizeLanguage(value: unknown): LocaleCode {
     if (value === "en" || value === "en_US") return "en_US";
@@ -31,6 +32,36 @@ function normalizeDirectoryPath(value: unknown): string {
     return normalized.length > 0 ? normalized : "";
 }
 
+function normalizeHardwareAccelerationMode(value: unknown): string {
+    if (typeof value !== "string") {
+        return FALLBACK_HARDWARE_ACCELERATION_MODE;
+    }
+
+    const normalized = value.trim().toLowerCase();
+    return normalized.length > 0 ? normalized : FALLBACK_HARDWARE_ACCELERATION_MODE;
+}
+
+function normalizeHardwareAccelerationOptions(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+        return [FALLBACK_HARDWARE_ACCELERATION_MODE];
+    }
+
+    const normalized = Array.from(
+        new Set(
+            value
+                .filter((item): item is string => typeof item === "string")
+                .map((item) => item.trim().toLowerCase())
+                .filter((item) => item.length > 0),
+        ),
+    );
+
+    if (!normalized.includes(FALLBACK_HARDWARE_ACCELERATION_MODE)) {
+        normalized.unshift(FALLBACK_HARDWARE_ACCELERATION_MODE);
+    }
+
+    return normalized;
+}
+
 interface SettingsStore {
     language: LocaleCode;
     browserForCookies: BrowserOptionValue;
@@ -40,7 +71,8 @@ interface SettingsStore {
     defaultDownloadDirectory: string;
     isDefaultDownloadDirectoryUserSet: boolean;
     hardwareAccelerationSupported: boolean;
-    isHWACCELOn: boolean;
+    hardwareAccelerationOptions: string[];
+    hardwareAccelerationMode: string;
     autoCheckUpdates: boolean;
 
     setLanguage: (language: LocaleCode) => void;
@@ -48,9 +80,9 @@ interface SettingsStore {
     setInstalledBrowsers: (installedBrowsers: BrowserOptionValue[]) => void;
     setDefaultDownloadDirectoryByUser: (defaultDownloadDirectory: string) => void;
     applySystemDefaultDownloadDirectory: (defaultDownloadDirectory: string) => void;
-    setHardwareAccelerationSupported: (supported: boolean) => void;
+    setHardwareAccelerationOptions: (options: string[]) => void;
+    setHardwareAccelerationMode: (mode: string) => void;
     toggleAlwaysAskDownloadDirectory: () => void;
-    toggleHWACCEL: () => void;
     toggleAutoCheckUpdates: () => void;
 }
 
@@ -64,8 +96,9 @@ export const useSettingsStore = create<SettingsStore>()(
             alwaysAskDownloadDirectory: false,
             defaultDownloadDirectory: "",
             isDefaultDownloadDirectoryUserSet: false,
-            hardwareAccelerationSupported: true,
-            isHWACCELOn: true,
+            hardwareAccelerationSupported: false,
+            hardwareAccelerationOptions: [FALLBACK_HARDWARE_ACCELERATION_MODE],
+            hardwareAccelerationMode: FALLBACK_HARDWARE_ACCELERATION_MODE,
             autoCheckUpdates: true,
 
             setLanguage: (language) => set({ language: language }),
@@ -110,18 +143,30 @@ export const useSettingsStore = create<SettingsStore>()(
                 };
             }),
 
-            setHardwareAccelerationSupported: (supported) => set((state) => ({
-                hardwareAccelerationSupported: supported,
-                isHWACCELOn: supported ? state.isHWACCELOn : false,
-            })),
+            setHardwareAccelerationOptions: (options) => set((state) => {
+                const normalizedOptions = normalizeHardwareAccelerationOptions(options);
+                const hasHardwareOption = normalizedOptions.some((option) => option !== FALLBACK_HARDWARE_ACCELERATION_MODE);
 
-            toggleHWACCEL: () => set((state) => {
-                if (!state.hardwareAccelerationSupported) {
-                    return state;
+                let nextMode = normalizeHardwareAccelerationMode(state.hardwareAccelerationMode);
+                if (!normalizedOptions.includes(nextMode)) {
+                    nextMode = hasHardwareOption ? normalizedOptions[1] : FALLBACK_HARDWARE_ACCELERATION_MODE;
                 }
 
                 return {
-                    isHWACCELOn: !state.isHWACCELOn,
+                    hardwareAccelerationOptions: normalizedOptions,
+                    hardwareAccelerationSupported: hasHardwareOption,
+                    hardwareAccelerationMode: nextMode,
+                };
+            }),
+
+            setHardwareAccelerationMode: (mode) => set((state) => {
+                const normalizedMode = normalizeHardwareAccelerationMode(mode);
+                const selectedMode = state.hardwareAccelerationOptions.includes(normalizedMode)
+                    ? normalizedMode
+                    : FALLBACK_HARDWARE_ACCELERATION_MODE;
+
+                return {
+                    hardwareAccelerationMode: selectedMode,
                 };
             }),
 
@@ -132,7 +177,7 @@ export const useSettingsStore = create<SettingsStore>()(
         {
             name: "cosmo-settings",
             storage: createJSONStorage(() => localStorage),
-            version: 3,
+            version: 5,
             migrate: (persistedState) => {
                 const previous = (persistedState as Partial<SettingsStore> | undefined) ?? {};
                 const normalizedDefaultDownloadDirectory = normalizeDirectoryPath(previous.defaultDownloadDirectory);
@@ -140,6 +185,9 @@ export const useSettingsStore = create<SettingsStore>()(
                     typeof previous.isDefaultDownloadDirectoryUserSet === "boolean"
                         ? previous.isDefaultDownloadDirectoryUserSet
                         : normalizedDefaultDownloadDirectory.length > 0;
+                const normalizedHardwareAccelerationMode = normalizeHardwareAccelerationMode(
+                    previous.hardwareAccelerationMode,
+                );
 
                 return {
                     ...previous,
@@ -147,6 +195,7 @@ export const useSettingsStore = create<SettingsStore>()(
                     browserForCookies: normalizeBrowser(previous.browserForCookies),
                     defaultDownloadDirectory: normalizedDefaultDownloadDirectory,
                     isDefaultDownloadDirectoryUserSet: isDefaultDownloadDirectoryUserSet,
+                    hardwareAccelerationMode: normalizedHardwareAccelerationMode,
                 };
             },
             partialize: (state) => ({
@@ -155,7 +204,7 @@ export const useSettingsStore = create<SettingsStore>()(
                 alwaysAskDownloadDirectory: state.alwaysAskDownloadDirectory,
                 defaultDownloadDirectory: state.defaultDownloadDirectory,
                 isDefaultDownloadDirectoryUserSet: state.isDefaultDownloadDirectoryUserSet,
-                isHWACCELOn: state.isHWACCELOn,
+                hardwareAccelerationMode: state.hardwareAccelerationMode,
                 autoCheckUpdates: state.autoCheckUpdates,
             }),
         },
