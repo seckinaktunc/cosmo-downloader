@@ -5,7 +5,8 @@
   "controlBar": {
     "urlPlaceholder": "粘贴任意视频链接",
     "download": "下载",
-    "downloading": "正在下载..."
+    "downloading": "正在下载...",
+    "cancel": "取消"
   },
   "common": {
     "activeDownloadNotice": "当前已有正在进行的下载任务。",
@@ -58,6 +59,7 @@
     }
   },
   "formats": {
+    "actionButtonLabel": "下载缩略图",
     "helpers": {
       "mp4": "最常见的视频格式",
       "mkv": "无损视频",
@@ -75,6 +77,8 @@
     "defaultDownloadDirectory": "默认下载位置",
     "selectDownloadDirectory": "选择下载位置",
     "hardwareAcceleration": "硬件加速",
+    "selectHardwareAcceleration": "选择加速模式",
+    "hardwareAccelerationDisabled": "关闭",
     "autoCheckUpdates": "自动检查更新",
     "selectFolderDialogLog": "即将打开文件夹选择对话框..."
   },
@@ -82,13 +86,21 @@
     "doneTitle": "已完成",
     "doneDescription": "视频已成功保存到您选择的文件夹。",
     "downloadingTitle": "正在下载...",
-    "downloadingDescription": "正在后台合并视频数据...",
+    "downloadingDescription": "正在下载媒体流...",
+    "mergingTitle": "正在合并...",
+    "mergingDescription": "正在合并视频和音频流...",
+    "convertingTitle": "正在转换...",
+    "convertingDescription": "正在将媒体转换为所选格式...",
     "errorTitle": "错误",
     "errorDescription": "下载未完成。请重试。"
   },
   "notifications": {
     "downloadCompletedTitle": "下载完成！",
-    "downloadCompletedMessage": "您正在下载的视频已成功下载并保存到所选文件夹。"
+    "downloadCompletedMessage": "您正在下载的视频已成功下载并保存到所选文件夹。",
+    "thumbnailDownloadedTitle": "缩略图下载完成！",
+    "thumbnailDownloadedMessage": "缩略图已保存到所选文件夹。",
+    "thumbnailDownloadFailedTitle": "缩略图下载失败",
+    "thumbnailDownloadFailedMessage": "无法下载缩略图，请重试。"
   },
   "languages": {
     "tr_TR": "Türkçe",
