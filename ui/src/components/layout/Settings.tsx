@@ -5,6 +5,7 @@ import { postWebViewMessage } from '@/lib/webview';
 import { useLocale } from '@/locale';
 import { useGlobalStore } from '@/stores/globalStore';
 import { useSettingsStore, type LocaleCode } from '@/stores/settingsStore';
+import { isActiveDownloadStatus } from '@/types/download';
 import Box from '@/components/ui/Box';
 import Button from '@/components/Button';
 import Dropdown, { type DropdownOption } from '@/components/Dropdown';
@@ -30,12 +31,12 @@ export default function Settings() {
 
     const defaultDownloadDirectory = useSettingsStore((state) => state.defaultDownloadDirectory);
     const hardwareAccelerationSupported = useSettingsStore((state) => state.hardwareAccelerationSupported);
+    const hardwareAccelerationOptions = useSettingsStore((state) => state.hardwareAccelerationOptions);
+    const hardwareAccelerationMode = useSettingsStore((state) => state.hardwareAccelerationMode);
+    const setHardwareAccelerationMode = useSettingsStore((state) => state.setHardwareAccelerationMode);
 
     const autoCheckUpdates = useSettingsStore((state) => state.autoCheckUpdates);
     const toggleAutoCheckUpdates = useSettingsStore((state) => state.toggleAutoCheckUpdates);
-
-    const isHWACCELOn = useSettingsStore((state) => state.isHWACCELOn);
-    const toggleHWACCEL = useSettingsStore((state) => state.toggleHWACCEL);
 
     const handleSelectFolder = () => {
         postWebViewMessage("select_default_download_directory");
@@ -70,11 +71,20 @@ export default function Settings() {
         { value: "zh_CN", label: locale.languages.zh_CN, icon: "flagCN" },
     ];
 
+    const hardwareAccelerationDropdownOptions = useMemo<DropdownOption[]>(() => {
+        return hardwareAccelerationOptions.map((option) => ({
+            value: option,
+            label: option === "none"
+                ? locale.settings.hardwareAccelerationDisabled
+                : option.toUpperCase(),
+        }));
+    }, [hardwareAccelerationOptions, locale.settings.hardwareAccelerationDisabled]);
+
     if (!isSettingsOpen) return null;
 
     return (
         <Box className='flex-col'>
-            {state.status === "downloading" && (
+            {isActiveDownloadStatus(state.status) && (
                 <div className='absolute inset-0 z-20 bg-dark/85 flex flex-col backdrop-blur-xs justify-center items-center p-4 gap-2 text-center rounded-xl border border-white/5'>
                     <Icon name='spinner' size={32} className='animate-spin' color='var(--color-primary)' />
                     <span className='text-sm text-white/25'>
@@ -123,16 +133,23 @@ export default function Settings() {
                         size='sm'
                         label={locale.settings.selectDownloadDirectory}
                         onClick={handleSelectFolder}
+                        className='rounded-md'
                     />
                 </Row>
             )}
 
-            {hardwareAccelerationSupported && (
-                <Row>
-                    <span className='text-sm text-white/50'>{locale.settings.hardwareAcceleration}</span>
-                    <ToggleSwitch id='isHWACCELOn' value={isHWACCELOn} onChange={toggleHWACCEL} />
-                </Row>
-            )}
+            <Row>
+                <span className='text-sm text-white/50'>{locale.settings.hardwareAcceleration}</span>
+                <Dropdown
+                    options={hardwareAccelerationDropdownOptions}
+                    value={hardwareAccelerationMode}
+                    onChange={setHardwareAccelerationMode}
+                    placeholder={locale.settings.selectHardwareAcceleration}
+                    disabled={!hardwareAccelerationSupported && hardwareAccelerationDropdownOptions.length <= 1}
+                    buttonClassName='rounded-md'
+                    menuClassName='rounded-md'
+                />
+            </Row>
 
             <Row>
                 <span className='text-sm text-white/50'>{locale.settings.autoCheckUpdates}</span>
