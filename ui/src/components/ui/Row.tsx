@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Icon from "../Icon";
+import Button from "../Button";
 
 interface RowProps {
     children: ReactNode;
@@ -27,15 +27,13 @@ export default function Row({ children, orientation = "horizontal", title, hint,
                     </span>
                     <div className="flex justify-end gap-2">
                         {actionButtonLabel &&
-                            <button
-                                className="flex gap-1 items-center text-xs text-primary"
+                            <Button
+                                variant="tertiary"
+                                icon={actionButtonIcon}
+                                iconSize={16}
+                                label={actionButtonLabel}
                                 onClick={actionButtonOnClick}
-                            >
-                                {actionButtonIcon &&
-                                    <Icon name={actionButtonIcon} size={12} />
-                                }
-                                {actionButtonLabel}
-                            </button>
+                            />
                         }
                         {hint &&
                             <span className="text-xs text-white/50 text-nowrap text-right">
