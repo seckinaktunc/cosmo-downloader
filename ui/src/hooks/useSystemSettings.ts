@@ -2,25 +2,21 @@ import { useEffect } from "react";
 import { postWebViewMessage, subscribeWebViewMessages } from "@/lib/webview";
 import { useSettingsStore } from "@/stores/settingsStore";
 
-const HARDWARE_ACCELERATION_PREFIX = "hardware_acceleration_supported:";
+const HARDWARE_ACCELERATION_OPTIONS_PREFIX = "hardware_acceleration_options:";
 const DEFAULT_DOWNLOAD_DIRECTORY_PREFIX = "default_download_directory:";
 const SELECTED_DOWNLOAD_DIRECTORY_PREFIX = "default_download_directory_selected:";
 
-function parseBoolean(value: string): boolean | null {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true" || normalized === "1") {
-        return true;
-    }
+function parseHardwareAccelerationOptions(value: string): string[] {
+    const parsed = value
+        .split(",")
+        .map((option) => option.trim().toLowerCase())
+        .filter((option) => option.length > 0);
 
-    if (normalized === "false" || normalized === "0") {
-        return false;
-    }
-
-    return null;
+    return Array.from(new Set(parsed));
 }
 
 export function useSystemSettings(): void {
-    const setHardwareAccelerationSupported = useSettingsStore((state) => state.setHardwareAccelerationSupported);
+    const setHardwareAccelerationOptions = useSettingsStore((state) => state.setHardwareAccelerationOptions);
     const applySystemDefaultDownloadDirectory = useSettingsStore((state) => state.applySystemDefaultDownloadDirectory);
     const setDefaultDownloadDirectoryByUser = useSettingsStore((state) => state.setDefaultDownloadDirectoryByUser);
 
@@ -28,11 +24,9 @@ export function useSystemSettings(): void {
         const unsubscribe = subscribeWebViewMessages((event) => {
             const message = event.data;
 
-            if (message.startsWith(HARDWARE_ACCELERATION_PREFIX)) {
-                const supported = parseBoolean(message.slice(HARDWARE_ACCELERATION_PREFIX.length));
-                if (supported != null) {
-                    setHardwareAccelerationSupported(supported);
-                }
+            if (message.startsWith(HARDWARE_ACCELERATION_OPTIONS_PREFIX)) {
+                const options = parseHardwareAccelerationOptions(message.slice(HARDWARE_ACCELERATION_OPTIONS_PREFIX.length));
+                setHardwareAccelerationOptions(options);
                 return;
             }
 
@@ -48,13 +42,13 @@ export function useSystemSettings(): void {
             }
         });
 
-        postWebViewMessage("request_hardware_acceleration_support");
+        postWebViewMessage("request_hardware_acceleration_options");
         postWebViewMessage("request_default_download_directory");
 
         return unsubscribe;
     }, [
         applySystemDefaultDownloadDirectory,
         setDefaultDownloadDirectoryByUser,
-        setHardwareAccelerationSupported,
+        setHardwareAccelerationOptions,
     ]);
 }
