@@ -1,4 +1,4 @@
-import { IconAdjustmentsHorizontal, IconBackspace, IconChevronDown, IconChevronsDown, IconDownload, IconFileImport, IconLoader2, IconPin, IconPinFilled, IconSettings, IconSettingsFilled, IconX } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconBackspace, IconChevronDown, IconChevronsDown, IconDownload, IconFileImport, IconFileInfo, IconLoader2, IconPin, IconPinFilled, IconSearch, IconSettings, IconSettingsFilled, IconX } from '@tabler/icons-react';
 import React from 'react';
 import BraveIcon from './icons/BraveIcon';
 import ChinaFlagIcon from './icons/ChinaFlagIcon';
@@ -24,7 +24,17 @@ const iconMap: Record<string, React.ElementType> = {
     flagTR: TurkishFlagIcon,
     flagEN: USEnglishFlagIcon,
     flagCN: ChinaFlagIcon,
+    chrome: ChromeIcon,
+    chromium: ChromiumIcon,
+    firefox: FirefoxIcon,
+    edge: EdgeIcon,
+    opera: OperaIcon,
+    safari: SafariIcon,
+    vivaldi: VivaldiIcon,
+    brave: BraveIcon,
+    whale: WhaleIcon,
     download: IconDownload,
+    search: IconSearch,
     close: IconX,
     backspace: IconBackspace,
     paste: IconFileImport,
@@ -36,15 +46,7 @@ const iconMap: Record<string, React.ElementType> = {
     settingsFilled: IconSettingsFilled,
     chevronDown: IconChevronDown,
     chevronsDown: IconChevronsDown,
-    chrome: ChromeIcon,
-    chromium: ChromiumIcon,
-    firefox: FirefoxIcon,
-    edge: EdgeIcon,
-    opera: OperaIcon,
-    safari: SafariIcon,
-    vivaldi: VivaldiIcon,
-    brave: BraveIcon,
-    whale: WhaleIcon,
+    fileInfo: IconFileInfo,
 };
 
 export default function Icon({ name, size = 20, ...props }: IconProps) {
