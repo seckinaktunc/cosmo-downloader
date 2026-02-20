@@ -1,64 +1,137 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { getLocaleMessages } from "../locale";
 import { subscribeWebViewMessages } from "../lib/webview";
 import { useDownloadStore } from "../stores/downloadStore";
+import { useMetadataStore } from "@/stores/metadataStore";
 import { useSettingsStore } from "../stores/settingsStore";
 import type { DownloadState } from "../types/download";
 import { sendNativeNotification } from "../utils/notification";
-
-function parseProgress(message: string): number | null {
-  const prefix = "status:progress:";
-  if (!message.startsWith(prefix)) {
-    return null;
-  }
-
-  const parsed = Number.parseInt(message.slice(prefix.length), 10);
-  if (Number.isNaN(parsed)) {
-    return null;
-  }
-
-  return Math.min(100, Math.max(0, parsed));
-}
+import {
+  parseDownloadStatusMessage,
+  parseMetadataMessage,
+  parsePlaylistMessage,
+  parseProgressMessage,
+} from "./downloadEventParsers";
 
 export function useDownloadState(): DownloadState {
   const status = useDownloadStore((state) => state.status);
   const progress = useDownloadStore((state) => state.progress);
-  return { status, progress };
+  const playlistProgress = useDownloadStore((state) => state.playlistProgress);
+  return { status, progress, playlistProgress };
 }
 
 export function useDownloadEvents(): void {
   const setProgress = useDownloadStore((state) => state.setProgress);
+  const setPlaylistProgress = useDownloadStore((state) => state.setPlaylistProgress);
   const markDownloading = useDownloadStore((state) => state.markDownloading);
+  const markMerging = useDownloadStore((state) => state.markMerging);
+  const markConverting = useDownloadStore((state) => state.markConverting);
+  const markIdle = useDownloadStore((state) => state.markIdle);
   const markDone = useDownloadStore((state) => state.markDone);
   const markError = useDownloadStore((state) => state.markError);
-  const reset = useDownloadStore((state) => state.reset);
-  const resetTimerRef = useRef<number | null>(null);
+  const setResolution = useDownloadStore((state) => state.setResolution);
+  const setFPS = useDownloadStore((state) => state.setFPS);
+  const setBitrate = useDownloadStore((state) => state.setBitrate);
+  const applyMetadata = useMetadataStore((state) => state.applyMetadata);
+  const markFetchError = useMetadataStore((state) => state.markFetchError);
 
   useEffect(() => {
-    const clearResetTimer = () => {
-      if (resetTimerRef.current == null) {
+    const unsubscribe = subscribeWebViewMessages((event) => {
+      const message = event.data;
+
+      const metadata = parseMetadataMessage(message);
+      if (metadata != null) {
+        const activeUrl = useDownloadStore.getState().url.trim();
+        if (activeUrl.length === 0 || metadata.url !== activeUrl) {
+          return;
+        }
+
+        if (metadata.type === "error") {
+          markFetchError(metadata.url);
+          return;
+        }
+
+        applyMetadata(metadata);
+
+        const currentState = useDownloadStore.getState();
+
+        if (
+          metadata.availableResolutions.length > 0 &&
+          !metadata.availableResolutions.includes(currentState.resolution)
+        ) {
+          setResolution(metadata.availableResolutions[metadata.availableResolutions.length - 1]);
+        }
+
+        if (
+          metadata.availableFps.length > 0 &&
+          !metadata.availableFps.includes(currentState.fps)
+        ) {
+          setFPS(metadata.availableFps[metadata.availableFps.length - 1]);
+        }
+
+        if (
+          metadata.availableBitrates.length > 0 &&
+          !metadata.availableBitrates.includes(currentState.bitrate)
+        ) {
+          setBitrate(metadata.availableBitrates[metadata.availableBitrates.length - 1]);
+        }
+
         return;
       }
 
-      window.clearTimeout(resetTimerRef.current);
-      resetTimerRef.current = null;
-    };
+      if (message === "thumbnail:done") {
+        const currentLanguage = useSettingsStore.getState().language;
+        const locale = getLocaleMessages(currentLanguage);
+        sendNativeNotification(
+          locale.notifications.thumbnailDownloadedTitle,
+          locale.notifications.thumbnailDownloadedMessage,
+        );
+        return;
+      }
 
-    const unsubscribe = subscribeWebViewMessages((event) => {
-      const message = event.data;
-      const progress = parseProgress(message);
+      if (message === "thumbnail:error") {
+        const currentLanguage = useSettingsStore.getState().language;
+        const locale = getLocaleMessages(currentLanguage);
+        sendNativeNotification(
+          locale.notifications.thumbnailDownloadFailedTitle,
+          locale.notifications.thumbnailDownloadFailedMessage,
+        );
+        return;
+      }
+
+      const playlistProgress = parsePlaylistMessage(message);
+      if (playlistProgress != null) {
+        setPlaylistProgress(playlistProgress.current, playlistProgress.total);
+        return;
+      }
+
+      const progress = parseProgressMessage(message);
       if (progress != null) {
         setProgress(progress);
         return;
       }
 
-      if (message === "status:downloading") {
-        clearResetTimer();
+      const statusMessage = parseDownloadStatusMessage(message);
+      if (statusMessage == null) {
+        return;
+      }
+
+      if (statusMessage === "status:downloading") {
         markDownloading();
         return;
       }
 
-      if (message === "status:done") {
+      if (statusMessage === "status:merging") {
+        markMerging();
+        return;
+      }
+
+      if (statusMessage === "status:converting") {
+        markConverting();
+        return;
+      }
+
+      if (statusMessage === "status:done") {
         const currentLanguage = useSettingsStore.getState().language;
         const locale = getLocaleMessages(currentLanguage);
         sendNativeNotification(
@@ -69,20 +142,32 @@ export function useDownloadEvents(): void {
         return;
       }
 
-      if (message === "status:error") {
+      if (statusMessage === "status:error") {
         markError();
         return;
       }
 
-      if (message === "status:idle") {
-        clearResetTimer();
-        reset();
+      if (statusMessage === "status:idle" || statusMessage === "status:canceled") {
+        markIdle();
       }
     });
 
     return () => {
-      clearResetTimer();
       unsubscribe();
     };
-  }, [markDownloading, markDone, markError, reset, setProgress]);
+  }, [
+    applyMetadata,
+    markConverting,
+    markDownloading,
+    markMerging,
+    markIdle,
+    markDone,
+    markError,
+    markFetchError,
+    setBitrate,
+    setFPS,
+    setPlaylistProgress,
+    setProgress,
+    setResolution,
+  ]);
 }
