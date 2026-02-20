@@ -5,7 +5,8 @@
   "controlBar": {
     "urlPlaceholder": "Herhangi bir video linki yapıştır",
     "download": "İndir",
-    "downloading": "İndiriliyor..."
+    "downloading": "İndiriliyor...",
+    "cancel": "İptal"
   },
   "common": {
     "activeDownloadNotice": "Şu anda devam eden bir indirme mevcut.",
@@ -35,7 +36,7 @@
         "auto": "En uygun",
         "av01": "En verimli",
         "vp9": "Yüksek kalite",
-        "h265": "Yksek sıkıştırma",
+        "h265": "Yüksek sıkıştırma",
         "h264": "En yaygın"
       }
     },
@@ -76,6 +77,8 @@
     "defaultDownloadDirectory": "Varsayılan indirme konumu",
     "selectDownloadDirectory": "İndirme konumu seç",
     "hardwareAcceleration": "Donanım hızlandırma",
+    "selectHardwareAcceleration": "Hızlandırma modu seç",
+    "hardwareAccelerationDisabled": "Kapalı",
     "autoCheckUpdates": "Güncellemeleri otomatik kontrol et",
     "selectFolderDialogLog": "Klasör seçme diyaloğu açılacak..."
   },
@@ -83,13 +86,21 @@
     "doneTitle": "Tamamlandı",
     "doneDescription": "Video başarıyla seçtiğiniz klasöre kaydedildi.",
     "downloadingTitle": "İndiriliyor...",
-    "downloadingDescription": "Arka planda video verileri birleştiriliyor...",
+    "downloadingDescription": "Medya akışları indiriliyor...",
+    "mergingTitle": "Birleştiriliyor...",
+    "mergingDescription": "Video ve ses akışları birleştiriliyor...",
+    "convertingTitle": "Dönüştürülüyor...",
+    "convertingDescription": "Medya seçilen formata dönüştürülüyor...",
     "errorTitle": "Hata",
     "errorDescription": "İndirme tamamlanamadı. Lütfen tekrar deneyin."
   },
   "notifications": {
     "downloadCompletedTitle": "İndirme tamamlandı!",
-    "downloadCompletedMessage": "İndirmekte olduğun video başarıyla indirildi ve seçtiğin klasöre kaydedildi."
+    "downloadCompletedMessage": "İndirmekte olduğun video başarıyla indirildi ve seçtiğin klasöre kaydedildi.",
+    "thumbnailDownloadedTitle": "Küçük resim indirildi!",
+    "thumbnailDownloadedMessage": "Küçük resim seçtiğin klasöre kaydedildi.",
+    "thumbnailDownloadFailedTitle": "Küçük resim indirilemedi",
+    "thumbnailDownloadFailedMessage": "Küçük resim indirilemedi. Lütfen tekrar dene."
   },
   "languages": {
     "tr_TR": "Türkçe",
