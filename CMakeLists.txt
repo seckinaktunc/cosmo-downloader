@@ -22,6 +22,8 @@ set(SOURCES
     src/Utils/Clipboard.cpp
     src/Utils/FolderDialog.cpp
     src/Utils/NotificationService.cpp
+    src/Utils/ExecutableResolver.cpp
+    src/Utils/FFmpegRunner.cpp
     src/Utils/SystemSettings.cpp
     src/Utils/YtDlpRunner.cpp
     res/app.rc
@@ -72,4 +74,28 @@ if (EXISTS "${YT_DLP_SOURCE}")
     )
 else()
     message(STATUS "yt-dlp.exe bulunamadi: ${YT_DLP_SOURCE}. PATH'ten bulunacak.")
+endif()
+
+set(FFMPEG_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/res/ffmpeg.exe")
+if (EXISTS "${FFMPEG_SOURCE}")
+    add_custom_command(TARGET CosmoDownloader POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${FFMPEG_SOURCE}"
+        $<TARGET_FILE_DIR:CosmoDownloader>
+        COMMENT "ffmpeg.exe kopyalaniyor..."
+    )
+else()
+    message(STATUS "ffmpeg.exe bulunamadi: ${FFMPEG_SOURCE}. PATH'ten bulunacak.")
+endif()
+
+set(FFPROBE_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/res/ffprobe.exe")
+if (EXISTS "${FFPROBE_SOURCE}")
+    add_custom_command(TARGET CosmoDownloader POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${FFPROBE_SOURCE}"
+        $<TARGET_FILE_DIR:CosmoDownloader>
+        COMMENT "ffprobe.exe kopyalaniyor..."
+    )
+else()
+    message(STATUS "ffprobe.exe bulunamadi: ${FFPROBE_SOURCE}. PATH'ten bulunacak.")
 endif()
