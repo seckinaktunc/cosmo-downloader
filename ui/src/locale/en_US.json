@@ -5,7 +5,8 @@
   "controlBar": {
     "urlPlaceholder": "Paste any video link",
     "download": "Download",
-    "downloading": "Downloading..."
+    "downloading": "Downloading...",
+    "cancel": "Cancel"
   },
   "common": {
     "activeDownloadNotice": "A download is currently in progress.",
@@ -76,6 +77,8 @@
     "defaultDownloadDirectory": "Default download location",
     "selectDownloadDirectory": "Choose download location",
     "hardwareAcceleration": "Hardware acceleration",
+    "selectHardwareAcceleration": "Select acceleration mode",
+    "hardwareAccelerationDisabled": "Disabled",
     "autoCheckUpdates": "Check for updates automatically",
     "selectFolderDialogLog": "Folder picker dialog will open..."
   },
@@ -83,13 +86,21 @@
     "doneTitle": "Completed",
     "doneDescription": "The video was saved successfully to your selected folder.",
     "downloadingTitle": "DOWNLOADING...",
-    "downloadingDescription": "Video streams are being merged in the background...",
+    "downloadingDescription": "Downloading media streams...",
+    "mergingTitle": "MERGING...",
+    "mergingDescription": "Combining video and audio streams...",
+    "convertingTitle": "CONVERTING...",
+    "convertingDescription": "Converting media to the selected format...",
     "errorTitle": "Error",
     "errorDescription": "Download could not be completed. Please try again."
   },
   "notifications": {
     "downloadCompletedTitle": "Download completed!",
-    "downloadCompletedMessage": "Your video was downloaded successfully and saved to the selected folder."
+    "downloadCompletedMessage": "Your video was downloaded successfully and saved to the selected folder.",
+    "thumbnailDownloadedTitle": "Thumbnail downloaded!",
+    "thumbnailDownloadedMessage": "The thumbnail was saved to the selected folder.",
+    "thumbnailDownloadFailedTitle": "Thumbnail download failed",
+    "thumbnailDownloadFailedMessage": "Thumbnail could not be downloaded. Please try again."
   },
   "languages": {
     "tr_TR": "Türkçe",
