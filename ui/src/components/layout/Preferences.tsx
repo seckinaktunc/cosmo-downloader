@@ -1,5 +1,5 @@
 import { cn } from '@/utils/cn';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
     AUDIO_BITRATE_OPTIONS,
     AUDIO_CODEC_OPTIONS,
@@ -8,15 +8,19 @@ import {
     VIDEO_FPS_OPTIONS,
     VIDEO_RES_OPTIONS,
 } from '../../constants/options';
+import { useDownloadThumbnail } from '@/hooks/useDownloadThumbnail';
 import { useDownloadState } from '../../hooks/useDownloadState';
 import { useLocale } from '../../locale';
 import {
+    type AudioBitrateOption,
     useDownloadStore,
     type AudioCodecOption,
     type FormatOption,
     type VideoCodecOption,
 } from '../../stores/downloadStore';
 import { useGlobalStore } from '../../stores/globalStore';
+import { useMetadataStore } from '../../stores/metadataStore';
+import { isActiveDownloadStatus } from '@/types/download';
 import Button from '../Button';
 import RadioSelector from '../forms/RadioSelector';
 import SliderSelector from '../forms/SliderSelector';
@@ -27,10 +31,12 @@ export default function Preferences() {
     const state = useDownloadState();
     const isPreferencesOpen = useGlobalStore((state) => state.isPreferencesOpen);
     const { locale } = useLocale();
+    const downloadThumbnail = useDownloadThumbnail();
 
     const isAdvancedPreferencesOpen = useGlobalStore((state) => state.isAdvancedPreferencesOpen);
     const toggleAdvancedPreferences = useGlobalStore((state) => state.toggleAdvancedPreferences);
 
+    const url = useDownloadStore((state) => state.url);
     const resolution = useDownloadStore((state) => state.resolution);
     const setResolution = useDownloadStore((state) => state.setResolution);
 
@@ -47,33 +53,106 @@ export default function Preferences() {
     const audioCodec = useDownloadStore((state) => state.audioCodec);
     const setAudioCodec = useDownloadStore((state) => state.setAudioCodec);
 
+    const metadataStatus = useMetadataStore((state) => state.status);
+    const metadataSourceUrl = useMetadataStore((state) => state.sourceUrl);
+    const metadataResolutions = useMetadataStore((state) => state.availableResolutions);
+    const metadataFps = useMetadataStore((state) => state.availableFps);
+    const metadataBitrates = useMetadataStore((state) => state.availableBitrates);
+
+    const hasMetadataForCurrentUrl =
+        metadataStatus === "ready" &&
+        metadataSourceUrl === url.trim();
+
+    const availableResolutions = useMemo(() => {
+        if (!hasMetadataForCurrentUrl) {
+            return [...VIDEO_RES_OPTIONS];
+        }
+
+        const filtered = VIDEO_RES_OPTIONS.filter((value) => metadataResolutions.includes(value));
+        return filtered.length > 0 ? filtered : [resolution];
+    }, [hasMetadataForCurrentUrl, metadataResolutions, resolution]);
+
+    const availableFps = useMemo(() => {
+        if (!hasMetadataForCurrentUrl) {
+            return [...VIDEO_FPS_OPTIONS];
+        }
+
+        const filtered = VIDEO_FPS_OPTIONS.filter((value) => metadataFps.includes(value));
+        return filtered.length > 0 ? filtered : [fps];
+    }, [fps, hasMetadataForCurrentUrl, metadataFps]);
+
+    const availableBitrates = useMemo(() => {
+        if (!hasMetadataForCurrentUrl) {
+            return [...AUDIO_BITRATE_OPTIONS];
+        }
+
+        const filtered = AUDIO_BITRATE_OPTIONS.filter((value) => metadataBitrates.includes(value));
+        return filtered.length > 0 ? filtered : [bitrate];
+    }, [bitrate, hasMetadataForCurrentUrl, metadataBitrates]);
+
+    useEffect(() => {
+        const highestResolution = availableResolutions[availableResolutions.length - 1];
+        if (
+            highestResolution != null &&
+            !availableResolutions.includes(resolution)
+        ) {
+            setResolution(highestResolution);
+        }
+
+        const highestFps = availableFps[availableFps.length - 1];
+        if (
+            highestFps != null &&
+            !availableFps.includes(fps)
+        ) {
+            setFPS(highestFps);
+        }
+
+        const highestBitrate = availableBitrates[availableBitrates.length - 1];
+        if (
+            highestBitrate != null &&
+            !availableBitrates.includes(bitrate)
+        ) {
+            setBitrate(highestBitrate as AudioBitrateOption);
+        }
+    }, [
+        availableBitrates,
+        availableFps,
+        availableResolutions,
+        bitrate,
+        fps,
+        resolution,
+        setBitrate,
+        setFPS,
+        setResolution,
+    ]);
+
     const resolutionOptions = useMemo(
         () =>
-            VIDEO_RES_OPTIONS.map((value) => ({
+            availableResolutions.map((value) => ({
                 value,
                 label: value === 1440 ? "2K" : value === 2160 ? "4K" : `${value}p`,
             })),
-        [],
+        [availableResolutions],
     );
 
     const fpsOptions = useMemo(
         () =>
-            VIDEO_FPS_OPTIONS.map((value) => ({
+            availableFps.map((value) => ({
                 value,
                 label: value === 30
                     ? `${value} ${locale.common.fps} (${locale.preferences.fpsStandard})`
                     : `${value} ${locale.common.fps}`,
             })),
-        [locale.common.fps, locale.preferences.fpsStandard],
+        [availableFps, locale.common.fps, locale.preferences.fpsStandard],
     );
 
     const bitrateOptions = useMemo(
         () =>
-            AUDIO_BITRATE_OPTIONS.map((value) => ({
+            availableBitrates.map((value) => ({
                 value,
                 label: `${value} ${locale.common.kbps}`,
             })),
-        [locale.common.kbps],
+        [availableBitrates, locale.common.kbps],
     );
 
     const formatOptions = useMemo(
@@ -115,7 +194,7 @@ export default function Preferences() {
 
     return (
         <Box className='flex-col'>
-            {state.status === "downloading" && (
+            {isActiveDownloadStatus(state.status) && (
                 <div className='absolute inset-0 z-20 bg-dark/85 flex flex-col backdrop-blur-xs justify-center items-center p-4 gap-2 text-center rounded-xl border border-white/5'>
                     <Icon name='spinner' size={32} className='animate-spin' color='var(--color-primary)' />
                     <span className='text-sm text-white/25'>
@@ -154,6 +233,7 @@ export default function Preferences() {
                 value={format}
                 actionButtonLabel={locale.formats.actionButtonLabel}
                 actionButtonIcon='download'
+                actionButtonOnClick={downloadThumbnail}
                 onChange={setFormat}
             />
             {isAdvancedPreferencesOpen && (
