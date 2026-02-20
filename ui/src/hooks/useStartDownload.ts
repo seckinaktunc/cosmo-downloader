@@ -10,14 +10,14 @@ export function useStartDownload() {
             alwaysAskDownloadDirectory,
             defaultDownloadDirectory,
             browserForCookies,
-            isHWACCELOn,
+            hardwareAccelerationMode,
         } = useSettingsStore.getState();
 
         if (!url || url.trim() === "") return;
 
         const message =
             `download:${url}|${format}|${resolution}|${bitrate}|${fps}|${videoCodec}|${audioCodec}|` +
-            `${alwaysAskDownloadDirectory}|${defaultDownloadDirectory}|${browserForCookies}|${isHWACCELOn}`;
+            `${alwaysAskDownloadDirectory}|${defaultDownloadDirectory}|${browserForCookies}|${hardwareAccelerationMode}`;
         postWebViewMessage(message);
     }, []);
 
