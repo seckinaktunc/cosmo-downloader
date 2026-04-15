@@ -39,7 +39,8 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
     cookiesBrowser:
       typeof saved.cookiesBrowser === 'string'
         ? (saved.cookiesBrowser as AppSettings['cookiesBrowser'])
-        : defaults.cookiesBrowser
+        : defaults.cookiesBrowser,
+    alwaysOnTop: typeof saved.alwaysOnTop === 'boolean' ? saved.alwaysOnTop : defaults.alwaysOnTop
   }
 }
 
@@ -99,4 +100,22 @@ export function readStartupHardwareAcceleration(): boolean {
   }
 
   return true
+}
+
+export function readStartupAlwaysOnTop(): boolean {
+  try {
+    const settingsPath = join(app.getPath('userData'), SETTINGS_FILE)
+    if (!existsSync(settingsPath)) {
+      return false
+    }
+
+    const parsed = JSON.parse(readFileSync(settingsPath, 'utf8')) as unknown
+    if (isRecord(parsed) && typeof parsed.alwaysOnTop === 'boolean') {
+      return parsed.alwaysOnTop
+    }
+  } catch {
+    return false
+  }
+
+  return false
 }

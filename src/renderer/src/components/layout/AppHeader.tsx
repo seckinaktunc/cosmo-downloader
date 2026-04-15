@@ -5,6 +5,9 @@ import { cn } from '../../lib/utils'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { useVideoStore } from '../../stores/videoStore'
 import { Button } from '../ui/Button'
+import { useDownloadStore } from '../../stores/downloadStore'
+import { useQueueStore } from '../../stores/queueStore'
+import { useUiStore } from '../../stores/uiStore'
 
 export function AppHeader(): React.JSX.Element {
   const { t } = useTranslation()
@@ -14,6 +17,11 @@ export function AppHeader(): React.JSX.Element {
   const clear = useVideoStore((state) => state.clear)
   const fetchMetadata = useVideoStore((state) => state.fetchMetadata)
   const stage = useVideoStore((state) => state.stage)
+  const resetDownload = useDownloadStore((state) => state.reset)
+  const activeQueueItemId = useQueueStore((state) => state.activeItemId)
+  const activePanel = useUiStore((state) => state.activePanel)
+  const setActivePanel = useUiStore((state) => state.setActivePanel)
+  const updateSettings = useSettingsStore((state) => state.update)
 
   useEffect(() => {
     if (!settings || url.trim().length === 0) {
@@ -27,6 +35,32 @@ export function AppHeader(): React.JSX.Element {
     return () => window.clearTimeout(timer)
   }, [fetchMetadata, settings, url])
 
+  const handleUrlChange = (nextUrl: string): void => {
+    setUrl(nextUrl)
+    if (!activeQueueItemId) {
+      resetDownload()
+    }
+  }
+
+  const handleClear = (): void => {
+    clear()
+    if (!activeQueueItemId) {
+      resetDownload()
+    }
+  }
+
+  const toggleAlwaysOnTop = async (): Promise<void> => {
+    if (!settings) {
+      return
+    }
+
+    const alwaysOnTop = !settings.alwaysOnTop
+    const result = await window.cosmo.window.setAlwaysOnTop(alwaysOnTop)
+    if (result.ok) {
+      await updateSettings({ alwaysOnTop })
+    }
+  }
+
   return (
     <header
       className={cn(
@@ -35,11 +69,13 @@ export function AppHeader(): React.JSX.Element {
     >
       <div className="flex items-center">
         <Button
-          icon="pin"
-          label={t('actions.history')}
-          tooltip={t('actions.history')}
+          icon={settings?.alwaysOnTop ? 'pinFilled' : 'pin'}
+          label={t('actions.pin')}
+          tooltip={t('actions.pin')}
           onlyIcon
           ghost
+          active={settings?.alwaysOnTop}
+          onClick={() => void toggleAlwaysOnTop()}
         />
         <Button
           icon="history"
@@ -47,6 +83,8 @@ export function AppHeader(): React.JSX.Element {
           tooltip={t('actions.history')}
           onlyIcon
           ghost
+          active={activePanel === 'history'}
+          onClick={() => setActivePanel(activePanel === 'history' ? null : 'history')}
         />
       </div>
 
@@ -55,13 +93,13 @@ export function AppHeader(): React.JSX.Element {
           className="size-full rounded-lg border border-white/10 bg-white/10 pl-4 pr-12 text-white outline-none transition placeholder:text-white/40 focus:border-white/40"
           placeholder={t('search.placeholder')}
           value={url}
-          onChange={(event) => setUrl(event.currentTarget.value)}
+          onChange={(event) => handleUrlChange(event.currentTarget.value)}
           aria-label={t('search.placeholder')}
         />
         <button
           className="absolute right-1 inline-flex size-10 items-center justify-center rounded-lg text-white outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70"
           type="button"
-          onClick={clear}
+          onClick={handleClear}
           aria-label={t('actions.clear')}
         >
           {stage === 'fetching_metadata' ? (

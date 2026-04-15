@@ -54,6 +54,7 @@ export type AppSettings = {
   defaultDownloadLocation: string
   interfaceLanguage: string
   cookiesBrowser: CookieBrowser
+  alwaysOnTop: boolean
 }
 
 export type SettingsUpdate = Partial<AppSettings>
@@ -105,6 +106,7 @@ export type DownloadStartRequest = {
   metadata: VideoMetadata
   exportSettings: ExportSettings
   settings: AppSettings
+  outputPath?: string
 }
 
 export type FetchMetadataRequest = {
@@ -128,6 +130,9 @@ export type DownloadProgress = {
   outputPath?: string
   logPath?: string
   message?: string
+  queuedItemId?: string
+  queueIndex?: number
+  queueTotal?: number
 }
 
 export type AppEnvironment = {
@@ -138,3 +143,72 @@ export type AppEnvironment = {
 }
 
 export type WindowAction = 'minimize' | 'toggleMaximize' | 'close'
+
+export type QueueItemStatus = 'pending' | 'active' | 'paused' | 'completed' | 'failed' | 'cancelled'
+
+export type QueueItem = {
+  id: string
+  metadata: VideoMetadata
+  exportSettings: ExportSettings
+  settings: AppSettings
+  status: QueueItemStatus
+  createdAt: string
+  updatedAt: string
+  outputPath?: string
+  requestedOutputPath?: string
+  logPath?: string
+  error?: string
+  progress?: DownloadProgress
+  historyEntryId?: string
+}
+
+export type QueueSnapshot = {
+  items: QueueItem[]
+  activeItemId?: string
+  paused: boolean
+}
+
+export type QueueAddRequest = DownloadStartRequest
+
+export type QueueReorderRequest = {
+  itemId: string
+  direction: 'up' | 'down'
+}
+
+export type QueueMoveRequest = {
+  itemId: string
+  targetIndex: number
+}
+
+export type QueueMoveManyRequest = {
+  itemIds: string[]
+  targetIndex: number
+}
+
+export type QueueBulkRequest = {
+  itemIds: string[]
+}
+
+export type QueueItemRequest = {
+  itemId: string
+}
+
+export type DownloadHistoryStatus = 'started' | 'completed' | 'failed' | 'cancelled'
+
+export type DownloadHistoryEntry = {
+  id: string
+  queueItemId?: string
+  metadata: VideoMetadata
+  exportSettings: ExportSettings
+  settings: AppSettings
+  status: DownloadHistoryStatus
+  createdAt: string
+  updatedAt: string
+  outputPath?: string
+  logPath?: string
+  error?: string
+}
+
+export type HistoryItemRequest = {
+  entryId: string
+}

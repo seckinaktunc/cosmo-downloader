@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { registerIpcHandlers } from './ipc/registerIpc'
-import { readStartupHardwareAcceleration } from './services/settingsService'
+import { readStartupAlwaysOnTop, readStartupHardwareAcceleration } from './services/settingsService'
 
 if (!readStartupHardwareAcceleration()) {
   app.disableHardwareAcceleration()
@@ -39,6 +39,7 @@ function createWindow(): void {
     minHeight: 680,
     title: 'Cosmo Downloader',
     show: false,
+    alwaysOnTop: readStartupAlwaysOnTop(),
     autoHideMenuBar: true,
     ...getWindowChromeOptions(),
     ...(process.platform === 'linux' ? { icon } : {}),

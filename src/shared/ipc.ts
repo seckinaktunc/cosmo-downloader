@@ -20,7 +20,33 @@ export const IPC_CHANNELS = {
     progress: 'download:progress',
     state: 'download:state'
   },
+  queue: {
+    get: 'queue:get',
+    add: 'queue:add',
+    start: 'queue:start',
+    pause: 'queue:pause',
+    resume: 'queue:resume',
+    cancelActive: 'queue:cancel-active',
+    remove: 'queue:remove',
+    removeMany: 'queue:remove-many',
+    reorder: 'queue:reorder',
+    move: 'queue:move',
+    moveMany: 'queue:move-many',
+    retry: 'queue:retry',
+    clear: 'queue:clear',
+    snapshot: 'queue:snapshot'
+  },
+  history: {
+    get: 'history:get',
+    remove: 'history:remove',
+    clear: 'history:clear',
+    requeue: 'history:requeue',
+    openOutput: 'history:open-output',
+    copySource: 'history:copy-source',
+    changed: 'history:changed'
+  },
   window: {
-    action: 'window:action'
+    action: 'window:action',
+    setAlwaysOnTop: 'window:set-always-on-top'
   }
 } as const

@@ -8,7 +8,7 @@ describe('renderer formatters', () => {
         { stage: 'downloading', stageLabel: 'Downloading', percentage: 42.4 },
         'idle'
       )
-    ).toBe('Downloading 42%')
+    ).toBe('Downloading (42%)')
   })
 
   it('shows processing percentages in the headline', () => {
@@ -17,7 +17,7 @@ describe('renderer formatters', () => {
         { stage: 'processing', stageLabel: 'Processing', percentage: 42.6 },
         'idle'
       )
-    ).toBe('Processing 43%')
+    ).toBe('Processing (43%)')
   })
 
   it('shows transferred bytes with total bytes', () => {

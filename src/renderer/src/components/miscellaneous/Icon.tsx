@@ -14,6 +14,7 @@ import {
   IconChevronsDown,
   IconClock,
   IconCopy,
+  IconDotsVerticalFilled,
   IconDownload,
   IconExclamationCircle,
   IconExternalLink,
@@ -93,6 +94,7 @@ const iconMap = {
   external: IconExternalLink,
   add: IconSquarePlus,
   reload: IconReload,
+  move: IconDotsVerticalFilled
 } as const
 
 export type IconName = keyof typeof iconMap

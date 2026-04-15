@@ -10,11 +10,10 @@ import {
   isAudioOnlyFormat
 } from '../../../../shared/formatOptions'
 import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types'
-import { RadioBoxes } from '../ui/RadioBoxes'
-import { SnapSlider } from '../ui/SnapSlider'
-import { SelectField } from '../ui/SelectField'
 import { useUiStore } from '../../stores/uiStore'
 import { useVideoStore } from '../../stores/videoStore'
+import { RadioBoxes } from '../ui/RadioBoxes'
+import { SnapSlider } from '../ui/SnapSlider'
 
 export function ExportSettingsPanel(): React.JSX.Element {
   const { t } = useTranslation()
@@ -51,71 +50,87 @@ export function ExportSettingsPanel(): React.JSX.Element {
   }, [audioOnly, exportSettings.resolution, updateExportSettings])
 
   return (
-    <section className="grid gap-2">
-      <RadioBoxes<OutputFormat>
-        value={exportSettings.outputFormat}
-        options={OUTPUT_FORMATS.map((format) => ({ value: format, label: format }))}
-        onChange={(outputFormat) => updateExportSettings({ outputFormat })}
-      />
-
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-sm bg-white/5 p-3 border border-white/10">
-          <SnapSlider
-            label={t('export.resolution')}
-            value={exportSettings.resolution}
-            options={resolutionOptions}
-            disabled={audioOnly}
-            formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value}p`)}
-            onChange={(resolution) => updateExportSettings({ resolution })}
-          />
-        </div>
-
-        <div className="rounded-sm bg-white/5 p-3 border border-white/10">
-          <SnapSlider
-            label={t('export.frameRate')}
-            value={exportSettings.frameRate}
-            options={frameRateOptions}
-            disabled={audioOnly}
-            formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} fps`)}
-            onChange={(frameRate) => updateExportSettings({ frameRate })}
-          />
-        </div>
-      </div>
-
-      <div className="rounded-sm bg-white/5 p-3 border border-white/10">
-        <SnapSlider
-          label={t('export.audioBitrate')}
-          value={exportSettings.audioBitrate}
-          options={AUDIO_BITRATE_OPTIONS}
-          formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} kbps`)}
-          onChange={(audioBitrate) => updateExportSettings({ audioBitrate })}
+    <section className="grid">
+      <div className="p-2">
+        <RadioBoxes<OutputFormat>
+          value={exportSettings.outputFormat}
+          options={OUTPUT_FORMATS.map((format) => ({ value: format, label: format }))}
+          onChange={(outputFormat) => updateExportSettings({ outputFormat })}
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-sm bg-white/5 p-3 border border-white/10">
-          <SelectField<VideoCodec>
-            label={t('export.videoCodec')}
-            value={exportSettings.videoCodec}
-            options={VIDEO_CODECS.map((codec) => ({
-              value: codec,
-              label: codec.toUpperCase(),
-              icon: 'video'
-            }))}
-            onChange={(videoCodec) => updateExportSettings({ videoCodec })}
-          />
+      <div className="border-y border-white/10 divide-y divide-white/10">
+        <div className="grid grid-cols-2 divide-x divide-white/10">
+          <div className="p-4">
+            <SnapSlider
+              label={t('export.resolution')}
+              value={exportSettings.resolution}
+              options={resolutionOptions}
+              disabled={audioOnly}
+              formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value}p`)}
+              onChange={(resolution) => updateExportSettings({ resolution })}
+            />
+          </div>
+
+          <div className="p-4">
+            <SnapSlider
+              label={t('export.frameRate')}
+              value={exportSettings.frameRate}
+              options={frameRateOptions}
+              disabled={audioOnly}
+              formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} fps`)}
+              onChange={(frameRate) => updateExportSettings({ frameRate })}
+            />
+          </div>
         </div>
-        <div className="rounded-sm bg-white/5 p-3 border border-white/10">
-          <SelectField<AudioCodec>
-            label={t('export.audioCodec')}
-            value={exportSettings.audioCodec}
-            options={AUDIO_CODECS.map((codec) => ({
-              value: codec,
-              label: codec.toUpperCase(),
-              icon: 'music'
-            }))}
-            onChange={(audioCodec) => updateExportSettings({ audioCodec })}
-          />
+        <div className="grid grid-cols-2 divide-x divide-white/10">
+          <div className="p-4">
+            <SnapSlider
+              label={t('export.videoBitrate')}
+              value={exportSettings.audioBitrate}
+              options={AUDIO_BITRATE_OPTIONS}
+              formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} kbps`)}
+              onChange={(audioBitrate) => updateExportSettings({ audioBitrate })}
+            />
+          </div>
+          <div className="p-4">
+            <SnapSlider
+              label={t('export.audioBitrate')}
+              value={exportSettings.audioBitrate}
+              options={AUDIO_BITRATE_OPTIONS}
+              formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} kbps`)}
+              onChange={(audioBitrate) => updateExportSettings({ audioBitrate })}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 divide-x divide-white/10">
+          <div className="p-4">
+            <RadioBoxes<VideoCodec>
+              label={t('export.videoCodec')}
+              value={exportSettings.videoCodec}
+              options={VIDEO_CODECS.map((codec) => ({
+                value: codec,
+                label: codec.toUpperCase(),
+                icon: 'video'
+              }))}
+              onChange={(videoCodec) => updateExportSettings({ videoCodec })}
+              className="grid-cols-3"
+            />
+          </div>
+          <div className="p-4">
+            <RadioBoxes<AudioCodec>
+              label={t('export.audioCodec')}
+              value={exportSettings.audioCodec}
+              options={AUDIO_CODECS.map((codec) => ({
+                value: codec,
+                label: codec.toUpperCase(),
+                icon: 'music'
+              }))}
+              onChange={(audioCodec) => updateExportSettings({ audioCodec })}
+              className="grid-cols-3"
+            />
+          </div>
         </div>
       </div>
     </section>

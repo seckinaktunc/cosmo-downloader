@@ -68,7 +68,7 @@ export function SnapSlider<T extends SliderValue>({
               key={String(option)}
               onClick={() => onChange(option)}
               className={`
-                absolute text-[10px] text-nowrap cursor-pointer pointer-events-auto
+                absolute flex justify-center text-[10px] text-nowrap cursor-pointer pointer-events-auto
                 ${option === value ? 'text-white font-medium' : 'text-white/20 hover:text-white/75'}
                 transition-colors ${translateClass}
               `}

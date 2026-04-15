@@ -10,7 +10,7 @@ import {
   statSync,
   writeFileSync
 } from 'fs'
-import { dirname, join } from 'path'
+import { dirname, extname, join, parse } from 'path'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../../shared/ipc'
 import type {
@@ -38,6 +38,13 @@ type ActiveJob = {
   logPath: string
   children: Set<ChildProcessWithoutNullStreams>
   cancelled: boolean
+  decorateProgress?: (progress: DownloadProgress) => DownloadProgress
+  onProgress?: (progress: DownloadProgress) => void
+}
+
+type DownloadStartOptions = {
+  decorateProgress?: (progress: DownloadProgress) => DownloadProgress
+  onProgress?: (progress: DownloadProgress) => void
 }
 
 function getAudioEncoder(codec: AudioCodec, outputFormat: OutputFormat): string {
@@ -118,7 +125,8 @@ export class DownloadService {
 
   async start(
     webContents: WebContents,
-    request: DownloadStartRequest
+    request: DownloadStartRequest,
+    options: DownloadStartOptions = {}
   ): Promise<IpcResult<DownloadProgress>> {
     if (this.activeJob != null) {
       return {
@@ -139,14 +147,18 @@ export class DownloadService {
       tempDir,
       logPath,
       children: new Set(),
-      cancelled: false
+      cancelled: false,
+      decorateProgress: options.decorateProgress,
+      onProgress: options.onProgress
     }
     this.activeJob = job
 
     const logStream = createWriteStream(logPath, { flags: 'a' })
     const emit = (progress: DownloadProgress): void => {
-      webContents.send(IPC_CHANNELS.download.progress, progress)
-      webContents.send(IPC_CHANNELS.download.state, progress)
+      const decorated = options.decorateProgress?.(progress) ?? progress
+      webContents.send(IPC_CHANNELS.download.progress, decorated)
+      webContents.send(IPC_CHANNELS.download.state, decorated)
+      options.onProgress?.(decorated)
     }
 
     try {
@@ -230,6 +242,13 @@ export class DownloadService {
 
   private async resolveDestination(request: DownloadStartRequest): Promise<string | null> {
     const extension = request.exportSettings.outputFormat
+
+    if (request.outputPath) {
+      const parsed = parse(request.outputPath)
+      const outputExtension = extname(request.outputPath).replace(/^\./, '') || extension
+      ensureDirectory(parsed.dir)
+      return createUniquePath(parsed.dir, parsed.name, outputExtension)
+    }
 
     if (request.settings.alwaysAskDownloadLocation) {
       const result = await dialog.showSaveDialog({
@@ -432,10 +451,13 @@ export class DownloadService {
   }
 
   private emitProgress(progress: DownloadProgress): void {
+    const decorated = this.activeJob?.decorateProgress?.(progress) ?? progress
+    this.activeJob?.onProgress?.(decorated)
+
     for (const contents of webContents.getAllWebContents()) {
       if (!contents.isDestroyed()) {
-        contents.send(IPC_CHANNELS.download.progress, progress)
-        contents.send(IPC_CHANNELS.download.state, progress)
+        contents.send(IPC_CHANNELS.download.progress, decorated)
+        contents.send(IPC_CHANNELS.download.state, decorated)
       }
     }
   }

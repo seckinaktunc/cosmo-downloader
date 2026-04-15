@@ -19,7 +19,20 @@ export const useVideoStore = create<VideoState>((set, get) => ({
   metadata: null,
   stage: 'idle',
 
-  setUrl: (url) => set({ url, error: undefined }),
+  setUrl: (url) => {
+    const requestId = get().activeRequestId
+    if (requestId) {
+      void window.cosmo.video.cancelMetadata({ requestId })
+    }
+
+    set({
+      url,
+      metadata: null,
+      stage: url.trim().length > 0 ? 'idle' : 'idle',
+      error: undefined,
+      activeRequestId: undefined
+    })
+  },
 
   clear: () => {
     const requestId = get().activeRequestId

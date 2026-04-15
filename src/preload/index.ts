@@ -5,10 +5,19 @@ import type {
   AppSettings,
   CancelMetadataRequest,
   CookieBrowserOption,
+  DownloadHistoryEntry,
   DownloadProgress,
   DownloadStartRequest,
   FetchMetadataRequest,
+  HistoryItemRequest,
   IpcResult,
+  QueueAddRequest,
+  QueueBulkRequest,
+  QueueItemRequest,
+  QueueMoveManyRequest,
+  QueueMoveRequest,
+  QueueReorderRequest,
+  QueueSnapshot,
   SettingsUpdate,
   VideoMetadata,
   WindowAction
@@ -38,10 +47,36 @@ export type CosmoApi = {
     onProgress: (listener: (progress: DownloadProgress) => void) => Unsubscribe
     onState: (listener: (progress: DownloadProgress) => void) => Unsubscribe
   }
+  queue: {
+    get: () => Promise<IpcResult<QueueSnapshot>>
+    add: (request: QueueAddRequest) => Promise<IpcResult<QueueSnapshot>>
+    start: () => Promise<IpcResult<QueueSnapshot>>
+    pause: () => Promise<IpcResult<QueueSnapshot>>
+    resume: () => Promise<IpcResult<QueueSnapshot>>
+    cancelActive: () => Promise<IpcResult<QueueSnapshot>>
+    remove: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>
+    removeMany: (request: QueueBulkRequest) => Promise<IpcResult<QueueSnapshot>>
+    reorder: (request: QueueReorderRequest) => Promise<IpcResult<QueueSnapshot>>
+    move: (request: QueueMoveRequest) => Promise<IpcResult<QueueSnapshot>>
+    moveMany: (request: QueueMoveManyRequest) => Promise<IpcResult<QueueSnapshot>>
+    retry: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>
+    clear: () => Promise<IpcResult<QueueSnapshot>>
+    onSnapshot: (listener: (snapshot: QueueSnapshot) => void) => Unsubscribe
+  }
+  history: {
+    get: () => Promise<IpcResult<DownloadHistoryEntry[]>>
+    remove: (request: HistoryItemRequest) => Promise<IpcResult<DownloadHistoryEntry[]>>
+    clear: () => Promise<IpcResult<DownloadHistoryEntry[]>>
+    requeue: (request: HistoryItemRequest) => Promise<IpcResult<QueueSnapshot>>
+    openOutput: (request: HistoryItemRequest) => Promise<IpcResult<null>>
+    copySource: (request: HistoryItemRequest) => Promise<IpcResult<null>>
+    onChanged: (listener: (entries: DownloadHistoryEntry[]) => void) => Unsubscribe
+  }
   window: {
     minimize: () => Promise<IpcResult<null>>
     toggleMaximize: () => Promise<IpcResult<null>>
     close: () => Promise<IpcResult<null>>
+    setAlwaysOnTop: (enabled: boolean) => Promise<IpcResult<null>>
   }
 }
 
@@ -83,10 +118,37 @@ const api: CosmoApi = {
     onProgress: (listener) => subscribe<DownloadProgress>(IPC_CHANNELS.download.progress, listener),
     onState: (listener) => subscribe<DownloadProgress>(IPC_CHANNELS.download.state, listener)
   },
+  queue: {
+    get: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.get),
+    add: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.add, request),
+    start: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.start),
+    pause: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.pause),
+    resume: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.resume),
+    cancelActive: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.cancelActive),
+    remove: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.remove, request),
+    removeMany: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.removeMany, request),
+    reorder: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.reorder, request),
+    move: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.move, request),
+    moveMany: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.moveMany, request),
+    retry: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.retry, request),
+    clear: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.clear),
+    onSnapshot: (listener) => subscribe<QueueSnapshot>(IPC_CHANNELS.queue.snapshot, listener)
+  },
+  history: {
+    get: () => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.get),
+    remove: (request) => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.remove, request),
+    clear: () => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.clear),
+    requeue: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.history.requeue, request),
+    openOutput: (request) => invoke<null>(IPC_CHANNELS.history.openOutput, request),
+    copySource: (request) => invoke<null>(IPC_CHANNELS.history.copySource, request),
+    onChanged: (listener) =>
+      subscribe<DownloadHistoryEntry[]>(IPC_CHANNELS.history.changed, listener)
+  },
   window: {
     minimize: () => windowAction('minimize'),
     toggleMaximize: () => windowAction('toggleMaximize'),
-    close: () => windowAction('close')
+    close: () => windowAction('close'),
+    setAlwaysOnTop: (enabled) => invoke<null>(IPC_CHANNELS.window.setAlwaysOnTop, enabled)
   }
 }
 

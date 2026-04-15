@@ -18,12 +18,12 @@ export function RadioBoxes<T extends string>({
   return (
     <fieldset className="space-y-2">
       {label && <legend className="text-sm font-medium text-white/60">{label}</legend>}
-      <div className={cn('grid grid-cols-5 h-16 gap-2', className)}>
+      <div className={cn('grid grid-cols-5 h-auto gap-2', className)}>
         {options.map((option) => (
           <label
             key={option.value}
             className={cn(
-              'flex cursor-pointer items-center justify-center rounded-sm border px-3 py-2 text-sm font-semibold uppercase transition',
+              'flex cursor-pointer items-center justify-center rounded-sm border px-3 py-2 text-sm font-semibold uppercase transition h-16',
               value === option.value
                 ? 'border-white bg-white text-black'
                 : 'border-white/10 bg-white/5 text-white hover:bg-white/10',

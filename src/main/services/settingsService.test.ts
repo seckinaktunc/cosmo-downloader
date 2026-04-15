@@ -13,11 +13,13 @@ describe('mergeSettings', () => {
     expect(
       mergeSettings(defaults, {
         hardwareAcceleration: false,
+        alwaysOnTop: true,
         defaultDownloadLocation: '/custom'
       })
     ).toEqual({
       ...defaults,
       hardwareAcceleration: false,
+      alwaysOnTop: true,
       defaultDownloadLocation: '/custom'
     })
   })

@@ -2,13 +2,17 @@ import { create } from 'zustand'
 import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults'
 import type { ExportSettings } from '../../../shared/types'
 
-type Panel = 'export' | 'settings' | null
+type Panel = 'metadata' | 'queue' | 'history' | null
+type Content = 'export' | 'settings' | null
 
 type UiState = {
   activePanel: Panel
+  activeContent: Content
   exportSettings: ExportSettings
   mediaOverviewWidthPercent: number
+
   setActivePanel: (panel: Panel) => void
+  setActiveContent: (panel: Content) => void
   updateExportSettings: (update: Partial<ExportSettings>) => void
   setMediaOverviewWidthPercent: (width: number) => void
 }
@@ -21,10 +25,13 @@ function clampMediaOverviewWidth(width: number): number {
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  activePanel: 'export',
+  activePanel: 'metadata',
+  activeContent: 'export',
   exportSettings: DEFAULT_EXPORT_SETTINGS,
   mediaOverviewWidthPercent: MEDIA_OVERVIEW_MIN_WIDTH,
+
   setActivePanel: (panel) => set({ activePanel: panel }),
+  setActiveContent: (content) => set({ activeContent: content }),
   updateExportSettings: (update) =>
     set((state) => ({
       exportSettings: {

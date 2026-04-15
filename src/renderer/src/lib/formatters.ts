@@ -52,7 +52,7 @@ export function formatStageHeadline(
   const percent = formatPercent(progress?.percentage)
 
   if ((stage === 'downloading' || stage === 'processing') && percent) {
-    return `${label} ${percent}`
+    return `${label} (${percent})`
   }
 
   return label
@@ -60,7 +60,7 @@ export function formatStageHeadline(
 
 export function formatTransferDetail(progress: DownloadProgress | null | undefined): string {
   if (!progress) {
-    return 'Waiting'
+    return ''
   }
 
   if (progress.downloadedBytes != null && progress.totalBytes != null) {
@@ -88,10 +88,10 @@ export function formatTransferDetail(progress: DownloadProgress | null | undefin
   }
 
   if (progress.stage === 'processing') {
-    return 'Processing'
+    return 'Processing media'
   }
 
-  return 'Waiting'
+  return ''
 }
 
 export function formatResolution(value?: number): string {

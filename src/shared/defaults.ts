@@ -16,6 +16,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     alwaysAskDownloadLocation: false,
     defaultDownloadLocation: downloadsPath,
     interfaceLanguage: 'en_US',
-    cookiesBrowser: 'none'
+    cookiesBrowser: 'none',
+    alwaysOnTop: false
   }
 }

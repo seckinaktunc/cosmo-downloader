@@ -7,7 +7,7 @@ type ButtonSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs'
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: IconName
-  label: string
+  label?: string
   size?: ButtonSize
   active?: boolean
   tooltip?: string
@@ -18,7 +18,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 const sizeClasses: Record<ButtonSize, { base: string; square: string; icon: number }> = {
-  xl: { base: 'h-14 px-4 text-base', square: 'size-14', icon: 28 },
+  xl: { base: 'h-14 px-4 gap-3 text-base', square: 'size-14', icon: 26 },
   lg: { base: 'h-12 px-4 text-sm', square: 'size-12', icon: 24 },
   md: { base: 'h-11 px-3 text-sm', square: 'size-11', icon: 22 },
   sm: { base: 'h-9 px-2.5 text-xs', square: 'size-9', icon: 20 },
@@ -46,7 +46,7 @@ export function Button({
       type="button"
       aria-label={onlyIcon ? label : undefined}
       className={cn(
-        'no-drag inline-flex items-center justify-center gap-2 rounded-lg text-white outline-none transition focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-40',
+        'cursor-pointer no-drag inline-flex items-center justify-center gap-2 rounded-lg text-white outline-none transition focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-40',
         onlyIcon ? resolvedSize.square : resolvedSize.base,
         ghost
           ? 'bg-transparent opacity-50 hover:bg-transparent hover:opacity-100'
@@ -64,7 +64,9 @@ export function Button({
           className={cn(active && !ghost ? undefined : 'opacity-70 text-white')}
         />
       ) : null}
-      {showLabel ? <span className="truncate">{children ?? label}</span> : null}
+      {showLabel ? (
+        <span className={cn('min-w-0', children == null && 'truncate')}>{children ?? label}</span>
+      ) : null}
     </button>
   )
 

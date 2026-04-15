@@ -16,7 +16,8 @@
     "history": "History",
     "exportSettings": "Export settings",
     "settings": "Settings",
-    "choose": "Choose"
+    "choose": "Choose",
+    "pin": "Always on top"
   },
   "download": {
     "idle": "Idle",
@@ -43,6 +44,7 @@
     "title": "Export",
     "resolution": "Resolution",
     "audioBitrate": "Audio bitrate",
+    "videoBitrate": "Video bitrate",
     "frameRate": "Frame rate",
     "format": "Output format",
     "videoCodec": "Video codec",
