@@ -1,1 +1,1 @@
-export const ipcHandle = (): void => window.electron.ipcRenderer.send('ping');
+export const cosmo = window.cosmo

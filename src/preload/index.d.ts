@@ -1,8 +1,9 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
+import type { CosmoApi } from './index'
 
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: unknown
+    cosmo: CosmoApi
   }
 }
+
+export {}

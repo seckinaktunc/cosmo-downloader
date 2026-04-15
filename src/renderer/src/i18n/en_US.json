@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "Cosmo Downloader"
+  },
+  "search": {
+    "placeholder": "Paste a video link",
+    "unsupported": "Only single-video links are supported.",
+    "fetching": "Fetching metadata...",
+    "ready": "Ready to download"
+  },
+  "actions": {
+    "download": "Download Video",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "queueDisabled": "Queue is not available in this version",
+    "history": "History",
+    "exportSettings": "Export settings",
+    "settings": "Settings",
+    "choose": "Choose"
+  },
+  "download": {
+    "idle": "Idle",
+    "validating": "Validating",
+    "fetching_metadata": "Fetching metadata",
+    "ready": "Ready",
+    "downloading": "Downloading",
+    "processing": "Processing",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled"
+  },
+  "settings": {
+    "title": "Settings",
+    "hardwareAcceleration": "Hardware acceleration",
+    "automaticUpdates": "Check for updates automatically",
+    "cookiesBrowser": "Browser to use for cookies",
+    "alwaysAsk": "Always ask for download location",
+    "downloadLocation": "Default download location",
+    "language": "Interface language",
+    "restartRequired": "Restart required for hardware acceleration changes."
+  },
+  "export": {
+    "title": "Export",
+    "resolution": "Resolution",
+    "audioBitrate": "Audio bitrate",
+    "frameRate": "Frame rate",
+    "format": "Output format",
+    "videoCodec": "Video codec",
+    "audioCodec": "Audio codec",
+    "auto": "Auto"
+  }
+}

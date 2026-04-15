@@ -1,20 +1,52 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, type BrowserWindowConstructorOptions } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { registerIpcHandlers } from './ipc/registerIpc'
+import { readStartupHardwareAcceleration } from './services/settingsService'
+
+if (!readStartupHardwareAcceleration()) {
+  app.disableHardwareAcceleration()
+}
+
+function getWindowChromeOptions(): Pick<
+  BrowserWindowConstructorOptions,
+  'titleBarStyle' | 'titleBarOverlay' | 'trafficLightPosition'
+> {
+  if (process.platform === 'darwin') {
+    return {
+      titleBarStyle: 'hiddenInset',
+      trafficLightPosition: { x: 16, y: 26 }
+    }
+  }
+
+  return {
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#000000',
+      symbolColor: '#ffffff',
+      height: 64
+    }
+  }
+}
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1100,
+    height: 760,
+    minWidth: 980,
+    minHeight: 680,
     title: 'Cosmo Downloader',
     show: false,
     autoHideMenuBar: true,
+    ...getWindowChromeOptions(),
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
     }
   })
 
@@ -50,8 +82,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  registerIpcHandlers()
 
   createWindow()
 

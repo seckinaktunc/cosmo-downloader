@@ -11,14 +11,17 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "test": "vitest run",
+    "download:binaries": "node scripts/download-binaries.mjs --all",
+    "download:binaries:current": "node scripts/download-binaries.mjs",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
@@ -26,7 +29,9 @@
     "@fontsource-variable/space-grotesk": "^5.2.10",
     "@tabler/icons-react": "^3.41.1",
     "clsx": "^2.1.1",
+    "i18next": "^26.0.4",
     "motion": "^12.38.0",
+    "react-i18next": "^17.0.3",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.12"
   },
@@ -51,6 +56,7 @@
     "react-dom": "^19.2.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
-    "vite": "^7.2.6"
+    "vite": "^7.2.6",
+    "vitest": "^4.1.4"
   }
 }

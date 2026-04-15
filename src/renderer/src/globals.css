@@ -1,39 +1,82 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme static {
-    --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 
-    --color-primary: rgb(var(--primary));
+  --color-primary: rgb(var(--primary));
 
-    --color-dark: rgb(var(--dark));
-    --color-light: rgb(var(--light));
+  --color-dark: rgb(var(--dark));
+  --color-light: rgb(var(--light));
 
-    --color-black: rgb(var(--black));
-    --color-white: rgb(var(--white));
+  --color-black: rgb(var(--black));
+  --color-white: rgb(var(--white));
 
-    --ease-spring: var(--spring);
+  --ease-spring: var(--spring);
 }
 
 :root {
-    font-weight: 400;
-    font-size: clamp(14px, calc(100dvw / 160), 16px);
-    font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 16px;
+  font-family: var(--font-sans);
+  line-height: 1.25;
 
-    background: var(--color-black);
-    color: var(--color-white);
+  background: var(--color-black);
+  color: var(--color-white);
 
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
-    --primary: 255 96 92;
+  --primary: 255 96 92;
 
-    --dark: 7 7 7;
-    --light: 136 136 136;
+  --dark: 7 7 7;
+  --light: 136 136 136;
 
-    --black: 0 0 0;
-    --white: 255 255 255;
+  --black: 0 0 0;
+  --white: 255 255 255;
 
-    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+* {
+  scrollbar-color: rgb(var(--white) / 0.1) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(var(--white) / 0.35);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--white) / 0.6);
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
 }
