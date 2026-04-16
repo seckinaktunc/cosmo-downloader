@@ -6,21 +6,21 @@ import {
   FRAME_RATE_OPTIONS,
   OUTPUT_FORMATS,
   RESOLUTION_OPTIONS,
+  VIDEO_BITRATE_OPTIONS,
   VIDEO_CODECS,
   isAudioOnlyFormat
 } from '../../../../shared/formatOptions'
 import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types'
-import { useUiStore } from '../../stores/uiStore'
-import { useVideoStore } from '../../stores/videoStore'
+import { useActiveExportSettings } from '../../hooks/useActiveExportSettings'
 import { RadioBoxes } from '../ui/RadioBoxes'
 import { SnapSlider } from '../ui/SnapSlider'
 
 export function ExportSettingsPanel(): React.JSX.Element {
   const { t } = useTranslation()
-  const metadata = useVideoStore((state) => state.metadata)
-  const exportSettings = useUiStore((state) => state.exportSettings)
-  const updateExportSettings = useUiStore((state) => state.updateExportSettings)
+  const { metadata, exportSettings, readOnly, label, updateExportSettings } =
+    useActiveExportSettings()
   const audioOnly = isAudioOnlyFormat(exportSettings.outputFormat)
+  const controlsDisabled = readOnly || metadata == null
 
   const resolutionOptions = useMemo(() => {
     const maxResolution = metadata?.maxResolution ?? 2160
@@ -38,24 +38,46 @@ export function ExportSettingsPanel(): React.JSX.Element {
   }, [metadata])
 
   useEffect(() => {
-    if (!resolutionOptions.includes(exportSettings.resolution)) {
-      updateExportSettings({ resolution: resolutionOptions[resolutionOptions.length - 1] })
+    if (!controlsDisabled && !resolutionOptions.includes(exportSettings.resolution)) {
+      void updateExportSettings({ resolution: resolutionOptions[resolutionOptions.length - 1] })
     }
-  }, [exportSettings.resolution, resolutionOptions, updateExportSettings])
+  }, [controlsDisabled, exportSettings.resolution, resolutionOptions, updateExportSettings])
 
   useEffect(() => {
-    if (audioOnly && exportSettings.resolution !== 'auto') {
-      updateExportSettings({ resolution: 'auto', videoCodec: 'auto', frameRate: 'auto' })
+    if (
+      !controlsDisabled &&
+      audioOnly &&
+      (exportSettings.resolution !== 'auto' ||
+        exportSettings.videoBitrate !== 'auto' ||
+        exportSettings.videoCodec !== 'auto' ||
+        exportSettings.frameRate !== 'auto')
+    ) {
+      void updateExportSettings({
+        resolution: 'auto',
+        videoBitrate: 'auto',
+        videoCodec: 'auto',
+        frameRate: 'auto'
+      })
     }
-  }, [audioOnly, exportSettings.resolution, updateExportSettings])
+  }, [
+    audioOnly,
+    controlsDisabled,
+    exportSettings.frameRate,
+    exportSettings.resolution,
+    exportSettings.videoBitrate,
+    exportSettings.videoCodec,
+    updateExportSettings
+  ])
 
   return (
     <section className="grid">
+      <div className="border-b border-white/10 p-2 text-xs text-white/50">{label}</div>
       <div className="p-2">
         <RadioBoxes<OutputFormat>
           value={exportSettings.outputFormat}
           options={OUTPUT_FORMATS.map((format) => ({ value: format, label: format }))}
-          onChange={(outputFormat) => updateExportSettings({ outputFormat })}
+          disabled={controlsDisabled}
+          onChange={(outputFormat) => void updateExportSettings({ outputFormat })}
         />
       </div>
 
@@ -66,9 +88,9 @@ export function ExportSettingsPanel(): React.JSX.Element {
               label={t('export.resolution')}
               value={exportSettings.resolution}
               options={resolutionOptions}
-              disabled={audioOnly}
+              disabled={controlsDisabled || audioOnly}
               formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value}p`)}
-              onChange={(resolution) => updateExportSettings({ resolution })}
+              onChange={(resolution) => void updateExportSettings({ resolution })}
             />
           </div>
 
@@ -77,9 +99,9 @@ export function ExportSettingsPanel(): React.JSX.Element {
               label={t('export.frameRate')}
               value={exportSettings.frameRate}
               options={frameRateOptions}
-              disabled={audioOnly}
+              disabled={controlsDisabled || audioOnly}
               formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} fps`)}
-              onChange={(frameRate) => updateExportSettings({ frameRate })}
+              onChange={(frameRate) => void updateExportSettings({ frameRate })}
             />
           </div>
         </div>
@@ -87,10 +109,11 @@ export function ExportSettingsPanel(): React.JSX.Element {
           <div className="p-4">
             <SnapSlider
               label={t('export.videoBitrate')}
-              value={exportSettings.audioBitrate}
-              options={AUDIO_BITRATE_OPTIONS}
-              formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} kbps`)}
-              onChange={(audioBitrate) => updateExportSettings({ audioBitrate })}
+              value={exportSettings.videoBitrate}
+              options={VIDEO_BITRATE_OPTIONS}
+              disabled={controlsDisabled || audioOnly}
+              formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} Mbps`)}
+              onChange={(videoBitrate) => void updateExportSettings({ videoBitrate })}
             />
           </div>
           <div className="p-4">
@@ -98,8 +121,9 @@ export function ExportSettingsPanel(): React.JSX.Element {
               label={t('export.audioBitrate')}
               value={exportSettings.audioBitrate}
               options={AUDIO_BITRATE_OPTIONS}
+              disabled={controlsDisabled}
               formatLabel={(value) => (value === 'auto' ? t('export.auto') : `${value} kbps`)}
-              onChange={(audioBitrate) => updateExportSettings({ audioBitrate })}
+              onChange={(audioBitrate) => void updateExportSettings({ audioBitrate })}
             />
           </div>
         </div>
@@ -112,9 +136,11 @@ export function ExportSettingsPanel(): React.JSX.Element {
               options={VIDEO_CODECS.map((codec) => ({
                 value: codec,
                 label: codec.toUpperCase(),
-                icon: 'video'
+                icon: 'video',
+                disabled: controlsDisabled || audioOnly
               }))}
-              onChange={(videoCodec) => updateExportSettings({ videoCodec })}
+              disabled={controlsDisabled || audioOnly}
+              onChange={(videoCodec) => void updateExportSettings({ videoCodec })}
               className="grid-cols-3"
             />
           </div>
@@ -125,9 +151,11 @@ export function ExportSettingsPanel(): React.JSX.Element {
               options={AUDIO_CODECS.map((codec) => ({
                 value: codec,
                 label: codec.toUpperCase(),
-                icon: 'music'
+                icon: 'music',
+                disabled: controlsDisabled
               }))}
-              onChange={(audioCodec) => updateExportSettings({ audioCodec })}
+              disabled={controlsDisabled}
+              onChange={(audioCodec) => void updateExportSettings({ audioCodec })}
               className="grid-cols-3"
             />
           </div>
