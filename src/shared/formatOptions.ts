@@ -1,6 +1,7 @@
 import type { AudioCodec, OutputFormat, VideoCodec } from './types'
 
 export const RESOLUTION_OPTIONS = [360, 480, 720, 1080, 1440, 2160] as const
+export const VIDEO_BITRATE_OPTIONS = ['auto', 2, 4, 8, 12, 20] as const
 export const AUDIO_BITRATE_OPTIONS = ['auto', 128, 192, 256, 320] as const
 export const FRAME_RATE_OPTIONS = ['auto', 24, 30, 60] as const
 
