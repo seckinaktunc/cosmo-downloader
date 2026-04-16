@@ -66,10 +66,15 @@ export function SnapSlider<T extends SliderValue>({
           return (
             <span
               key={String(option)}
-              onClick={() => onChange(option)}
+              onClick={() => {
+                if (!disabled) {
+                  onChange(option)
+                }
+              }}
               className={`
-                absolute flex justify-center text-[10px] text-nowrap cursor-pointer pointer-events-auto
+                absolute flex justify-center text-[10px] text-nowrap pointer-events-auto
                 ${option === value ? 'text-white font-medium' : 'text-white/20 hover:text-white/75'}
+                ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
                 transition-colors ${translateClass}
               `}
               style={{ left: `${maxIndex === 0 ? 0 : (index / maxIndex) * 100}%` }}
