@@ -19,7 +19,7 @@ type QueueState = {
     metadata: VideoMetadata,
     exportSettings: ExportSettings,
     settings: AppSettings
-  ) => Promise<boolean>
+  ) => Promise<QueueItem | null>
   start: () => Promise<void>
   pause: () => Promise<void>
   resume: () => Promise<void>
@@ -30,6 +30,7 @@ type QueueState = {
   reorder: (itemId: string, direction: 'up' | 'down') => Promise<void>
   move: (itemId: string, targetIndex: number) => Promise<void>
   moveMany: (itemIds: string[], targetIndex: number) => Promise<void>
+  updateExportSettings: (itemId: string, exportSettings: ExportSettings) => Promise<void>
   clear: () => Promise<void>
 }
 
@@ -66,16 +67,21 @@ export const useQueueStore = create<QueueState>((set, get) => ({
   },
 
   add: async (metadata, exportSettings, settings) => {
+    const previousIds = new Set(get().items.map((item) => item.id))
     const result = await window.cosmo.queue.add({ metadata, exportSettings, settings })
     if (result.ok) {
       applySnapshot(set, result.data)
-      return true
+      return (
+        result.data.items.find((item) => !previousIds.has(item.id)) ??
+        result.data.items[result.data.items.length - 1] ??
+        null
+      )
     }
 
     if (result.error.code !== 'CANCELLED') {
       set({ error: result.error.message })
     }
-    return false
+    return null
   },
 
   start: async () => {
@@ -134,6 +140,12 @@ export const useQueueStore = create<QueueState>((set, get) => ({
 
   moveMany: async (itemIds, targetIndex) => {
     const result = await window.cosmo.queue.moveMany({ itemIds, targetIndex })
+    if (result.ok) applySnapshot(set, result.data)
+    else set({ error: result.error.message })
+  },
+
+  updateExportSettings: async (itemId, exportSettings) => {
+    const result = await window.cosmo.queue.updateExportSettings({ itemId, exportSettings })
     if (result.ok) applySnapshot(set, result.data)
     else set({ error: result.error.message })
   },
