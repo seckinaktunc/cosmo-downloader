@@ -15,7 +15,7 @@ export function MetadataPanel(): React.JSX.Element {
   const error = useVideoStore((state) => state.error)
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
   const settings = useSettingsStore((state) => state.settings)
-  const exportSettings = useUiStore((state) => state.exportSettings)
+  const previewExportSettings = useUiStore((state) => state.previewExportSettings)
   const queueItems = useQueueStore((state) => state.items)
   const addToQueue = useQueueStore((state) => state.add)
   const setActivePanel = useUiStore((state) => state.setActivePanel)
@@ -48,7 +48,7 @@ export function MetadataPanel(): React.JSX.Element {
       return
     }
 
-    const added = await addToQueue(metadata, exportSettings, settings)
+    const added = await addToQueue(metadata, previewExportSettings, settings)
     if (added) {
       setActivePanel('queue')
     }
