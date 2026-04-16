@@ -12,6 +12,9 @@ type DownloadState = {
   progress: DownloadProgress | null
   error?: string
   isSubscribed: boolean
+  trackedPreviewQueueItemId?: string
+  trackedPreviewUrl?: string
+  completedPreviewUrl?: string
   subscribe: () => void
   start: (
     metadata: VideoMetadata,
@@ -20,6 +23,10 @@ type DownloadState = {
   ) => Promise<void>
   cancel: () => Promise<void>
   reset: () => void
+  resetForNewPreview: () => void
+  trackPreviewDownload: (queueItemId: string, sourceUrl: string) => void
+  markTrackedPreviewCompleted: (queueItemId: string) => void
+  clearPreviewDownloadState: () => void
 }
 
 const ACTIVE_STAGES: DownloadStage[] = ['downloading', 'processing']
@@ -73,5 +80,52 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
     set({ stage: 'cancelled', progress: { stage: 'cancelled', stageLabel: 'Cancelled' } })
   },
 
-  reset: () => set({ stage: 'idle', progress: null, error: undefined })
+  reset: () => set({ stage: 'idle', progress: null, error: undefined }),
+
+  resetForNewPreview: () =>
+    set((state) => {
+      if (ACTIVE_STAGES.includes(state.stage)) {
+        return {
+          trackedPreviewQueueItemId: undefined,
+          trackedPreviewUrl: undefined,
+          completedPreviewUrl: undefined
+        }
+      }
+
+      return {
+        stage: 'idle',
+        progress: null,
+        error: undefined,
+        trackedPreviewQueueItemId: undefined,
+        trackedPreviewUrl: undefined,
+        completedPreviewUrl: undefined
+      }
+    }),
+
+  trackPreviewDownload: (queueItemId, sourceUrl) =>
+    set({
+      trackedPreviewQueueItemId: queueItemId,
+      trackedPreviewUrl: sourceUrl,
+      completedPreviewUrl: undefined
+    }),
+
+  markTrackedPreviewCompleted: (queueItemId) =>
+    set((state) => {
+      if (state.trackedPreviewQueueItemId !== queueItemId || !state.trackedPreviewUrl) {
+        return {}
+      }
+
+      return {
+        completedPreviewUrl: state.trackedPreviewUrl,
+        trackedPreviewQueueItemId: undefined,
+        trackedPreviewUrl: undefined
+      }
+    }),
+
+  clearPreviewDownloadState: () =>
+    set({
+      trackedPreviewQueueItemId: undefined,
+      trackedPreviewUrl: undefined,
+      completedPreviewUrl: undefined
+    })
 }))
