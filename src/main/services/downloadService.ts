@@ -22,15 +22,22 @@ import type {
   VideoCodec
 } from '../../shared/types'
 import { isAudioOnlyFormat } from '../../shared/formatOptions'
-import { BinaryMissingError, BinaryService } from './binaryService'
+import { BinaryMissingError, BinaryService, type BinaryPaths } from './binaryService'
 import { createDownloadPlan } from './formatPlanner'
 import { createUniquePath } from './filename'
+import {
+  assertSelectedCodecs,
+  hasExplicitCodecSelection,
+  probeMediaFile,
+  verifySelectedCodecs,
+  type MediaProbeResult
+} from './mediaProbe'
 import {
   parseFfmpegProgressChunk,
   parseYtdlpProgressLine,
   YTDLP_PROGRESS_TEMPLATE
 } from './progressParser'
-import { spawnProcess } from '../utils/process'
+import { killProcessTree, spawnProcess } from '../utils/process'
 
 type ActiveJob = {
   id: string
@@ -105,6 +112,84 @@ function ensureDirectory(directory: string): void {
   mkdirSync(directory, { recursive: true })
 }
 
+function executableName(baseName: string): string {
+  return process.platform === 'win32' ? `${baseName}.exe` : baseName
+}
+
+function requireFfprobePath(binaries: BinaryPaths): string {
+  if (binaries.ffprobe) {
+    return binaries.ffprobe
+  }
+
+  throw new BinaryMissingError('ffprobe', join(dirname(binaries.ffmpeg), executableName('ffprobe')))
+}
+
+export function shouldTranscodeAfterSourceProbe(
+  planNeedsFfmpegTranscode: boolean,
+  request: DownloadStartRequest,
+  probe: MediaProbeResult
+): boolean {
+  if (planNeedsFfmpegTranscode) {
+    return true
+  }
+
+  if (!hasExplicitCodecSelection(request.exportSettings)) {
+    return false
+  }
+
+  return !verifySelectedCodecs(request.exportSettings, probe).ok
+}
+
+export function buildFfmpegTranscodeArgs(
+  request: DownloadStartRequest,
+  inputPath: string,
+  outputPath: string
+): string[] {
+  const args = ['-hide_banner', '-y']
+  if (request.settings.hardwareAcceleration) {
+    args.push('-hwaccel', 'auto')
+  }
+
+  args.push('-i', inputPath)
+
+  if (isAudioOnlyFormat(request.exportSettings.outputFormat)) {
+    args.push(
+      '-vn',
+      '-c:a',
+      getAudioEncoder(request.exportSettings.audioCodec, request.exportSettings.outputFormat)
+    )
+  } else {
+    args.push('-map', '0:v:0?', '-map', '0:a:0?')
+    const videoEncoder = getVideoEncoder(
+      request.exportSettings.videoCodec,
+      request.exportSettings.outputFormat
+    )
+    args.push('-c:v', videoEncoder)
+    appendVideoEncoderOptions(args, videoEncoder)
+    if (request.exportSettings.videoBitrate !== 'auto') {
+      args.push('-b:v', `${request.exportSettings.videoBitrate}M`)
+    }
+    args.push(
+      '-c:a',
+      getAudioEncoder(request.exportSettings.audioCodec, request.exportSettings.outputFormat)
+    )
+  }
+
+  if (request.exportSettings.audioBitrate !== 'auto') {
+    args.push('-b:a', `${request.exportSettings.audioBitrate}k`)
+  }
+
+  if (
+    request.exportSettings.frameRate !== 'auto' &&
+    !isAudioOnlyFormat(request.exportSettings.outputFormat)
+  ) {
+    args.push('-r', String(request.exportSettings.frameRate))
+  }
+
+  args.push('-progress', 'pipe:1', '-nostats', outputPath)
+  return args
+}
+
 export class DownloadService {
   private activeJob: ActiveJob | null = null
 
@@ -117,7 +202,7 @@ export class DownloadService {
 
     this.activeJob.cancelled = true
     for (const child of this.activeJob.children) {
-      child.kill('SIGTERM')
+      killProcessTree(child)
     }
 
     return { ok: true, data: null }
@@ -164,6 +249,9 @@ export class DownloadService {
     try {
       const binaries = this.binaryService.getPaths()
       const plan = createDownloadPlan(request.metadata, request.exportSettings)
+      const ffprobePath = hasExplicitCodecSelection(request.exportSettings)
+        ? requireFfprobePath(binaries)
+        : undefined
       const destination = await this.resolveDestination(request)
 
       if (destination == null) {
@@ -185,7 +273,17 @@ export class DownloadService {
         throw new Error('Download cancelled.')
       }
 
-      if (!plan.needsFfmpegTranscode) {
+      let needsFfmpegTranscode = plan.needsFfmpegTranscode
+      if (!needsFfmpegTranscode && ffprobePath) {
+        const sourceProbe = await probeMediaFile(ffprobePath, sourceFile)
+        needsFfmpegTranscode = shouldTranscodeAfterSourceProbe(
+          plan.needsFfmpegTranscode,
+          request,
+          sourceProbe
+        )
+      }
+
+      if (!needsFfmpegTranscode) {
         ensureDirectory(dirname(destination))
         renameSync(sourceFile, destination)
         const progress = {
@@ -205,6 +303,11 @@ export class DownloadService {
 
       if (job.cancelled) {
         throw new Error('Download cancelled.')
+      }
+
+      if (ffprobePath) {
+        const processedProbe = await probeMediaFile(ffprobePath, processingOutput)
+        assertSelectedCodecs(request.exportSettings, processedProbe, 'processed output')
       }
 
       ensureDirectory(dirname(destination))
@@ -303,7 +406,10 @@ export class DownloadService {
     args.push(request.metadata.url)
 
     return new Promise((resolve, reject) => {
-      const child = spawnProcess(ytdlpPath, args, { cwd: job.tempDir })
+      const child = spawnProcess(ytdlpPath, args, {
+        cwd: job.tempDir,
+        detached: process.platform !== 'win32'
+      })
       job.children.add(child)
       const stderrLines: string[] = []
       let stdoutBuffer = ''
@@ -367,48 +473,13 @@ export class DownloadService {
     outputPath: string,
     request: DownloadStartRequest
   ): Promise<void> {
-    const args = ['-hide_banner', '-y']
-    if (request.settings.hardwareAcceleration) {
-      args.push('-hwaccel', 'auto')
-    }
-
-    args.push('-i', inputPath)
-
-    if (isAudioOnlyFormat(request.exportSettings.outputFormat)) {
-      args.push(
-        '-vn',
-        '-c:a',
-        getAudioEncoder(request.exportSettings.audioCodec, request.exportSettings.outputFormat)
-      )
-    } else {
-      args.push('-map', '0:v:0?', '-map', '0:a:0?')
-      const videoEncoder = getVideoEncoder(
-        request.exportSettings.videoCodec,
-        request.exportSettings.outputFormat
-      )
-      args.push('-c:v', videoEncoder)
-      appendVideoEncoderOptions(args, videoEncoder)
-      args.push(
-        '-c:a',
-        getAudioEncoder(request.exportSettings.audioCodec, request.exportSettings.outputFormat)
-      )
-    }
-
-    if (request.exportSettings.audioBitrate !== 'auto') {
-      args.push('-b:a', `${request.exportSettings.audioBitrate}k`)
-    }
-
-    if (
-      request.exportSettings.frameRate !== 'auto' &&
-      !isAudioOnlyFormat(request.exportSettings.outputFormat)
-    ) {
-      args.push('-r', String(request.exportSettings.frameRate))
-    }
-
-    args.push('-progress', 'pipe:1', '-nostats', outputPath)
+    const args = buildFfmpegTranscodeArgs(request, inputPath, outputPath)
 
     return new Promise((resolve, reject) => {
-      const child = spawnProcess(ffmpegPath, args, { cwd: job.tempDir })
+      const child = spawnProcess(ffmpegPath, args, {
+        cwd: job.tempDir,
+        detached: process.platform !== 'win32'
+      })
       job.children.add(child)
       const stderrLines: string[] = []
       let progressBuffer = ''

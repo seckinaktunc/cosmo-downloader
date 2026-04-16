@@ -119,7 +119,7 @@ export function createDownloadPlan(
   const codecConversion = requiresCodecConversion(bestFormat, settings)
   const audioOnly = isAudioOnlyFormat(settings.outputFormat)
   const frameRateConversion = settings.frameRate !== 'auto'
-  const bitrateConversion = settings.audioBitrate !== 'auto'
+  const bitrateConversion = settings.audioBitrate !== 'auto' || settings.videoBitrate !== 'auto'
   const webmCodecMismatch =
     settings.outputFormat === 'webm' && bestFormat != null && !compatibleWithWebm(bestFormat)
   const mp4CodecMismatch =
