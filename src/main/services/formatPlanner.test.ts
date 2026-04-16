@@ -32,6 +32,7 @@ const metadata: VideoMetadata = {
 const baseSettings: ExportSettings = {
   outputFormat: 'mp4',
   resolution: 1080,
+  videoBitrate: 'auto',
   audioBitrate: 'auto',
   frameRate: 'auto',
   videoCodec: 'auto',
@@ -63,6 +64,12 @@ describe('createDownloadPlan', () => {
 
   it('uses transcode for audio-only output', () => {
     expect(createDownloadPlan(metadata, { ...baseSettings, outputFormat: 'mp3' }).strategy).toBe(
+      'transcode'
+    )
+  })
+
+  it('uses transcode when video bitrate is selected', () => {
+    expect(createDownloadPlan(metadata, { ...baseSettings, videoBitrate: 8 }).strategy).toBe(
       'transcode'
     )
   })
