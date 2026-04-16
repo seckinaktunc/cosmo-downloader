@@ -1,11 +1,7 @@
-import { useState } from 'react'
-import type { QueueItem, VideoMetadata } from '../../../../shared/types'
-import {
-  formatDuration,
-  formatPercent,
-  formatStageHeadline,
-  formatTransferDetail
-} from '../../lib/formatters'
+import { useEffect, useState } from 'react'
+import type { VideoMetadata } from '../../../../shared/types'
+import { getBottomButtonState } from '../../lib/bottomButtonState'
+import { formatDuration } from '../../lib/formatters'
 import { useDownloadStore } from '../../stores/downloadStore'
 import { useQueueStore } from '../../stores/queueStore'
 import { useSettingsStore } from '../../stores/settingsStore'
@@ -14,58 +10,8 @@ import { useVideoStore } from '../../stores/videoStore'
 import { Button } from '../ui/Button'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 
-const ACTIVE_STAGES = ['downloading', 'processing']
-const TERMINAL_QUEUE_STATES = ['completed', 'failed', 'cancelled']
-
 function getSourceUrl(metadata: VideoMetadata): string {
   return metadata.webpageUrl ?? metadata.url
-}
-
-function getPrimaryText(
-  activeItem: QueueItem | undefined,
-  queueItems: QueueItem[],
-  downloadStage: ReturnType<typeof useDownloadStore.getState>['stage'],
-  progress: ReturnType<typeof useDownloadStore.getState>['progress'],
-  videoStage: ReturnType<typeof useVideoStore.getState>['stage'],
-  canDownload: boolean
-): { primary: string; secondary?: string } {
-  if (activeItem) {
-    const index = queueItems.findIndex((item) => item.id === activeItem.id)
-    const percent = formatPercent(activeItem.progress?.percentage) || '0%'
-    return {
-      primary: `Queue ${index + 1} of ${queueItems.length} (${percent})`,
-      secondary: formatTransferDetail(activeItem.progress)
-    }
-  }
-
-  if (ACTIVE_STAGES.includes(downloadStage)) {
-    return {
-      primary: formatStageHeadline(progress, downloadStage),
-      secondary: formatTransferDetail(progress)
-    }
-  }
-
-  if (
-    downloadStage === 'completed' ||
-    (queueItems.length > 0 &&
-      queueItems.every((item) => TERMINAL_QUEUE_STATES.includes(item.status)))
-  ) {
-    return { primary: 'Download New' }
-  }
-
-  if (videoStage === 'fetching_metadata') {
-    return { primary: 'Fetching Metadata' }
-  }
-
-  if (canDownload) {
-    return { primary: 'Download Video' }
-  }
-
-  if (videoStage === 'failed') {
-    return { primary: 'Download Unavailable' }
-  }
-
-  return { primary: 'Paste Video URL' }
 }
 
 export function BottomBar(): React.JSX.Element {
@@ -74,13 +20,19 @@ export function BottomBar(): React.JSX.Element {
   const videoStage = useVideoStore((state) => state.stage)
   const clearVideo = useVideoStore((state) => state.clear)
   const settings = useSettingsStore((state) => state.settings)
-  const exportSettings = useUiStore((state) => state.exportSettings)
+  const previewExportSettings = useUiStore((state) => state.previewExportSettings)
   const activePanel = useUiStore((state) => state.activePanel)
   const setActivePanel = useUiStore((state) => state.setActivePanel)
   const activeContent = useUiStore((state) => state.activeContent)
   const downloadStage = useDownloadStore((state) => state.stage)
   const progress = useDownloadStore((state) => state.progress)
+  const cancelDownload = useDownloadStore((state) => state.cancel)
   const resetDownload = useDownloadStore((state) => state.reset)
+  const trackedPreviewQueueItemId = useDownloadStore((state) => state.trackedPreviewQueueItemId)
+  const completedPreviewUrl = useDownloadStore((state) => state.completedPreviewUrl)
+  const trackPreviewDownload = useDownloadStore((state) => state.trackPreviewDownload)
+  const markTrackedPreviewCompleted = useDownloadStore((state) => state.markTrackedPreviewCompleted)
+  const clearPreviewDownloadState = useDownloadStore((state) => state.clearPreviewDownloadState)
   const queueItems = useQueueStore((state) => state.items)
   const activeQueueItemId = useQueueStore((state) => state.activeItemId)
   const queuePaused = useQueueStore((state) => state.paused)
@@ -91,30 +43,53 @@ export function BottomBar(): React.JSX.Element {
   const activeItem = queueItems.find((item) => item.id === activeQueueItemId)
   const summaryMetadata = activeItem?.metadata ?? metadata
   const canDownload = metadata != null && settings != null && videoStage === 'ready'
-  const hasQueue = queueItems.length > 0
-  const buttonText = getPrimaryText(
+  const pendingItems = queueItems.filter((item) => item.status === 'pending')
+  const hasPendingQueueItems = pendingItems.length > 0
+  const currentSourceUrl = metadata ? getSourceUrl(metadata) : undefined
+  const currentPreviewCompleted = Boolean(
+    currentSourceUrl && completedPreviewUrl === currentSourceUrl
+  )
+  const completedPreviewItem =
+    currentSourceUrl && currentPreviewCompleted
+      ? queueItems.find(
+          (item) => item.status === 'completed' && getSourceUrl(item.metadata) === currentSourceUrl
+        )
+      : undefined
+  const buttonText = getBottomButtonState({
     activeItem,
     queueItems,
     downloadStage,
     progress,
     videoStage,
-    canDownload
-  )
-  const activeProgress = activeItem?.progress ?? progress
-  const isActive = activeItem != null || ACTIVE_STAGES.includes(downloadStage)
-  const isComplete =
-    downloadStage === 'completed' ||
-    (queueItems.length > 0 &&
-      queueItems.every((item) => TERMINAL_QUEUE_STATES.includes(item.status)))
+    canDownloadPreview: canDownload,
+    currentPreviewCompleted,
+    hasPendingQueueItems
+  })
+  const activeProgress = activeItem?.progress ?? completedPreviewItem?.progress ?? progress
+  const isActive = buttonText.mode === 'cancel'
   const percent =
-    isActive || isComplete ? (activeProgress?.percentage ?? (isComplete ? 100 : 0)) : 0
+    isActive || currentPreviewCompleted
+      ? (activeProgress?.percentage ?? (currentPreviewCompleted ? 100 : 0))
+      : 0
   const isDuplicate =
     metadata != null &&
     queueItems.some((item) => getSourceUrl(item.metadata) === getSourceUrl(metadata))
 
+  useEffect(() => {
+    if (!trackedPreviewQueueItemId) {
+      return
+    }
+
+    const trackedItem = queueItems.find((item) => item.id === trackedPreviewQueueItemId)
+    if (trackedItem?.status === 'completed') {
+      markTrackedPreviewCompleted(trackedItem.id)
+    }
+  }, [markTrackedPreviewCompleted, queueItems, trackedPreviewQueueItemId])
+
   const clearCurrent = (): void => {
     clearVideo()
     resetDownload()
+    clearPreviewDownloadState()
   }
 
   const addPreviewAndStart = async (): Promise<void> => {
@@ -122,25 +97,26 @@ export function BottomBar(): React.JSX.Element {
       return
     }
 
-    const added = await addToQueue(metadata, exportSettings, settings)
+    const added = await addToQueue(metadata, previewExportSettings, settings)
     if (added) {
+      trackPreviewDownload(added.id, getSourceUrl(metadata))
       await startQueue()
       setActivePanel('queue')
     }
   }
 
   const handleMainClick = (): void => {
-    if (activeItem) {
-      void cancelActive()
+    if (buttonText.mode === 'cancel') {
+      void (activeItem ? cancelActive() : cancelDownload())
       return
     }
 
-    if (isComplete) {
+    if (buttonText.mode === 'new_video') {
       clearCurrent()
       return
     }
 
-    if (canDownload) {
+    if (buttonText.mode === 'start' && canDownload && !currentPreviewCompleted) {
       if (isDuplicate) {
         setConfirmDuplicate(true)
         return
@@ -150,7 +126,7 @@ export function BottomBar(): React.JSX.Element {
       return
     }
 
-    if (hasQueue) {
+    if (buttonText.mode === 'start' && hasPendingQueueItems) {
       void (queuePaused ? resumeQueue() : startQueue())
     }
   }
@@ -200,10 +176,16 @@ export function BottomBar(): React.JSX.Element {
 
       <div className="flex items-center gap-2">
         <Button
-          icon={activeItem ? 'close' : isComplete ? 'reload' : 'download'}
+          icon={
+            buttonText.mode === 'cancel'
+              ? 'close'
+              : buttonText.mode === 'new_video'
+                ? 'reload'
+                : 'download'
+          }
           label={buttonText.primary}
           active={activeContent === 'export'}
-          disabled={!canDownload && !isActive && !isComplete && !hasQueue}
+          disabled={buttonText.mode === 'disabled'}
           onClick={handleMainClick}
           size="xl"
           aria-label={buttonText.primary}
