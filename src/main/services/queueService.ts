@@ -3,12 +3,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../../shared/ipc'
+import { mergeExportSettings } from '../../shared/defaults'
 import type {
   DownloadHistoryEntry,
   DownloadProgress,
   IpcResult,
   QueueAddRequest,
   QueueBulkRequest,
+  QueueExportSettingsUpdateRequest,
   QueueItem,
   QueueMoveManyRequest,
   QueueMoveRequest,
@@ -46,11 +48,13 @@ function readItems(filePath: string): QueueItem[] {
       .filter((item): item is QueueItem => {
         return isRecord(item) && typeof item.id === 'string' && isRecord(item.metadata)
       })
-      .map((item) =>
-        item.status === 'active'
-          ? { ...item, status: 'paused', updatedAt: now(), progress: undefined }
-          : item
-      )
+      .map((item) => ({
+        ...item,
+        exportSettings: mergeExportSettings(item.exportSettings),
+        ...(item.status === 'active'
+          ? { status: 'paused' as const, updatedAt: now(), progress: undefined }
+          : {})
+      }))
   } catch {
     return []
   }
@@ -91,7 +95,7 @@ export class QueueService {
     const item: QueueItem = {
       id: randomUUID(),
       metadata: request.metadata,
-      exportSettings: request.exportSettings,
+      exportSettings: mergeExportSettings(request.exportSettings),
       settings: request.settings,
       requestedOutputPath,
       status: 'pending',
@@ -109,7 +113,7 @@ export class QueueService {
     this.items.push({
       id: randomUUID(),
       metadata: entry.metadata,
-      exportSettings: entry.exportSettings,
+      exportSettings: mergeExportSettings(entry.exportSettings),
       settings: entry.settings,
       status: 'pending',
       createdAt: timestamp,
@@ -240,6 +244,22 @@ export class QueueService {
     return ok(this.getSnapshot())
   }
 
+  updateExportSettings(request: QueueExportSettingsUpdateRequest): IpcResult<QueueSnapshot> {
+    const item = this.items.find((candidate) => candidate.id === request.itemId)
+    if (!item) {
+      return fail('NOT_FOUND', 'Queue item not found.')
+    }
+
+    if (!['pending', 'paused', 'failed', 'cancelled'].includes(item.status)) {
+      return fail('VALIDATION_ERROR', 'Export settings can only be edited before retrying.')
+    }
+
+    item.exportSettings = mergeExportSettings(request.exportSettings)
+    item.updatedAt = now()
+    this.writeAndBroadcast()
+    return ok(this.getSnapshot())
+  }
+
   clear(): IpcResult<QueueSnapshot> {
     this.items = this.items.filter((item) => item.status === 'active')
     this.writeAndBroadcast()
@@ -263,6 +283,22 @@ export class QueueService {
     this.updateItem(item.id, { status: 'active', progress: undefined, error: undefined })
     const historyEntry = this.historyService.addStarted({ ...item, status: 'active' })
     this.updateItem(item.id, { historyEntryId: historyEntry.id })
+
+    if (this.pauseRequested || this.cancelRequested) {
+      if (this.pauseRequested) {
+        this.updateItem(item.id, { status: 'paused', progress: undefined, updatedAt: now() })
+        this.historyService.update(historyEntry.id, 'cancelled', { error: 'Paused.' })
+      } else {
+        this.updateItem(item.id, { status: 'cancelled', progress: undefined, updatedAt: now() })
+        this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' })
+      }
+
+      this.running = false
+      this.pauseRequested = false
+      this.cancelRequested = false
+      this.writeAndBroadcast()
+      return
+    }
 
     const decorateProgress = (progress: DownloadProgress): DownloadProgress => {
       const currentIndex = this.items.findIndex((candidate) => candidate.id === item.id)
