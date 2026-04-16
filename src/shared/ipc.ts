@@ -32,6 +32,7 @@ export const IPC_CHANNELS = {
     reorder: 'queue:reorder',
     move: 'queue:move',
     moveMany: 'queue:move-many',
+    updateExportSettings: 'queue:update-export-settings',
     retry: 'queue:retry',
     clear: 'queue:clear',
     snapshot: 'queue:snapshot'
@@ -39,6 +40,7 @@ export const IPC_CHANNELS = {
   history: {
     get: 'history:get',
     remove: 'history:remove',
+    removeMany: 'history:remove-many',
     clear: 'history:clear',
     requeue: 'history:requeue',
     openOutput: 'history:open-output',

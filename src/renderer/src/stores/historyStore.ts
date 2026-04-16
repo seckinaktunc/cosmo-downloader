@@ -8,6 +8,7 @@ type HistoryState = {
   load: () => Promise<void>
   subscribe: () => void
   remove: (entryId: string) => Promise<void>
+  removeMany: (entryIds: string[]) => Promise<void>
   clear: () => Promise<void>
   requeue: (entryId: string) => Promise<void>
   openOutput: (entryId: string) => Promise<void>
@@ -38,6 +39,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   remove: async (entryId) => {
     const result = await window.cosmo.history.remove({ entryId })
+    if (result.ok) set({ entries: result.data, error: undefined })
+    else set({ error: result.error.message })
+  },
+
+  removeMany: async (entryIds) => {
+    const result = await window.cosmo.history.removeMany({ entryIds })
     if (result.ok) set({ entries: result.data, error: undefined })
     else set({ error: result.error.message })
   },

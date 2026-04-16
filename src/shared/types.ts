@@ -96,6 +96,7 @@ export type VideoMetadata = {
 export type ExportSettings = {
   outputFormat: OutputFormat
   resolution: number | 'auto'
+  videoBitrate: number | 'auto'
   audioBitrate: number | 'auto'
   frameRate: number | 'auto'
   videoCodec: VideoCodec
@@ -185,6 +186,11 @@ export type QueueMoveManyRequest = {
   targetIndex: number
 }
 
+export type QueueExportSettingsUpdateRequest = {
+  itemId: string
+  exportSettings: ExportSettings
+}
+
 export type QueueBulkRequest = {
   itemIds: string[]
 }
@@ -211,4 +217,8 @@ export type DownloadHistoryEntry = {
 
 export type HistoryItemRequest = {
   entryId: string
+}
+
+export type HistoryBulkRequest = {
+  entryIds: string[]
 }

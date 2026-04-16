@@ -3,9 +3,11 @@ import { IPC_CHANNELS } from '../../shared/ipc'
 import type {
   AppEnvironment,
   CancelMetadataRequest,
+  HistoryBulkRequest,
   HistoryItemRequest,
   QueueAddRequest,
   QueueBulkRequest,
+  QueueExportSettingsUpdateRequest,
   QueueItemRequest,
   QueueMoveManyRequest,
   QueueMoveRequest,
@@ -108,6 +110,12 @@ export function registerIpcHandlers(): void {
     queueService.moveMany(request)
   )
 
+  ipcMain.handle(
+    IPC_CHANNELS.queue.updateExportSettings,
+    (_event, request: QueueExportSettingsUpdateRequest) =>
+      queueService.updateExportSettings(request)
+  )
+
   ipcMain.handle(IPC_CHANNELS.queue.retry, (_event, request: QueueItemRequest) =>
     queueService.retry(request.itemId)
   )
@@ -118,6 +126,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.history.remove, (_event, request: HistoryItemRequest) =>
     ok(historyService.remove(request.entryId))
+  )
+
+  ipcMain.handle(IPC_CHANNELS.history.removeMany, (_event, request: HistoryBulkRequest) =>
+    ok(historyService.removeMany(request.entryIds))
   )
 
   ipcMain.handle(IPC_CHANNELS.history.clear, () => ok(historyService.clear()))

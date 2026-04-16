@@ -9,10 +9,12 @@ import type {
   DownloadProgress,
   DownloadStartRequest,
   FetchMetadataRequest,
+  HistoryBulkRequest,
   HistoryItemRequest,
   IpcResult,
   QueueAddRequest,
   QueueBulkRequest,
+  QueueExportSettingsUpdateRequest,
   QueueItemRequest,
   QueueMoveManyRequest,
   QueueMoveRequest,
@@ -59,6 +61,9 @@ export type CosmoApi = {
     reorder: (request: QueueReorderRequest) => Promise<IpcResult<QueueSnapshot>>
     move: (request: QueueMoveRequest) => Promise<IpcResult<QueueSnapshot>>
     moveMany: (request: QueueMoveManyRequest) => Promise<IpcResult<QueueSnapshot>>
+    updateExportSettings: (
+      request: QueueExportSettingsUpdateRequest
+    ) => Promise<IpcResult<QueueSnapshot>>
     retry: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>
     clear: () => Promise<IpcResult<QueueSnapshot>>
     onSnapshot: (listener: (snapshot: QueueSnapshot) => void) => Unsubscribe
@@ -66,6 +71,7 @@ export type CosmoApi = {
   history: {
     get: () => Promise<IpcResult<DownloadHistoryEntry[]>>
     remove: (request: HistoryItemRequest) => Promise<IpcResult<DownloadHistoryEntry[]>>
+    removeMany: (request: HistoryBulkRequest) => Promise<IpcResult<DownloadHistoryEntry[]>>
     clear: () => Promise<IpcResult<DownloadHistoryEntry[]>>
     requeue: (request: HistoryItemRequest) => Promise<IpcResult<QueueSnapshot>>
     openOutput: (request: HistoryItemRequest) => Promise<IpcResult<null>>
@@ -130,6 +136,8 @@ const api: CosmoApi = {
     reorder: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.reorder, request),
     move: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.move, request),
     moveMany: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.moveMany, request),
+    updateExportSettings: (request) =>
+      invoke<QueueSnapshot>(IPC_CHANNELS.queue.updateExportSettings, request),
     retry: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.retry, request),
     clear: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.clear),
     onSnapshot: (listener) => subscribe<QueueSnapshot>(IPC_CHANNELS.queue.snapshot, listener)
@@ -137,6 +145,8 @@ const api: CosmoApi = {
   history: {
     get: () => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.get),
     remove: (request) => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.remove, request),
+    removeMany: (request) =>
+      invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.removeMany, request),
     clear: () => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.clear),
     requeue: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.history.requeue, request),
     openOutput: (request) => invoke<null>(IPC_CHANNELS.history.openOutput, request),

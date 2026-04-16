@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import type { DownloadHistoryEntry, DownloadHistoryStatus, QueueItem } from '../../shared/types'
 import { IPC_CHANNELS } from '../../shared/ipc'
+import { mergeExportSettings } from '../../shared/defaults'
 
 const HISTORY_FILE = 'history.json'
 
@@ -26,9 +27,14 @@ function readEntries(filePath: string): DownloadHistoryEntry[] {
       return []
     }
 
-    return parsed.filter((entry): entry is DownloadHistoryEntry => {
-      return isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.metadata)
-    })
+    return parsed
+      .filter((entry): entry is DownloadHistoryEntry => {
+        return isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.metadata)
+      })
+      .map((entry) => ({
+        ...entry,
+        exportSettings: mergeExportSettings(entry.exportSettings)
+      }))
   } catch {
     return []
   }
@@ -51,7 +57,7 @@ export class HistoryService {
       id: randomUUID(),
       queueItemId: item.id,
       metadata: item.metadata,
-      exportSettings: item.exportSettings,
+      exportSettings: mergeExportSettings(item.exportSettings),
       settings: item.settings,
       status: 'started',
       createdAt: timestamp,
@@ -80,6 +86,13 @@ export class HistoryService {
 
   remove(entryId: string): DownloadHistoryEntry[] {
     this.entries = this.entries.filter((entry) => entry.id !== entryId)
+    this.writeAndBroadcast()
+    return this.get()
+  }
+
+  removeMany(entryIds: string[]): DownloadHistoryEntry[] {
+    const selectedIds = new Set(entryIds)
+    this.entries = this.entries.filter((entry) => !selectedIds.has(entry.id))
     this.writeAndBroadcast()
     return this.get()
   }
