@@ -22,17 +22,18 @@ export function MetadataPanel(): React.JSX.Element {
 
   if (!metadata) {
     return (
-      <section className="flex h-full flex-col items-center justify-center gap-3 text-center text-white/50">
+      <section className="flex h-full flex-col items-center justify-center gap-4 text-center">
         <Icon
-          name={stage === 'fetching_metadata' ? 'spinner' : 'video'}
-          size={48}
-          className={stage === 'fetching_metadata' ? 'animate-spin' : undefined}
+          name={stage === 'fetching_metadata' ? 'spinner' : 'copy'}
+          size={96}
+          thickness={1}
+          className={`opacity-50 ${stage === 'fetching_metadata' ? 'animate-spin' : undefined}`}
         />
         <div>
           <h1 className="text-2xl font-bold text-white">
-            {stage === 'fetching_metadata' ? 'Fetching metadata' : 'Paste a single video link'}
+            {stage === 'fetching_metadata' ? 'Fetching metadata' : 'Paste a video link'}
           </h1>
-          <p className="mt-1 max-w-xl text-sm">{error ?? 'Or drag and drop here'}</p>
+          <p className="mt-1 max-w-xl text-sm text-white/50">{error ?? 'Or drag and drop here'}</p>
         </div>
       </section>
     )

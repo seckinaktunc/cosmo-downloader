@@ -390,7 +390,7 @@ export function QueuePanel(): React.JSX.Element {
         <div className="flex shrink-0">
           <Button
             icon="close"
-            label={`Delete (${selectedCount})`}
+            label={`Close`}
             className="absolute top-2 right-1"
             onlyIcon
             ghost

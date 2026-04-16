@@ -40,13 +40,13 @@ export function MainContent(): React.JSX.Element {
       <div className="min-h-0 overflow-y-auto rounded-lg bg-linear-to-b from-dark to-white/10 border border-white/10">
         <div className="flex w-full divide-x divide-white/10">
           <div
-            className={`py-2 px-3 flex-1 text-white/50 text-center ${activeContent !== 'export' ? 'bg-black/50 border-b border-white/10' : 'bg-linear-to-t from-transparent to-white/10'}`}
+            className={`py-2 px-3 flex-1 text-center cursor-pointer ${activeContent !== 'export' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark' : 'bg-dark text-white'}`}
             onClick={() => setActiveContent('export')}
           >
             Export Settings
           </div>
           <div
-            className={`py-2 px-3 flex-1 text-white/50 text-center ${activeContent !== 'settings' ? 'bg-black/50 border-b border-white/10' : 'bg-linear-to-t from-transparent to-white/10'}`}
+            className={`py-2 px-3 flex-1 text-center cursor-pointer ${activeContent !== 'settings' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark' : 'bg-dark text-white'}`}
             onClick={() => setActiveContent('settings')}
           >
             Preferences

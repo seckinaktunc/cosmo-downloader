@@ -46,6 +46,7 @@ import {
 interface IconProps {
   name: IconName
   size?: number
+  thickness?: number
   color?: string
   className?: string
   style?: React.CSSProperties
@@ -102,6 +103,7 @@ export type IconName = keyof typeof iconMap
 export default function Icon({
   name,
   size = 20,
+  thickness = 2,
   style,
   filled = false,
   ...props
@@ -118,6 +120,7 @@ export default function Icon({
 
   return (
     <IconComponent
+      stroke={thickness}
       style={{
         width: `${size / 16}rem`,
         height: `${size / 16}rem`,

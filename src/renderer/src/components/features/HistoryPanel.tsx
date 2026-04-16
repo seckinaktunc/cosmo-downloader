@@ -1,3 +1,4 @@
+import { useUiStore } from '@renderer/stores/uiStore'
 import { formatDuration } from '../../lib/formatters'
 import { useHistoryStore } from '../../stores/historyStore'
 import { Button } from '../ui/Button'
@@ -9,17 +10,27 @@ export function HistoryPanel(): React.JSX.Element {
   const requeue = useHistoryStore((state) => state.requeue)
   const openOutput = useHistoryStore((state) => state.openOutput)
   const copySource = useHistoryStore((state) => state.copySource)
+  const setActivePanel = useUiStore((state) => state.setActivePanel)
 
   return (
     <section className="grid gap-4 text-white">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold">History</h2>
-          <p className="text-sm text-white/50">
-            {entries.length === 0 ? 'No download history' : `${entries.length} download(s)`}
+      <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-white/10 bg-black/70 p-4 backdrop-blur">
+        <div className="min-w-0">
+          <h2 className="truncate text-xl font-bold">Download History</h2>
+          <p className="truncate text-sm text-white/50">
+            {entries.length === 0 ? 'No downloads' : `${entries.length} downloaded item(s)`}
           </p>
         </div>
-        <Button icon="trash" label="Clear" size="sm" ghost onClick={() => void clear()} />
+        <div className="flex shrink-0">
+          <Button
+            icon="close"
+            label={`Close`}
+            className="absolute top-2 right-1"
+            onlyIcon
+            ghost
+            onClick={() => setActivePanel('metadata')}
+          />
+        </div>
       </div>
 
       <div className="grid gap-2">

@@ -26,7 +26,7 @@ export function RadioBoxes<T extends string>({
               'flex cursor-pointer items-center justify-center rounded-sm border px-3 py-2 text-sm font-semibold uppercase transition h-16',
               value === option.value
                 ? 'border-white bg-white text-black'
-                : 'border-white/10 bg-white/5 text-white hover:bg-white/10',
+                : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white',
               option.disabled && 'cursor-not-allowed opacity-40'
             )}
           >
