@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { AppSettings, DownloadStage, VideoMetadata } from '../../../shared/types'
 import { validateUrl } from '../lib/validateUrl'
 import { classifyVideoUrl } from '../lib/videoUrlClassifier'
+import { useDownloadStore } from './downloadStore'
+import { useUiStore } from './uiStore'
 
 type VideoState = {
   url: string
@@ -25,6 +27,8 @@ export const useVideoStore = create<VideoState>((set, get) => ({
       void window.cosmo.video.cancelMetadata({ requestId })
     }
 
+    useUiStore.getState().clearPreviewExportTarget()
+    useDownloadStore.getState().resetForNewPreview()
     set({
       url,
       metadata: null,
@@ -40,6 +44,8 @@ export const useVideoStore = create<VideoState>((set, get) => ({
       void window.cosmo.video.cancelMetadata({ requestId })
     }
 
+    useUiStore.getState().clearPreviewExportTarget()
+    useDownloadStore.getState().clearPreviewDownloadState()
     set({ url: '', metadata: null, stage: 'idle', error: undefined, activeRequestId: undefined })
   },
 
@@ -80,6 +86,8 @@ export const useVideoStore = create<VideoState>((set, get) => ({
     }
 
     if (result.ok) {
+      useUiStore.getState().initializePreviewExportSettings()
+      useDownloadStore.getState().resetForNewPreview()
       set({ metadata: result.data, stage: 'ready', error: undefined, activeRequestId: undefined })
       return
     }
