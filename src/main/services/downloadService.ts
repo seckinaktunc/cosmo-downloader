@@ -22,6 +22,7 @@ import type {
   VideoCodec
 } from '../../shared/types'
 import { isAudioOnlyFormat } from '../../shared/formatOptions'
+import { APP_ICON } from '../appIdentity'
 import { BinaryMissingError, BinaryService, type BinaryPaths } from './binaryService'
 import { createDownloadPlan } from './formatPlanner'
 import { createUniquePath } from './filename'
@@ -541,6 +542,7 @@ export class DownloadService {
     new Notification({
       title: 'Download complete',
       body: title,
+      icon: APP_ICON,
       silent: false
     })
       .on('click', () => {

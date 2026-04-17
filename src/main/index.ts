@@ -1,9 +1,11 @@
 import { app, shell, BrowserWindow, type BrowserWindowConstructorOptions } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { APP_ICON, APP_ID, APP_NAME } from './appIdentity'
 import { registerIpcHandlers } from './ipc/registerIpc'
 import { readStartupAlwaysOnTop, readStartupHardwareAcceleration } from './services/settingsService'
+
+app.setName(APP_NAME)
 
 if (!readStartupHardwareAcceleration()) {
   app.disableHardwareAcceleration()
@@ -37,12 +39,12 @@ function createWindow(): void {
     height: 760,
     minWidth: 980,
     minHeight: 680,
-    title: 'Cosmo Downloader',
+    title: APP_NAME,
     show: false,
     alwaysOnTop: readStartupAlwaysOnTop(),
     autoHideMenuBar: true,
     ...getWindowChromeOptions(),
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform !== 'darwin' ? { icon: APP_ICON } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -74,7 +76,11 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.cosmo.downloader')
+  electronApp.setAppUserModelId(APP_ID)
+
+  if (process.platform === 'darwin' && is.dev) {
+    app.dock?.setIcon(APP_ICON)
+  }
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
