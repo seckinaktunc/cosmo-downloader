@@ -9,11 +9,17 @@ import type { ReactNode } from 'react'
 
 type TooltipProps = {
   label: string
+  type?: 'default' | 'error'
   children: ReactNode
   placement?: FloatingPlacement
 }
 
-export function Tooltip({ label, children, placement = 'top' }: TooltipProps): React.JSX.Element {
+export function Tooltip({
+  label,
+  type = 'default',
+  children,
+  placement = 'top'
+}: TooltipProps): React.JSX.Element {
   const tooltipId = useId()
   const anchorRef = useRef<HTMLSpanElement | null>(null)
   const tooltipRef = useRef<HTMLSpanElement | null>(null)
@@ -91,7 +97,13 @@ export function Tooltip({ label, children, placement = 'top' }: TooltipProps): R
               id={tooltipId}
               ref={tooltipRef}
               role="tooltip"
-              className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md bg-white px-2 py-1 text-xs text-black shadow-lg"
+              className={`
+              pointer-events-none fixed z-50 inline-block
+        w-fit max-w-[min(28rem,calc(100vw-1rem))]
+        whitespace-normal wrap-break-word text-center
+        rounded-md border ${type === 'default' ? 'border-white/10 bg-white/10 text-white/50' : 'border-primary/50 bg-primary/25 text-primary'}
+        px-3 py-2 text-sm shadow-lg backdrop-blur-lg
+              `}
               style={{
                 left: position?.left ?? -9999,
                 top: position?.top ?? -9999,
