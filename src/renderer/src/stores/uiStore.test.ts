@@ -4,9 +4,31 @@ import { useUiStore } from './uiStore'
 
 beforeEach(() => {
   useUiStore.setState({
+    activePanel: 'metadata',
+    previousMediaPanel: 'metadata',
     activeExportTarget: null,
     previewExportSettings: DEFAULT_EXPORT_SETTINGS,
     lastEditableExportSettings: DEFAULT_EXPORT_SETTINGS
+  })
+})
+
+describe('useUiStore media panel history', () => {
+  it('restores the previous media panel when toggling the active panel closed', () => {
+    useUiStore.getState().openMediaPanel('queue')
+
+    expect(useUiStore.getState().activePanel).toBe('queue')
+
+    useUiStore.getState().toggleMediaPanel('queue')
+
+    expect(useUiStore.getState().activePanel).toBe('metadata')
+  })
+
+  it('keeps one-step history across queue and history panels', () => {
+    useUiStore.getState().openMediaPanel('queue')
+    useUiStore.getState().openMediaPanel('history')
+    useUiStore.getState().closeMediaPanel()
+
+    expect(useUiStore.getState().activePanel).toBe('queue')
   })
 })
 
