@@ -21,7 +21,7 @@ const sizeClasses: Record<ButtonSize, { base: string; square: string; icon: numb
   xl: { base: 'h-14 px-4 gap-3 text-base', square: 'size-14', icon: 26 },
   lg: { base: 'h-12 px-4 text-sm', square: 'size-12', icon: 24 },
   md: { base: 'h-11 px-3 text-sm', square: 'size-11', icon: 22 },
-  sm: { base: 'h-9 px-2.5 text-xs', square: 'size-9', icon: 20 },
+  sm: { base: 'h-10 px-2.5 text-xs', square: 'size-10', icon: 20 },
   xs: { base: 'h-8 px-2 text-xs', square: 'size-8', icon: 18 }
 }
 
@@ -50,7 +50,7 @@ export function Button({
         onlyIcon ? resolvedSize.square : resolvedSize.base,
         ghost
           ? 'bg-transparent opacity-50 hover:bg-transparent hover:opacity-100'
-          : 'bg-white/5 hover:bg-white/10',
+          : 'bg-white/5 hover:bg-white/10 border border-white/10',
         active && !ghost && 'bg-white text-black hover:bg-white',
         active && ghost && 'opacity-100',
         className
