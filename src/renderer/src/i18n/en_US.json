@@ -6,18 +6,24 @@
     "placeholder": "Paste a video link",
     "unsupported": "Only single-video links are supported.",
     "fetching": "Fetching metadata...",
-    "ready": "Ready to download"
+    "ready": "Ready to download",
+    "action": "Search",
+    "contextMenu": "URL actions"
   },
   "actions": {
     "download": "Download Video",
     "cancel": "Cancel",
     "clear": "Clear",
+    "close": "Close",
+    "paste": "Paste",
     "queueDisabled": "Queue is not available in this version",
     "history": "History",
     "exportSettings": "Export settings",
     "settings": "Settings",
     "choose": "Choose",
-    "pin": "Always on top"
+    "pin": "Always on top",
+    "deleteCount": "Delete ({{count}})",
+    "itemActions": "Actions for {{title}}"
   },
   "download": {
     "idle": "Idle",
@@ -32,13 +38,20 @@
   },
   "settings": {
     "title": "Settings",
+    "loading": "Loading settings...",
+    "englishUs": "English (US)",
     "hardwareAcceleration": "Hardware acceleration",
+    "hardwareAccelerationDescription": "Uses GPU for better processing performance (recommended).",
     "automaticUpdates": "Check for updates automatically",
     "cookiesBrowser": "Browser to use for cookies",
+    "cookiesBrowserDescription": "Imports cookies from the selected browser to access to protected content more reliably (recommended).",
     "alwaysAsk": "Always ask for download location",
     "downloadLocation": "Default download location",
     "language": "Interface language",
     "restartRequired": "Restart required for hardware acceleration changes."
+  },
+  "layout": {
+    "resizeMediaOverview": "Resize media overview"
   },
   "export": {
     "title": "Export",
@@ -49,6 +62,84 @@
     "format": "Output format",
     "videoCodec": "Video codec",
     "audioCodec": "Audio codec",
+    "savePath": "Download file",
+    "noSavePath": "Choose where this video will be saved",
     "auto": "Auto"
+  },
+  "exportTarget": {
+    "queuedEditable": "Editing queued video settings",
+    "queuedReadOnly": "Queue item settings are read-only",
+    "historyReadOnly": "History settings are read-only",
+    "previewEditable": "Editing preview video settings",
+    "unavailable": "Select a video to edit export settings"
+  },
+  "metadata": {
+    "fetching": "Fetching metadata",
+    "emptyTitle": "Paste a video link",
+    "emptyDescription": "Or drag and drop here",
+    "unknownUploader": "Unknown uploader"
+  },
+  "thumbnail": {
+    "download": "Download thumbnail",
+    "copyImage": "Copy image",
+    "openBrowser": "Open thumbnail in browser",
+    "copied": "Copied!",
+    "saved": "Saved!",
+    "opened": "Opened",
+    "removed": "Removed",
+    "done": "Done",
+    "failed": "Failed"
+  },
+  "bottom": {
+    "startDownload": "Start Download",
+    "newVideo": "New Video",
+    "noVideo": "No video selected",
+    "pasteToBegin": "Paste a video link to begin",
+    "queueProgress": "Queue {{index}} of {{total}} ({{percent}})"
+  },
+  "common": {
+    "noDetails": "No details"
+  },
+  "queue": {
+    "title": "Queue",
+    "empty": "No queued downloads",
+    "itemCount": "{{count}} queued item(s)",
+    "add": "Add to Queue",
+    "addDuplicate": "Add Duplicate",
+    "duplicateTitle": "Add duplicate?",
+    "duplicateMessage": "This video is already in the queue. Add another copy with the current settings?",
+    "itemActions": "Queue item actions",
+    "actions": {
+      "retry": "Retry",
+      "remove": "Remove"
+    },
+    "status": {
+      "active": "Active",
+      "activePercent": "Active {{percent}}",
+      "pending": "Pending",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "history": {
+    "title": "Download History",
+    "empty": "No downloads",
+    "itemCount": "{{count}} downloaded item(s)",
+    "itemActions": "History item actions",
+    "actions": {
+      "open": "Open",
+      "openMedia": "Open Media",
+      "openFolder": "Open Folder",
+      "requeue": "Requeue",
+      "copyUrl": "Copy URL"
+    },
+    "status": {
+      "started": "Started",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    }
   }
 }
