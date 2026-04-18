@@ -55,6 +55,7 @@ function readItems(filePath: string): QueueItem[] {
           ? { status: 'paused' as const, updatedAt: now(), progress: undefined }
           : {})
       }))
+      .filter((item) => item.status !== 'completed' && item.status !== 'cancelled')
   } catch {
     return []
   }
@@ -115,6 +116,7 @@ export class QueueService {
       metadata: entry.metadata,
       exportSettings: mergeExportSettings(entry.exportSettings),
       settings: entry.settings,
+      requestedOutputPath: entry.exportSettings.savePath,
       status: 'pending',
       createdAt: timestamp,
       updatedAt: timestamp
@@ -255,6 +257,7 @@ export class QueueService {
     }
 
     item.exportSettings = mergeExportSettings(request.exportSettings)
+    item.requestedOutputPath = item.exportSettings.savePath
     item.updatedAt = now()
     this.writeAndBroadcast()
     return ok(this.getSnapshot())
@@ -289,8 +292,13 @@ export class QueueService {
         this.updateItem(item.id, { status: 'paused', progress: undefined, updatedAt: now() })
         this.historyService.update(historyEntry.id, 'cancelled', { error: 'Paused.' })
       } else {
-        this.updateItem(item.id, { status: 'cancelled', progress: undefined, updatedAt: now() })
+        this.updateItem(
+          item.id,
+          { status: 'cancelled', progress: undefined, updatedAt: now() },
+          false
+        )
         this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' })
+        this.pruneTerminalItems()
       }
 
       this.running = false
@@ -328,32 +336,49 @@ export class QueueService {
       this.updateItem(item.id, { status: 'paused', progress: undefined, updatedAt: now() })
       this.historyService.update(historyEntry.id, 'cancelled', { error: 'Paused.' })
     } else if (this.cancelRequested) {
-      this.updateItem(item.id, {
-        status: 'cancelled',
-        progress: result.ok ? result.data : undefined
-      })
+      this.updateItem(
+        item.id,
+        {
+          status: 'cancelled',
+          progress: result.ok ? result.data : undefined
+        },
+        false
+      )
       this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' })
+      this.pruneTerminalItems()
     } else if (result.ok) {
-      this.updateItem(item.id, {
-        status: 'completed',
-        outputPath: result.data.outputPath,
-        progress: result.data
-      })
+      this.updateItem(
+        item.id,
+        {
+          status: 'completed',
+          outputPath: result.data.outputPath,
+          progress: result.data
+        },
+        false
+      )
       this.historyService.update(historyEntry.id, 'completed', {
         outputPath: result.data.outputPath
       })
+      this.pruneTerminalItems()
     } else {
       const status = result.error.code === 'CANCELLED' ? 'cancelled' : 'failed'
-      this.updateItem(item.id, {
-        status,
-        error: result.error.message,
-        logPath: result.error.details,
-        progress: undefined
-      })
+      this.updateItem(
+        item.id,
+        {
+          status,
+          error: result.error.message,
+          logPath: result.error.details,
+          progress: undefined
+        },
+        status !== 'cancelled'
+      )
       this.historyService.update(historyEntry.id, status, {
         error: result.error.message,
         logPath: result.error.details
       })
+      if (status === 'cancelled') {
+        this.pruneTerminalItems()
+      }
     }
 
     this.running = false
@@ -373,6 +398,12 @@ export class QueueService {
 
   private getActiveItem(): QueueItem | undefined {
     return this.items.find((item) => item.status === 'active')
+  }
+
+  private pruneTerminalItems(): void {
+    this.items = this.items.filter(
+      (item) => item.status !== 'completed' && item.status !== 'cancelled'
+    )
   }
 
   private updateItem(
@@ -395,15 +426,18 @@ export class QueueService {
   private async resolveRequestedOutputPath(
     request: QueueAddRequest
   ): Promise<string | undefined | null> {
-    if (!request.settings.alwaysAskDownloadLocation) {
-      return request.outputPath
+    const explicitOutputPath = request.outputPath ?? request.exportSettings.savePath
+    if (explicitOutputPath || !request.settings.alwaysAskDownloadLocation) {
+      return explicitOutputPath
     }
 
     const extension = request.exportSettings.outputFormat
     const result = await dialog.showSaveDialog({
       title: 'Save queued download',
       defaultPath: createUniquePath(
-        request.settings.defaultDownloadLocation || app.getPath('downloads'),
+        request.settings.lastDownloadDirectory ||
+          request.settings.defaultDownloadLocation ||
+          app.getPath('downloads'),
         request.metadata.title,
         extension
       ),

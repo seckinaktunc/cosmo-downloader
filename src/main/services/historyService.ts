@@ -117,6 +117,26 @@ export class HistoryService {
     return true
   }
 
+  async openMedia(entryId: string): Promise<boolean> {
+    const outputPath = this.find(entryId)?.outputPath
+    if (!outputPath || !existsSync(outputPath)) {
+      return false
+    }
+
+    const error = await shell.openPath(outputPath)
+    return error.length === 0
+  }
+
+  async openFolder(entryId: string): Promise<boolean> {
+    const outputPath = this.find(entryId)?.outputPath
+    if (!outputPath || !existsSync(outputPath)) {
+      return false
+    }
+
+    shell.showItemInFolder(outputPath)
+    return true
+  }
+
   copySource(entryId: string): boolean {
     const url = this.find(entryId)?.metadata.webpageUrl ?? this.find(entryId)?.metadata.url
     if (!url) {

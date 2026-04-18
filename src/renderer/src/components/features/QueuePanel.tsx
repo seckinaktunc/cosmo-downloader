@@ -1,4 +1,5 @@
 import { useUiStore } from '@renderer/stores/uiStore'
+import { useTranslation } from 'react-i18next'
 import { movePendingItems } from '../../../../shared/queueModel'
 import type { QueueItem } from '../../../../shared/types'
 import { formatPercent, formatTransferDetail } from '../../lib/formatters'
@@ -6,16 +7,20 @@ import { useQueueStore } from '../../stores/queueStore'
 import { InteractiveItemPanel } from '../ui/InteractiveItemPanel'
 import type { ActionMenuItem } from '../ui/ActionMenu'
 
-function statusLabel(item: QueueItem): string {
+function statusLabel(
+  item: QueueItem,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   if (item.status === 'active') {
     const percent = formatPercent(item.progress?.percentage)
-    return percent ? `Active ${percent}` : 'Active'
+    return percent ? t('queue.status.activePercent', { percent }) : t('queue.status.active')
   }
 
-  return item.status.charAt(0).toUpperCase() + item.status.slice(1)
+  return t(`queue.status.${item.status}`)
 }
 
 export function QueuePanel(): React.JSX.Element {
+  const { t } = useTranslation()
   const items = useQueueStore((state) => state.items)
   const cancelActive = useQueueStore((state) => state.cancelActive)
   const remove = useQueueStore((state) => state.remove)
@@ -26,7 +31,7 @@ export function QueuePanel(): React.JSX.Element {
   const activeExportTarget = useUiStore((state) => state.activeExportTarget)
   const setActiveExportTarget = useUiStore((state) => state.setActiveExportTarget)
   const setActiveContent = useUiStore((state) => state.setActiveContent)
-  const setActivePanel = useUiStore((state) => state.setActivePanel)
+  const closeMediaPanel = useUiStore((state) => state.closeMediaPanel)
 
   const getActions = (item: QueueItem): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = []
@@ -34,7 +39,7 @@ export function QueuePanel(): React.JSX.Element {
     if (item.status === 'failed' || item.status === 'cancelled' || item.status === 'paused') {
       actions.push({
         id: 'retry',
-        label: 'Retry',
+        label: t('queue.actions.retry'),
         icon: 'reload',
         onSelect: () => void retry(item.id)
       })
@@ -43,7 +48,7 @@ export function QueuePanel(): React.JSX.Element {
     if (item.status === 'active') {
       actions.push({
         id: 'cancel',
-        label: 'Cancel',
+        label: t('actions.cancel'),
         icon: 'close',
         danger: true,
         onSelect: () => void cancelActive()
@@ -53,7 +58,7 @@ export function QueuePanel(): React.JSX.Element {
     if (item.status !== 'active') {
       actions.push({
         id: 'remove',
-        label: 'Remove',
+        label: t('queue.actions.remove'),
         icon: 'trash',
         danger: true,
         onSelect: () => void remove(item.id)
@@ -65,14 +70,16 @@ export function QueuePanel(): React.JSX.Element {
 
   return (
     <InteractiveItemPanel
-      title="Queue"
-      subtitle={items.length === 0 ? 'No queued downloads' : `${items.length} queued item(s)`}
+      title={t('queue.title')}
+      subtitle={
+        items.length === 0 ? t('queue.empty') : t('queue.itemCount', { count: items.length })
+      }
       items={items}
       getId={(item) => item.id}
       getTitle={(item) => item.metadata.title}
       getThumbnail={(item) => item.metadata.thumbnail}
       getLeadingLabel={(_item, index) => `#${index + 1}`}
-      getStatusLabel={statusLabel}
+      getStatusLabel={(item) => statusLabel(item, t)}
       getDetail={(item) => item.error ?? formatTransferDetail(item.progress)}
       getActions={getActions}
       activeItemId={activeExportTarget?.type === 'queue' ? activeExportTarget.itemId : undefined}
@@ -87,8 +94,19 @@ export function QueuePanel(): React.JSX.Element {
       }
       moveItems={(itemIds, targetIndex) => void moveMany(itemIds, targetIndex)}
       onDeleteSelected={(itemIds) => void removeMany(itemIds)}
+      onClearSelection={() => {
+        if (activeExportTarget?.type === 'queue') {
+          setActiveExportTarget(null)
+        }
+      }}
       onClear={() => void clear()}
-      onClose={() => setActivePanel('metadata')}
+      onClose={closeMediaPanel}
+      emptyDetail={t('common.noDetails')}
+      clearLabel={t('actions.clear')}
+      deleteLabel={(count) => t('actions.deleteCount', { count })}
+      closeLabel={t('actions.close')}
+      actionsLabel={(title) => t('actions.itemActions', { title })}
+      menuLabel={t('queue.itemActions')}
     />
   )
 }

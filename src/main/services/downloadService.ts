@@ -347,9 +347,10 @@ export class DownloadService {
   private async resolveDestination(request: DownloadStartRequest): Promise<string | null> {
     const extension = request.exportSettings.outputFormat
 
-    if (request.outputPath) {
-      const parsed = parse(request.outputPath)
-      const outputExtension = extname(request.outputPath).replace(/^\./, '') || extension
+    const requestedPath = request.outputPath ?? request.exportSettings.savePath
+    if (requestedPath) {
+      const parsed = parse(requestedPath)
+      const outputExtension = extname(requestedPath).replace(/^\./, '') || extension
       ensureDirectory(parsed.dir)
       return createUniquePath(parsed.dir, parsed.name, outputExtension)
     }
@@ -358,7 +359,9 @@ export class DownloadService {
       const result = await dialog.showSaveDialog({
         title: 'Save download',
         defaultPath: createUniquePath(
-          request.settings.defaultDownloadLocation || app.getPath('downloads'),
+          request.settings.lastDownloadDirectory ||
+            request.settings.defaultDownloadLocation ||
+            app.getPath('downloads'),
           request.metadata.title,
           extension
         ),

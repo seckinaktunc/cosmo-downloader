@@ -6,6 +6,7 @@ import type {
   QueueSnapshot,
   VideoMetadata
 } from '../../../shared/types'
+import { useUiStore } from './uiStore'
 
 type QueueState = {
   items: QueueItem[]
@@ -31,8 +32,17 @@ type QueueState = {
   move: (itemId: string, targetIndex: number) => Promise<void>
   moveMany: (itemIds: string[], targetIndex: number) => Promise<void>
   updateExportSettings: (itemId: string, exportSettings: ExportSettings) => Promise<void>
+  updateExportSettingsDebounced: (itemId: string, exportSettings: ExportSettings) => void
+  flushExportSettingsSaves: () => Promise<void>
   clear: () => Promise<void>
 }
+
+type PendingExportSettingsSave = {
+  timer: number
+  exportSettings: ExportSettings
+}
+
+const pendingExportSettingsSaves = new Map<string, PendingExportSettingsSave>()
 
 function applySnapshot(set: (state: Partial<QueueState>) => void, snapshot: QueueSnapshot): void {
   set({
@@ -41,6 +51,38 @@ function applySnapshot(set: (state: Partial<QueueState>) => void, snapshot: Queu
     paused: snapshot.paused,
     error: undefined
   })
+
+  const activeExportTarget = useUiStore.getState().activeExportTarget
+  if (
+    activeExportTarget?.type === 'queue' &&
+    !snapshot.items.some((item) => item.id === activeExportTarget.itemId)
+  ) {
+    useUiStore.getState().setActiveExportTarget(null)
+  }
+}
+
+function optimisticallyApplyExportSettings(
+  set: (state: Partial<QueueState> | ((state: QueueState) => Partial<QueueState>)) => void,
+  itemId: string,
+  exportSettings: ExportSettings
+): void {
+  set((state) => ({
+    items: state.items.map((item) =>
+      item.id === itemId
+        ? { ...item, exportSettings, requestedOutputPath: exportSettings.savePath }
+        : item
+    )
+  }))
+}
+
+async function saveExportSettings(
+  set: (state: Partial<QueueState>) => void,
+  itemId: string,
+  exportSettings: ExportSettings
+): Promise<void> {
+  const result = await window.cosmo.queue.updateExportSettings({ itemId, exportSettings })
+  if (result.ok) applySnapshot(set, result.data)
+  else set({ error: result.error.message })
 }
 
 export const useQueueStore = create<QueueState>((set, get) => ({
@@ -145,9 +187,39 @@ export const useQueueStore = create<QueueState>((set, get) => ({
   },
 
   updateExportSettings: async (itemId, exportSettings) => {
-    const result = await window.cosmo.queue.updateExportSettings({ itemId, exportSettings })
-    if (result.ok) applySnapshot(set, result.data)
-    else set({ error: result.error.message })
+    const pending = pendingExportSettingsSaves.get(itemId)
+    if (pending) {
+      window.clearTimeout(pending.timer)
+      pendingExportSettingsSaves.delete(itemId)
+    }
+
+    optimisticallyApplyExportSettings(set, itemId, exportSettings)
+    await saveExportSettings(set, itemId, exportSettings)
+  },
+
+  updateExportSettingsDebounced: (itemId, exportSettings) => {
+    const pending = pendingExportSettingsSaves.get(itemId)
+    if (pending) {
+      window.clearTimeout(pending.timer)
+    }
+
+    optimisticallyApplyExportSettings(set, itemId, exportSettings)
+    const timer = window.setTimeout(() => {
+      pendingExportSettingsSaves.delete(itemId)
+      void saveExportSettings(set, itemId, exportSettings)
+    }, 300)
+    pendingExportSettingsSaves.set(itemId, { timer, exportSettings })
+  },
+
+  flushExportSettingsSaves: async () => {
+    const saves = Array.from(pendingExportSettingsSaves.entries())
+    pendingExportSettingsSaves.clear()
+    await Promise.all(
+      saves.map(([itemId, pending]) => {
+        window.clearTimeout(pending.timer)
+        return saveExportSettings(set, itemId, pending.exportSettings)
+      })
+    )
   },
 
   clear: async () => {
