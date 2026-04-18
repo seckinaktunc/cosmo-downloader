@@ -42,11 +42,21 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
     }
 
     window.cosmo.download.onProgress((progress) => {
-      set({
+      set((state) => ({
         stage: progress.stage,
         progress,
-        error: progress.stage === 'failed' ? progress.message : undefined
-      })
+        error: progress.stage === 'failed' ? progress.message : undefined,
+        ...(progress.stage === 'completed' &&
+        progress.queuedItemId != null &&
+        progress.queuedItemId === state.trackedPreviewQueueItemId &&
+        state.trackedPreviewUrl
+          ? {
+              completedPreviewUrl: state.trackedPreviewUrl,
+              trackedPreviewQueueItemId: undefined,
+              trackedPreviewUrl: undefined
+            }
+          : {})
+      }))
     })
     set({ isSubscribed: true })
   },
