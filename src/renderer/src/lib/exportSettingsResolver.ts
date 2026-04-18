@@ -17,6 +17,22 @@ export type ResolvedExportSettingsTarget = {
   label: string
 }
 
+type ExportSettingsTargetLabels = {
+  queuedEditable: string
+  queuedReadOnly: string
+  historyReadOnly: string
+  previewEditable: string
+  unavailable: string
+}
+
+const DEFAULT_LABELS: ExportSettingsTargetLabels = {
+  queuedEditable: 'Editing queued video settings',
+  queuedReadOnly: 'Queue item settings are read-only',
+  historyReadOnly: 'History settings are read-only',
+  previewEditable: 'Editing preview video settings',
+  unavailable: 'Select a video to edit export settings'
+}
+
 export function isQueueExportEditable(status: QueueItemStatus): boolean {
   return (
     status === 'pending' || status === 'paused' || status === 'failed' || status === 'cancelled'
@@ -28,13 +44,15 @@ export function resolveExportSettingsTarget({
   previewMetadata,
   previewExportSettings,
   queueItems,
-  historyEntries
+  historyEntries,
+  labels = DEFAULT_LABELS
 }: {
   activeTarget: ActiveExportTarget | null
   previewMetadata: VideoMetadata | null
   previewExportSettings: ExportSettings
   queueItems: QueueItem[]
   historyEntries: DownloadHistoryEntry[]
+  labels?: ExportSettingsTargetLabels
 }): ResolvedExportSettingsTarget {
   if (activeTarget?.type === 'queue') {
     const item = queueItems.find((candidate) => candidate.id === activeTarget.itemId)
@@ -46,7 +64,7 @@ export function resolveExportSettingsTarget({
         exportSettings: item.exportSettings,
         readOnly: !editable,
         editable,
-        label: editable ? 'Editing queued video settings' : 'Queue item settings are read-only'
+        label: editable ? labels.queuedEditable : labels.queuedReadOnly
       }
     }
   }
@@ -60,7 +78,7 @@ export function resolveExportSettingsTarget({
         exportSettings: entry.exportSettings,
         readOnly: true,
         editable: false,
-        label: 'History settings are read-only'
+        label: labels.historyReadOnly
       }
     }
   }
@@ -72,7 +90,7 @@ export function resolveExportSettingsTarget({
       exportSettings: previewExportSettings,
       readOnly: false,
       editable: true,
-      label: 'Editing preview video settings'
+      label: labels.previewEditable
     }
   }
 
@@ -82,6 +100,6 @@ export function resolveExportSettingsTarget({
     exportSettings: DEFAULT_EXPORT_SETTINGS,
     readOnly: true,
     editable: false,
-    label: 'Select a video to edit export settings'
+    label: labels.unavailable
   }
 }
