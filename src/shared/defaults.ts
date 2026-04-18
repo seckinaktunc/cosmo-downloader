@@ -7,7 +7,8 @@ export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
   audioBitrate: 'auto',
   frameRate: 'auto',
   videoCodec: 'auto',
-  audioCodec: 'auto'
+  audioCodec: 'auto',
+  savePath: undefined
 }
 
 function isRecord(value: unknown): value is Partial<ExportSettings> {
@@ -21,7 +22,11 @@ export function mergeExportSettings(value: unknown): ExportSettings {
 
   return {
     ...DEFAULT_EXPORT_SETTINGS,
-    ...value
+    ...value,
+    savePath:
+      typeof value.savePath === 'string' && value.savePath.trim().length > 0
+        ? value.savePath
+        : undefined
   }
 }
 
@@ -31,6 +36,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     automaticUpdates: true,
     alwaysAskDownloadLocation: false,
     defaultDownloadLocation: downloadsPath,
+    lastDownloadDirectory: downloadsPath,
     interfaceLanguage: 'en_US',
     cookiesBrowser: 'none',
     alwaysOnTop: false
