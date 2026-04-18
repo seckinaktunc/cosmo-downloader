@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { VideoMetadata } from '../../../../shared/types'
+import { useDisplayMetadata } from '../../hooks/useDisplayMetadata'
 import { getBottomButtonState } from '../../lib/bottomButtonState'
-import { formatDuration } from '../../lib/formatters'
 import { useDownloadStore } from '../../stores/downloadStore'
 import { useQueueStore } from '../../stores/queueStore'
 import { useSettingsStore } from '../../stores/settingsStore'
@@ -9,20 +10,26 @@ import { useUiStore } from '../../stores/uiStore'
 import { useVideoStore } from '../../stores/videoStore'
 import { Button } from '../ui/Button'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { Thumbnail } from '../ui/Thumbnail'
 
 function getSourceUrl(metadata: VideoMetadata): string {
   return metadata.webpageUrl ?? metadata.url
 }
 
 export function BottomBar(): React.JSX.Element {
+  const { t } = useTranslation()
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
   const metadata = useVideoStore((state) => state.metadata)
+  const displayMetadata = useDisplayMetadata()
   const videoStage = useVideoStore((state) => state.stage)
   const clearVideo = useVideoStore((state) => state.clear)
   const settings = useSettingsStore((state) => state.settings)
+  const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath)
   const previewExportSettings = useUiStore((state) => state.previewExportSettings)
+  const updatePreviewExportSettings = useUiStore((state) => state.updatePreviewExportSettings)
   const activePanel = useUiStore((state) => state.activePanel)
-  const setActivePanel = useUiStore((state) => state.setActivePanel)
+  const openMediaPanel = useUiStore((state) => state.openMediaPanel)
+  const toggleMediaPanel = useUiStore((state) => state.toggleMediaPanel)
   const activeContent = useUiStore((state) => state.activeContent)
   const downloadStage = useDownloadStore((state) => state.stage)
   const progress = useDownloadStore((state) => state.progress)
@@ -40,8 +47,9 @@ export function BottomBar(): React.JSX.Element {
   const startQueue = useQueueStore((state) => state.start)
   const resumeQueue = useQueueStore((state) => state.resume)
   const cancelActive = useQueueStore((state) => state.cancelActive)
+  const flushExportSettingsSaves = useQueueStore((state) => state.flushExportSettingsSaves)
   const activeItem = queueItems.find((item) => item.id === activeQueueItemId)
-  const summaryMetadata = activeItem?.metadata ?? metadata
+  const summaryMetadata = activeItem?.metadata ?? metadata ?? displayMetadata
   const canDownload = metadata != null && settings != null && videoStage === 'ready'
   const pendingItems = queueItems.filter((item) => item.status === 'pending')
   const hasPendingQueueItems = pendingItems.length > 0
@@ -63,7 +71,14 @@ export function BottomBar(): React.JSX.Element {
     videoStage,
     canDownloadPreview: canDownload,
     currentPreviewCompleted,
-    hasPendingQueueItems
+    hasPendingQueueItems,
+    labels: {
+      startDownload: t('bottom.startDownload'),
+      newVideo: t('bottom.newVideo'),
+      fetchingMetadata: t('metadata.fetching'),
+      queueProgress: (index, total, progressPercent) =>
+        t('bottom.queueProgress', { index, total, percent: progressPercent })
+    }
   })
   const activeProgress = activeItem?.progress ?? completedPreviewItem?.progress ?? progress
   const isActive = buttonText.mode === 'cancel'
@@ -97,11 +112,26 @@ export function BottomBar(): React.JSX.Element {
       return
     }
 
-    const added = await addToQueue(metadata, previewExportSettings, settings)
+    let exportSettings = previewExportSettings
+    if (settings.alwaysAskDownloadLocation && !exportSettings.savePath) {
+      const savePath = await chooseOutputPath({
+        title: metadata.title,
+        outputFormat: exportSettings.outputFormat
+      })
+
+      if (!savePath) {
+        return
+      }
+
+      exportSettings = updatePreviewExportSettings({ savePath })
+    }
+
+    const added = await addToQueue(metadata, exportSettings, settings)
     if (added) {
       trackPreviewDownload(added.id, getSourceUrl(metadata))
+      await flushExportSettingsSaves()
       await startQueue()
-      setActivePanel('queue')
+      openMediaPanel('queue')
     }
   }
 
@@ -127,28 +157,26 @@ export function BottomBar(): React.JSX.Element {
     }
 
     if (buttonText.mode === 'start' && hasPendingQueueItems) {
-      void (queuePaused ? resumeQueue() : startQueue())
+      void (async () => {
+        await flushExportSettingsSaves()
+        await (queuePaused ? resumeQueue() : startQueue())
+      })()
     }
   }
 
   return (
     <footer className="grid grid-cols-[1fr_auto] items-center gap-y-2 bg-black p-2">
       <div className="flex min-w-0 max-w-[75%] items-center gap-3">
-        <div className="relative aspect-video h-16 overflow-hidden rounded-lg bg-white/10 shrink-0">
-          {summaryMetadata?.thumbnail ? (
-            <img
-              src={summaryMetadata.thumbnail}
-              alt=""
-              className="size-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          ) : null}
-          {summaryMetadata?.duration ? (
-            <span className="absolute bottom-1 right-1 bg-black/50 px-1 py-0.5 rounded-sm text-sm font-bold">
-              {formatDuration(summaryMetadata.duration)}
-            </span>
-          ) : null}
-        </div>
+        <Thumbnail
+          src={summaryMetadata?.thumbnail}
+          title={summaryMetadata?.title}
+          duration={summaryMetadata?.duration}
+          className="aspect-video h-16 rounded-lg bg-white/10 shrink-0 border border-white/10"
+          actionSize="xs"
+          showPlaceholderIcon={false}
+          actionsEnabled={false}
+          onClick={() => openMediaPanel('metadata')}
+        />
         <div className="flex min-w-0 flex-col items-start">
           {summaryMetadata?.platform ? (
             <span className="text-sm font-bold uppercase tracking-wide text-primary">
@@ -161,16 +189,22 @@ export function BottomBar(): React.JSX.Element {
             rel="noreferrer"
             className="block max-w-full truncate font-bold underline-offset-2 hover:underline text-white"
           >
-            {summaryMetadata?.title ?? 'No video selected'}
+            {summaryMetadata?.title ?? t('bottom.noVideo')}
           </a>
-          <a
-            href={summaryMetadata?.uploader}
-            target="_blank"
-            rel="noreferrer"
-            className="block max-w-full truncate text-sm underline-offset-2 hover:underline text-white/50"
-          >
-            {summaryMetadata?.uploader ?? 'Paste a video link to begin'}
-          </a>
+          {summaryMetadata?.uploaderUrl ? (
+            <a
+              href={summaryMetadata.uploaderUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="block max-w-full truncate text-sm underline-offset-2 hover:underline text-white/50"
+            >
+              {summaryMetadata.uploader ?? t('bottom.pasteToBegin')}
+            </a>
+          ) : (
+            <span className="block max-w-full truncate text-sm text-white/50">
+              {summaryMetadata?.uploader ?? t('bottom.pasteToBegin')}
+            </span>
+          )}
         </div>
       </div>
 
@@ -202,28 +236,28 @@ export function BottomBar(): React.JSX.Element {
         </Button>
         <Button
           icon="list"
-          label="Queue"
-          tooltip="Queue"
+          label={t('queue.title')}
+          tooltip={t('queue.title')}
           onlyIcon
           active={activePanel === 'queue'}
-          onClick={() => setActivePanel(activePanel === 'queue' ? null : 'queue')}
+          onClick={() => toggleMediaPanel('queue')}
           size="xl"
         />
       </div>
 
-      <div className="col-span-3 h-2 overflow-hidden rounded-lg bg-white/10">
+      <div className="col-span-3 h-2 overflow-hidden rounded-lg bg-white/10 border border-white/10">
         <div
-          className="h-full rounded-lg bg-primary transition-all"
+          className="h-full rounded-lg bg-linear-to-r from-primary/50 to-primary bg-no-repeat transition-all"
           style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}
         />
       </div>
 
       {confirmDuplicate ? (
         <ConfirmDialog
-          title="Add duplicate?"
-          message="This video is already in the queue. Add another copy with the current settings?"
-          confirmLabel="Add Duplicate"
-          cancelLabel="Cancel"
+          title={t('queue.duplicateTitle')}
+          message={t('queue.duplicateMessage')}
+          confirmLabel={t('queue.addDuplicate')}
+          cancelLabel={t('actions.cancel')}
           onCancel={() => setConfirmDuplicate(false)}
           onConfirm={() => {
             setConfirmDuplicate(false)
