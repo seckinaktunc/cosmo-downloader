@@ -1,18 +1,36 @@
 import { cn } from '../../lib/utils'
+import Icon from '../miscellaneous/Icon'
+import { Tooltip } from './Tooltip'
 
 type SwitchProps = {
   label: string
   checked: boolean
   onChange: (checked: boolean) => void
   description?: string
+  error?: string
 }
 
-export function Switch({ label, checked, onChange, description }: SwitchProps): React.JSX.Element {
+export function Switch({
+  label,
+  checked,
+  onChange,
+  description,
+  error
+}: SwitchProps): React.JSX.Element {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg bg-white/5 px-4 py-3 text-white">
-      <span className="flex min-w-0 flex-col">
-        <span className="font-medium">{label}</span>
-        {description ? <span className="text-sm text-white/50">{description}</span> : null}
+    <label className="flex cursor-pointer items-center justify-between gap-4 text-white">
+      <span className="flex min-w-0 items-center gap-1">
+        <span className={`font-medium ${error ? 'text-primary' : 'text-white/50'}`}>{label}</span>
+        {description && (
+          <Tooltip label={description}>
+            <Icon name="info" className="opacity-50" />
+          </Tooltip>
+        )}
+        {error && (
+          <Tooltip type="error" label={error}>
+            <Icon name="warning" className="opacity-100 text-primary" />
+          </Tooltip>
+        )}
       </span>
       <input
         type="checkbox"
@@ -23,14 +41,14 @@ export function Switch({ label, checked, onChange, description }: SwitchProps): 
       <span
         aria-hidden
         className={cn(
-          'relative h-7 w-12 rounded-lg border border-white/10 transition',
-          checked ? 'bg-primary' : 'bg-white/10'
+          'relative flex items-center h-8 w-14 rounded-full border transition',
+          checked ? 'bg-primary/50 border-primary' : 'bg-white/10 border-white/10'
         )}
       >
         <span
           className={cn(
-            'absolute top-1 size-5 rounded-md bg-white transition',
-            checked ? 'left-6' : 'left-1'
+            'absolute size-6 bg-white rounded-full transition-all duration-200',
+            checked ? 'left-[calc(100%-1.75rem)]' : 'left-1'
           )}
         />
       </span>
