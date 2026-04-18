@@ -52,6 +52,7 @@ export type AppSettings = {
   automaticUpdates: boolean
   alwaysAskDownloadLocation: boolean
   defaultDownloadLocation: string
+  lastDownloadDirectory?: string
   interfaceLanguage: string
   cookiesBrowser: CookieBrowser
   alwaysOnTop: boolean
@@ -84,6 +85,7 @@ export type VideoMetadata = {
   thumbnail?: string
   description?: string
   uploader?: string
+  uploaderUrl?: string
   duration?: number
   maxResolution?: number
   containers: string[]
@@ -101,6 +103,7 @@ export type ExportSettings = {
   frameRate: number | 'auto'
   videoCodec: VideoCodec
   audioCodec: AudioCodec
+  savePath?: string
 }
 
 export type DownloadStartRequest = {
@@ -221,4 +224,25 @@ export type HistoryItemRequest = {
 
 export type HistoryBulkRequest = {
   entryIds: string[]
+}
+
+export type ChooseOutputPathRequest = {
+  title: string
+  outputFormat: OutputFormat
+  currentPath?: string
+  defaultDirectory?: string
+}
+
+export type ChooseOutputPathResult = {
+  filePath: string
+  directory: string
+}
+
+export type ThumbnailRequest = {
+  url: string
+  title?: string
+}
+
+export type OpenPathRequest = {
+  path: string
 }
