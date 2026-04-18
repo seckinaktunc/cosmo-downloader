@@ -27,6 +27,8 @@
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/space-grotesk": "^5.2.10",
+    "@iconify-json/logos": "^1.2.11",
+    "@iconify/react": "^6.0.2",
     "@tabler/icons-react": "^3.41.1",
     "clsx": "^2.1.1",
     "i18next": "^26.0.4",
