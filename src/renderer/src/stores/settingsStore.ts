@@ -3,6 +3,7 @@ import type {
   AppEnvironment,
   AppSettings,
   CookieBrowserOption,
+  OutputFormat,
   SettingsUpdate
 } from '../../../shared/types'
 
@@ -16,6 +17,11 @@ type SettingsState = {
   load: () => Promise<void>
   update: (update: SettingsUpdate) => Promise<void>
   chooseDownloadDirectory: () => Promise<void>
+  chooseOutputPath: (request: {
+    title: string
+    outputFormat: OutputFormat
+    currentPath?: string
+  }) => Promise<string | null>
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -67,5 +73,27 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (result.ok && result.data) {
       await get().update({ defaultDownloadLocation: result.data })
     }
+  },
+
+  chooseOutputPath: async ({ title, outputFormat, currentPath }) => {
+    const settings = get().settings
+    const result = await window.cosmo.settings.chooseOutputPath({
+      title,
+      outputFormat,
+      currentPath,
+      defaultDirectory: settings?.lastDownloadDirectory ?? settings?.defaultDownloadLocation
+    })
+
+    if (!result.ok || !result.data) {
+      if (result.ok) {
+        return null
+      }
+
+      set({ error: result.error.message })
+      return null
+    }
+
+    await get().update({ lastDownloadDirectory: result.data.directory })
+    return result.data.filePath
   }
 }))

@@ -32,6 +32,10 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
       typeof saved.defaultDownloadLocation === 'string' && saved.defaultDownloadLocation.length > 0
         ? saved.defaultDownloadLocation
         : defaults.defaultDownloadLocation,
+    lastDownloadDirectory:
+      typeof saved.lastDownloadDirectory === 'string' && saved.lastDownloadDirectory.length > 0
+        ? saved.lastDownloadDirectory
+        : defaults.lastDownloadDirectory,
     interfaceLanguage:
       typeof saved.interfaceLanguage === 'string' && saved.interfaceLanguage.length > 0
         ? saved.interfaceLanguage
