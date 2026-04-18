@@ -19,7 +19,7 @@ type RawYtDlpFormat = {
   protocol?: unknown
 }
 
-type RawYtDlpMetadata = {
+export type RawYtDlpMetadata = {
   _type?: unknown
   entries?: unknown
   extractor?: unknown
@@ -29,7 +29,11 @@ type RawYtDlpMetadata = {
   thumbnail?: unknown
   description?: unknown
   uploader?: unknown
+  uploader_url?: unknown
   channel?: unknown
+  channel_url?: unknown
+  creator_url?: unknown
+  artist_url?: unknown
   duration?: unknown
   formats?: unknown
 }
@@ -130,7 +134,11 @@ function parseFormats(rawFormats: unknown): VideoFormat[] {
   })
 }
 
-function parseMetadata(requestId: string, url: string, raw: RawYtDlpMetadata): VideoMetadata {
+export function parseMetadata(
+  requestId: string,
+  url: string,
+  raw: RawYtDlpMetadata
+): VideoMetadata {
   if (raw._type === 'playlist' || Array.isArray(raw.entries)) {
     throw new Error('Playlist and channel downloads are not available in this version.')
   }
@@ -147,6 +155,11 @@ function parseMetadata(requestId: string, url: string, raw: RawYtDlpMetadata): V
     thumbnail: asString(raw.thumbnail),
     description: asString(raw.description),
     uploader: asString(raw.uploader) ?? asString(raw.channel),
+    uploaderUrl:
+      asString(raw.uploader_url) ??
+      asString(raw.channel_url) ??
+      asString(raw.creator_url) ??
+      asString(raw.artist_url),
     duration: asNumber(raw.duration),
     maxResolution: Math.max(0, ...videoFormats.map((format) => format.height ?? 0)) || undefined,
     containers: uniqueSortedStrings(formats.map((format) => format.extension)),
