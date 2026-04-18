@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { AppSettings, DownloadStage, VideoMetadata } from '../../../shared/types'
+import { getValidLookingSingleVideoUrl } from '../lib/urlInput'
 import { validateUrl } from '../lib/validateUrl'
 import { classifyVideoUrl } from '../lib/videoUrlClassifier'
 import { useDownloadStore } from './downloadStore'
@@ -29,10 +30,11 @@ export const useVideoStore = create<VideoState>((set, get) => ({
 
     useUiStore.getState().clearPreviewExportTarget()
     useDownloadStore.getState().resetForNewPreview()
+    const validLookingUrl = getValidLookingSingleVideoUrl(url)
     set({
       url,
       metadata: null,
-      stage: url.trim().length > 0 ? 'idle' : 'idle',
+      stage: validLookingUrl ? 'fetching_metadata' : 'idle',
       error: undefined,
       activeRequestId: undefined
     })
