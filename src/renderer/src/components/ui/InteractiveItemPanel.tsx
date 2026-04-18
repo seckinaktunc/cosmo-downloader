@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils'
 import Icon from '../miscellaneous/Icon'
 import { ActionMenu, type ActionMenuAnchor, type ActionMenuItem } from './ActionMenu'
 import { Button } from './Button'
+import { Thumbnail, type ThumbnailAction } from './Thumbnail'
 
 const DRAG_THRESHOLD_PX = 6
 const AUTO_SCROLL_EDGE_PX = 48
@@ -33,6 +34,8 @@ export type InteractiveItemPanelProps<TItem> = {
   getTitle: (item: TItem) => string
   getThumbnail?: (item: TItem) => string | undefined
   getThumbnailBadge?: (item: TItem) => string | undefined
+  getThumbnailActions?: (item: TItem) => ThumbnailAction[] | undefined
+  getThumbnailActionsEnabled?: (item: TItem) => boolean
   getLeadingLabel?: (item: TItem, index: number) => string | undefined
   getStatusLabel?: (item: TItem) => string | undefined
   getMetaLabel?: (item: TItem) => string | undefined
@@ -47,11 +50,15 @@ export type InteractiveItemPanelProps<TItem> = {
   previewMoveItems?: (items: TItem[], itemIds: string[], targetIndex: number) => TItem[] | null
   moveItems?: (itemIds: string[], targetIndex: number) => void | Promise<void>
   onDeleteSelected?: (itemIds: string[]) => void | Promise<void>
+  onClearSelection?: () => void
   onClear?: () => void | Promise<void>
   onClose?: () => void
   emptyDetail?: string
   clearLabel?: string
   deleteLabel?: (count: number) => string
+  closeLabel?: string
+  actionsLabel?: (title: string) => string
+  menuLabel?: string
 }
 
 function getTargetIndex<TItem>(
@@ -94,6 +101,8 @@ export function InteractiveItemPanel<TItem>({
   getTitle,
   getThumbnail,
   getThumbnailBadge,
+  getThumbnailActions,
+  getThumbnailActionsEnabled,
   getLeadingLabel,
   getStatusLabel,
   getMetaLabel,
@@ -108,11 +117,15 @@ export function InteractiveItemPanel<TItem>({
   previewMoveItems,
   moveItems,
   onDeleteSelected,
+  onClearSelection,
   onClear,
   onClose,
   emptyDetail = 'No details',
   clearLabel = 'Clear',
-  deleteLabel = (count) => `Delete (${count})`
+  deleteLabel = (count) => `Delete (${count})`,
+  closeLabel = 'Close',
+  actionsLabel = (title) => `Actions for ${title}`,
+  menuLabel = `${title} item actions`
 }: InteractiveItemPanelProps<TItem>): React.JSX.Element {
   const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(() => new Set())
   const [menuState, setMenuState] = useState<MenuState | null>(null)
@@ -135,6 +148,14 @@ export function InteractiveItemPanel<TItem>({
   const menuItem =
     menuState == null ? undefined : displayItems.find((item) => getId(item) === menuState.itemId)
   const menuItems = menuItem && getActions ? getActions(menuItem) : []
+
+  useEffect(() => {
+    setBulkSelectedIds((current) => {
+      const next = new Set(Array.from(current).filter((id) => bulkSelectableIds.has(id)))
+      const changed = next.size !== current.size || Array.from(current).some((id) => !next.has(id))
+      return changed ? next : current
+    })
+  }, [bulkSelectableIds])
 
   useEffect(() => {
     if (draggingItemIds.length === 0 || autoScrollDirection === 0) {
@@ -225,6 +246,7 @@ export function InteractiveItemPanel<TItem>({
     }
 
     setBulkSelectedIds(new Set())
+    onClearSelection?.()
   }
 
   const beginPointerGesture = (
@@ -366,7 +388,7 @@ export function InteractiveItemPanel<TItem>({
           <div className="flex shrink-0">
             <Button
               icon="close"
-              label="Close"
+              label={closeLabel}
               className="absolute top-0 right-0"
               onlyIcon
               ghost
@@ -397,6 +419,8 @@ export function InteractiveItemPanel<TItem>({
             const draggable = isDraggable(item)
             const thumbnail = getThumbnail?.(item)
             const thumbnailBadge = getThumbnailBadge?.(item)
+            const thumbnailActions = getThumbnailActions?.(item)
+            const thumbnailActionsEnabled = getThumbnailActionsEnabled?.(item) ?? true
             const leadingLabel = getLeadingLabel?.(item, index)
             const statusLabel = getStatusLabel?.(item)
             const metaLabel = getMetaLabel?.(item)
@@ -459,7 +483,7 @@ export function InteractiveItemPanel<TItem>({
                     'no-drag relative z-10 flex h-full min-h-20 cursor-pointer items-center justify-center text-white/40 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70',
                     menuState?.itemId === itemId && 'bg-white/10 text-white'
                   )}
-                  aria-label={`Actions for ${itemTitle}`}
+                  aria-label={actionsLabel(itemTitle)}
                   aria-haspopup="menu"
                   aria-expanded={menuState?.itemId === itemId}
                   onPointerDown={(event) => event.stopPropagation()}
@@ -482,21 +506,16 @@ export function InteractiveItemPanel<TItem>({
                 </button>
 
                 <div className="flex min-w-0 gap-2 p-2 pl-0">
-                  <div className="relative aspect-video h-16 shrink-0 overflow-hidden rounded-md bg-white/10">
-                    {thumbnail ? (
-                      <img
-                        src={thumbnail}
-                        alt=""
-                        className="size-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : null}
-                    {thumbnailBadge ? (
-                      <span className="absolute bottom-1 right-1 rounded-sm bg-black/60 px-1 text-xs font-bold">
-                        {thumbnailBadge}
-                      </span>
-                    ) : null}
-                  </div>
+                  <Thumbnail
+                    src={thumbnail}
+                    title={itemTitle}
+                    badge={thumbnailBadge}
+                    className="aspect-video h-16 shrink-0 rounded-md bg-white/10"
+                    actionSize="xs"
+                    showPlaceholderIcon={false}
+                    actions={thumbnailActions}
+                    actionsEnabled={thumbnailActionsEnabled}
+                  />
                   <div className="min-w-0 flex-1 self-center">
                     <div className="flex min-w-0 items-center gap-2">
                       {leadingLabel ? (
@@ -550,7 +569,7 @@ export function InteractiveItemPanel<TItem>({
         anchor={menuState?.anchor ?? null}
         items={menuItems}
         placement={menuState?.anchor.type === 'point' ? 'bottom-start' : 'right-start'}
-        ariaLabel={`${title} item actions`}
+        ariaLabel={menuLabel}
         onClose={() => setMenuState(null)}
       />
     </section>
