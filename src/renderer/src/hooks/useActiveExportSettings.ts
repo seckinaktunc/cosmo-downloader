@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ExportSettings } from '../../../shared/types'
 import { resolveExportSettingsTarget } from '../lib/exportSettingsResolver'
 import { useHistoryStore } from '../stores/historyStore'
@@ -9,13 +10,16 @@ import { useVideoStore } from '../stores/videoStore'
 export function useActiveExportSettings(): ReturnType<typeof resolveExportSettingsTarget> & {
   updateExportSettings: (update: Partial<ExportSettings>) => Promise<void>
 } {
+  const { t } = useTranslation()
   const activeTarget = useUiStore((state) => state.activeExportTarget)
   const previewExportSettings = useUiStore((state) => state.previewExportSettings)
   const updatePreviewExportSettings = useUiStore((state) => state.updatePreviewExportSettings)
   const setLastEditableExportSettings = useUiStore((state) => state.setLastEditableExportSettings)
   const metadata = useVideoStore((state) => state.metadata)
   const queueItems = useQueueStore((state) => state.items)
-  const updateQueueExportSettings = useQueueStore((state) => state.updateExportSettings)
+  const updateQueueExportSettingsDebounced = useQueueStore(
+    (state) => state.updateExportSettingsDebounced
+  )
   const historyEntries = useHistoryStore((state) => state.entries)
 
   const resolved = useMemo(
@@ -25,9 +29,16 @@ export function useActiveExportSettings(): ReturnType<typeof resolveExportSettin
         previewMetadata: metadata,
         previewExportSettings,
         queueItems,
-        historyEntries
+        historyEntries,
+        labels: {
+          queuedEditable: t('exportTarget.queuedEditable'),
+          queuedReadOnly: t('exportTarget.queuedReadOnly'),
+          historyReadOnly: t('exportTarget.historyReadOnly'),
+          previewEditable: t('exportTarget.previewEditable'),
+          unavailable: t('exportTarget.unavailable')
+        }
       }),
-    [activeTarget, historyEntries, metadata, previewExportSettings, queueItems]
+    [activeTarget, historyEntries, metadata, previewExportSettings, queueItems, t]
   )
 
   const updateExportSettings = useCallback(
@@ -47,7 +58,7 @@ export function useActiveExportSettings(): ReturnType<typeof resolveExportSettin
           ...item.exportSettings,
           ...update
         }
-        await updateQueueExportSettings(item.id, nextSettings)
+        updateQueueExportSettingsDebounced(item.id, nextSettings)
         setLastEditableExportSettings(nextSettings)
         return
       }
@@ -61,7 +72,7 @@ export function useActiveExportSettings(): ReturnType<typeof resolveExportSettin
       resolved.target,
       setLastEditableExportSettings,
       updatePreviewExportSettings,
-      updateQueueExportSettings
+      updateQueueExportSettingsDebounced
     ]
   )
 
