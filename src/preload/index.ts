@@ -4,6 +4,8 @@ import type {
   AppEnvironment,
   AppSettings,
   CancelMetadataRequest,
+  ChooseOutputPathRequest,
+  ChooseOutputPathResult,
   CookieBrowserOption,
   DownloadHistoryEntry,
   DownloadProgress,
@@ -12,6 +14,7 @@ import type {
   HistoryBulkRequest,
   HistoryItemRequest,
   IpcResult,
+  OpenPathRequest,
   QueueAddRequest,
   QueueBulkRequest,
   QueueExportSettingsUpdateRequest,
@@ -21,6 +24,7 @@ import type {
   QueueReorderRequest,
   QueueSnapshot,
   SettingsUpdate,
+  ThumbnailRequest,
   VideoMetadata,
   WindowAction
 } from '../shared/types'
@@ -35,6 +39,20 @@ export type CosmoApi = {
     get: () => Promise<IpcResult<AppSettings>>
     update: (update: SettingsUpdate) => Promise<IpcResult<AppSettings>>
     chooseDownloadDirectory: () => Promise<IpcResult<string | null>>
+    chooseOutputPath: (
+      request: ChooseOutputPathRequest
+    ) => Promise<IpcResult<ChooseOutputPathResult | null>>
+  }
+  clipboard: {
+    readText: () => Promise<IpcResult<string>>
+  }
+  thumbnail: {
+    download: (request: ThumbnailRequest) => Promise<IpcResult<string | null>>
+    copyImage: (request: ThumbnailRequest) => Promise<IpcResult<null>>
+    openExternal: (request: ThumbnailRequest) => Promise<IpcResult<null>>
+  }
+  shell: {
+    openPath: (request: OpenPathRequest) => Promise<IpcResult<null>>
   }
   system: {
     detectCookieBrowsers: () => Promise<IpcResult<CookieBrowserOption[]>>
@@ -75,6 +93,8 @@ export type CosmoApi = {
     clear: () => Promise<IpcResult<DownloadHistoryEntry[]>>
     requeue: (request: HistoryItemRequest) => Promise<IpcResult<QueueSnapshot>>
     openOutput: (request: HistoryItemRequest) => Promise<IpcResult<null>>
+    openMedia: (request: HistoryItemRequest) => Promise<IpcResult<null>>
+    openFolder: (request: HistoryItemRequest) => Promise<IpcResult<null>>
     copySource: (request: HistoryItemRequest) => Promise<IpcResult<null>>
     onChanged: (listener: (entries: DownloadHistoryEntry[]) => void) => Unsubscribe
   }
@@ -108,7 +128,20 @@ const api: CosmoApi = {
     get: () => invoke<AppSettings>(IPC_CHANNELS.settings.get),
     update: (update) => invoke<AppSettings>(IPC_CHANNELS.settings.update, update),
     chooseDownloadDirectory: () =>
-      invoke<string | null>(IPC_CHANNELS.settings.chooseDownloadDirectory)
+      invoke<string | null>(IPC_CHANNELS.settings.chooseDownloadDirectory),
+    chooseOutputPath: (request) =>
+      invoke<ChooseOutputPathResult | null>(IPC_CHANNELS.settings.chooseOutputPath, request)
+  },
+  clipboard: {
+    readText: () => invoke<string>(IPC_CHANNELS.clipboard.readText)
+  },
+  thumbnail: {
+    download: (request) => invoke<string | null>(IPC_CHANNELS.thumbnail.download, request),
+    copyImage: (request) => invoke<null>(IPC_CHANNELS.thumbnail.copyImage, request),
+    openExternal: (request) => invoke<null>(IPC_CHANNELS.thumbnail.openExternal, request)
+  },
+  shell: {
+    openPath: (request) => invoke<null>(IPC_CHANNELS.shell.openPath, request)
   },
   system: {
     detectCookieBrowsers: () =>
@@ -150,6 +183,8 @@ const api: CosmoApi = {
     clear: () => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.clear),
     requeue: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.history.requeue, request),
     openOutput: (request) => invoke<null>(IPC_CHANNELS.history.openOutput, request),
+    openMedia: (request) => invoke<null>(IPC_CHANNELS.history.openMedia, request),
+    openFolder: (request) => invoke<null>(IPC_CHANNELS.history.openFolder, request),
     copySource: (request) => invoke<null>(IPC_CHANNELS.history.copySource, request),
     onChanged: (listener) =>
       subscribe<DownloadHistoryEntry[]>(IPC_CHANNELS.history.changed, listener)
