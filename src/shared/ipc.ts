@@ -5,7 +5,19 @@ export const IPC_CHANNELS = {
   settings: {
     get: 'settings:get',
     update: 'settings:update',
-    chooseDownloadDirectory: 'settings:choose-download-directory'
+    chooseDownloadDirectory: 'settings:choose-download-directory',
+    chooseOutputPath: 'settings:choose-output-path'
+  },
+  clipboard: {
+    readText: 'clipboard:read-text'
+  },
+  thumbnail: {
+    download: 'thumbnail:download',
+    copyImage: 'thumbnail:copy-image',
+    openExternal: 'thumbnail:open-external'
+  },
+  shell: {
+    openPath: 'shell:open-path'
   },
   system: {
     detectCookieBrowsers: 'system:detect-cookie-browsers'
@@ -44,6 +56,8 @@ export const IPC_CHANNELS = {
     clear: 'history:clear',
     requeue: 'history:requeue',
     openOutput: 'history:open-output',
+    openMedia: 'history:open-media',
+    openFolder: 'history:open-folder',
     copySource: 'history:copy-source',
     changed: 'history:changed'
   },
