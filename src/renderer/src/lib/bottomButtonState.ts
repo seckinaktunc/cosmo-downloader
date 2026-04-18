@@ -14,6 +14,12 @@ export type BottomButtonStateInput = {
   canDownloadPreview: boolean
   currentPreviewCompleted: boolean
   hasPendingQueueItems: boolean
+  labels?: {
+    startDownload: string
+    newVideo: string
+    fetchingMetadata: string
+    queueProgress: (index: number, total: number, percent: string) => string
+  }
 }
 
 export type BottomButtonState = {
@@ -30,14 +36,20 @@ export function getBottomButtonState({
   videoStage,
   canDownloadPreview,
   currentPreviewCompleted,
-  hasPendingQueueItems
+  hasPendingQueueItems,
+  labels = {
+    startDownload: 'Start Download',
+    newVideo: 'New Video',
+    fetchingMetadata: 'Fetching Metadata',
+    queueProgress: (index, total, percent) => `Queue ${index} of ${total} (${percent})`
+  }
 }: BottomButtonStateInput): BottomButtonState {
   if (activeItem) {
     const index = queueItems.findIndex((item) => item.id === activeItem.id)
     const percent = formatPercent(activeItem.progress?.percentage) || '0%'
     return {
       mode: 'cancel',
-      primary: `Queue ${index + 1} of ${queueItems.length} (${percent})`,
+      primary: labels.queueProgress(index + 1, queueItems.length, percent),
       secondary: formatTransferDetail(activeItem.progress)
     }
   }
@@ -51,20 +63,20 @@ export function getBottomButtonState({
   }
 
   if (hasPendingQueueItems) {
-    return { mode: 'start', primary: 'Start Download' }
+    return { mode: 'start', primary: labels.startDownload }
   }
 
   if (currentPreviewCompleted) {
-    return { mode: 'new_video', primary: 'New Video' }
+    return { mode: 'new_video', primary: labels.newVideo }
   }
 
   if (canDownloadPreview) {
-    return { mode: 'start', primary: 'Start Download' }
+    return { mode: 'start', primary: labels.startDownload }
   }
 
   if (videoStage === 'fetching_metadata') {
-    return { mode: 'disabled', primary: 'Fetching Metadata' }
+    return { mode: 'disabled', primary: labels.fetchingMetadata }
   }
 
-  return { mode: 'disabled', primary: 'Start Download' }
+  return { mode: 'disabled', primary: labels.startDownload }
 }
