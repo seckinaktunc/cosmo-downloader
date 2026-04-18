@@ -159,7 +159,7 @@ export function Dropdown<T extends string>({
         aria-haspopup="listbox"
         aria-labelledby={ariaLabelledBy}
         aria-activedescendant={open && focusedIndex >= 0 ? getOptionId(focusedIndex) : undefined}
-        className="no-drag flex w-full items-center justify-between gap-3 border border-white/10 bg-dark p-2 text-left text-white outline-none transition hover:border-white/20 focus-visible:ring-2 focus-visible:ring-white/70"
+        className="no-drag flex w-full items-center min-w-40 h-10 justify-between gap-3 border border-white/10 bg-dark p-2 text-left text-white outline-none transition hover:border-white/20 focus-visible:ring-2 focus-visible:ring-white/70 cursor-pointer"
         onClick={() => (open ? closeDropdown() : openDropdown())}
         onKeyDown={handleKeyDown}
       >
