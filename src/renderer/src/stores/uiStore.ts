@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults'
 import type { ExportSettings } from '../../../shared/types'
 
-type Panel = 'metadata' | 'queue' | 'history' | null
+type MediaPanel = 'metadata' | 'queue' | 'history'
+type Panel = MediaPanel | null
 type Content = 'export' | 'settings' | null
 export type ActiveExportTarget =
   | { type: 'preview' }
@@ -11,6 +12,7 @@ export type ActiveExportTarget =
 
 type UiState = {
   activePanel: Panel
+  previousMediaPanel: MediaPanel
   activeContent: Content
   activeExportTarget: ActiveExportTarget | null
   previewExportSettings: ExportSettings
@@ -18,6 +20,9 @@ type UiState = {
   mediaOverviewWidthPercent: number
 
   setActivePanel: (panel: Panel) => void
+  openMediaPanel: (panel: MediaPanel) => void
+  closeMediaPanel: () => void
+  toggleMediaPanel: (panel: MediaPanel) => void
   setActiveContent: (panel: Content) => void
   setActiveExportTarget: (target: ActiveExportTarget | null) => void
   initializePreviewExportSettings: () => void
@@ -34,8 +39,13 @@ function clampMediaOverviewWidth(width: number): number {
   return Math.min(MEDIA_OVERVIEW_MAX_WIDTH, Math.max(MEDIA_OVERVIEW_MIN_WIDTH, width))
 }
 
+function normalizePanel(panel: Panel): MediaPanel {
+  return panel ?? 'metadata'
+}
+
 export const useUiStore = create<UiState>((set) => ({
   activePanel: 'metadata',
+  previousMediaPanel: 'metadata',
   activeContent: 'export',
   activeExportTarget: null,
   previewExportSettings: DEFAULT_EXPORT_SETTINGS,
@@ -43,6 +53,29 @@ export const useUiStore = create<UiState>((set) => ({
   mediaOverviewWidthPercent: MEDIA_OVERVIEW_MIN_WIDTH,
 
   setActivePanel: (panel) => set({ activePanel: panel }),
+  openMediaPanel: (panel) =>
+    set((state) => ({
+      activePanel: panel,
+      previousMediaPanel:
+        state.activePanel === panel ? state.previousMediaPanel : normalizePanel(state.activePanel)
+    })),
+  closeMediaPanel: () =>
+    set((state) => ({
+      activePanel: state.previousMediaPanel,
+      previousMediaPanel: 'metadata'
+    })),
+  toggleMediaPanel: (panel) =>
+    set((state) =>
+      state.activePanel === panel
+        ? {
+            activePanel: state.previousMediaPanel,
+            previousMediaPanel: 'metadata'
+          }
+        : {
+            activePanel: panel,
+            previousMediaPanel: normalizePanel(state.activePanel)
+          }
+    ),
   setActiveContent: (content) => set({ activeContent: content }),
   setActiveExportTarget: (target) => set({ activeExportTarget: target }),
   initializePreviewExportSettings: () =>
