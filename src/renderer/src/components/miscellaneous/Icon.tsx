@@ -1,3 +1,5 @@
+import { icons as logos } from '@iconify-json/logos'
+import { Icon as IconifyIcon, addCollection } from '@iconify/react'
 import {
   IconAdjustmentsHorizontal,
   IconAdjustmentsHorizontalFilled,
@@ -12,6 +14,7 @@ import {
   IconCheck,
   IconChevronDown,
   IconChevronsDown,
+  IconClipboardText,
   IconClock,
   IconCopy,
   IconDotsVerticalFilled,
@@ -19,6 +22,7 @@ import {
   IconExclamationCircle,
   IconExternalLink,
   IconFolder,
+  IconFolderOpen,
   IconHeart,
   IconHistory,
   IconInfoCircle,
@@ -31,6 +35,7 @@ import {
   IconPinned,
   IconPlayerStop,
   IconReload,
+  IconSearch,
   IconSettings,
   IconSettingsFilled,
   IconSmartHome,
@@ -53,6 +58,8 @@ interface IconProps {
   filled?: boolean
 }
 
+addCollection(logos)
+
 const iconMap = {
   home: IconSmartHome,
   video: IconVideo,
@@ -61,9 +68,9 @@ const iconMap = {
   settings: IconSettings,
   settingsFilled: IconSettingsFilled,
   copy: IconCopy,
+  paste: IconClipboardText,
   check: IconCheck,
   trash: IconTrashX,
-  warning: IconExclamationCircle,
   heart: IconHeart,
   close: IconX,
   download: IconDownload,
@@ -89,16 +96,20 @@ const iconMap = {
   language: IconLanguage,
   list: IconList,
   info: IconInfoCircle,
+  warning: IconExclamationCircle,
   world: IconWorld,
   pin: IconPinned,
   pinFilled: IconPinFilled,
   external: IconExternalLink,
   add: IconSquarePlus,
   reload: IconReload,
-  move: IconDotsVerticalFilled
+  search: IconSearch,
+  move: IconDotsVerticalFilled,
+  folderOpen: IconFolderOpen
 } as const
 
-export type IconName = keyof typeof iconMap
+export type TablerIconName = keyof typeof iconMap
+export type IconName = TablerIconName | `logos:${string}`
 
 export default function Icon({
   name,
@@ -106,12 +117,28 @@ export default function Icon({
   thickness = 2,
   style,
   filled = false,
-  ...props
+  color,
+  className
 }: IconProps): React.JSX.Element | null {
-  const filledName = `${name}Filled` as IconName
-  const resolvedName = filled && iconMap[filledName] ? filledName : name
+  if (name.startsWith('logos:')) {
+    return (
+      <IconifyIcon
+        icon={name}
+        className={className}
+        style={{
+          width: `${size / 16}rem`,
+          height: `${size / 16}rem`,
+          color,
+          ...style
+        }}
+      />
+    )
+  }
 
-  const IconComponent = iconMap[resolvedName]
+  const filledName = `${name}Filled` as TablerIconName
+  const resolvedName = filled && filledName in iconMap ? filledName : name
+
+  const IconComponent = iconMap[resolvedName as TablerIconName]
 
   if (!IconComponent) {
     console.warn(`Icon "${name}" not found in iconMap.`)
@@ -121,12 +148,13 @@ export default function Icon({
   return (
     <IconComponent
       stroke={thickness}
+      color={color}
+      className={className}
       style={{
         width: `${size / 16}rem`,
         height: `${size / 16}rem`,
         ...style
       }}
-      {...props}
     />
   )
 }
