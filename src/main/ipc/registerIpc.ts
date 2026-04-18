@@ -1,10 +1,15 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron'
+import { existsSync, statSync } from 'fs'
+import { dirname, parse } from 'path'
 import { IPC_CHANNELS } from '../../shared/ipc'
 import type {
   AppEnvironment,
   CancelMetadataRequest,
+  ChooseOutputPathRequest,
+  ChooseOutputPathResult,
   HistoryBulkRequest,
   HistoryItemRequest,
+  OpenPathRequest,
   QueueAddRequest,
   QueueBulkRequest,
   QueueExportSettingsUpdateRequest,
@@ -15,6 +20,7 @@ import type {
   DownloadStartRequest,
   FetchMetadataRequest,
   SettingsUpdate,
+  ThumbnailRequest,
   WindowAction
 } from '../../shared/types'
 import { detectCookieBrowsers } from '../services/browserDetector'
@@ -24,7 +30,22 @@ import { VideoMetadataService } from '../services/videoMetadataService'
 import { DownloadService } from '../services/downloadService'
 import { HistoryService } from '../services/historyService'
 import { QueueService } from '../services/queueService'
+import { createUniquePath } from '../services/filename'
+import {
+  copyThumbnailImage,
+  downloadThumbnail,
+  openThumbnailExternal
+} from '../services/thumbnailService'
 import { fail, ok } from '../utils/ipcResult'
+
+function getOpenablePath(targetPath: string): string | null {
+  if (existsSync(targetPath) && statSync(targetPath).isDirectory()) {
+    return targetPath
+  }
+
+  const parent = dirname(targetPath)
+  return existsSync(parent) ? parent : null
+}
 
 export function registerIpcHandlers(): void {
   const settingsService = new SettingsService()
@@ -57,6 +78,67 @@ export function registerIpcHandlers(): void {
     })
 
     return ok(result.canceled ? null : result.filePaths[0])
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.settings.chooseOutputPath,
+    async (_event, request: ChooseOutputPathRequest) => {
+      const extension = request.outputFormat
+      const currentPath = request.currentPath?.trim()
+      const defaultDirectory =
+        request.defaultDirectory?.trim() ||
+        settingsService.get().lastDownloadDirectory ||
+        settingsService.get().defaultDownloadLocation ||
+        app.getPath('downloads')
+      const defaultPath = currentPath
+        ? createUniquePath(parse(currentPath).dir, parse(currentPath).name, extension)
+        : createUniquePath(defaultDirectory, request.title || 'video', extension)
+
+      const result = await dialog.showSaveDialog({
+        title: 'Choose download file',
+        defaultPath,
+        filters: [{ name: extension.toUpperCase(), extensions: [extension] }]
+      })
+
+      if (result.canceled || !result.filePath) {
+        return ok(null)
+      }
+
+      const data: ChooseOutputPathResult = {
+        filePath: result.filePath,
+        directory: dirname(result.filePath)
+      }
+      return ok(data)
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.clipboard.readText, () => ok(clipboard.readText()))
+
+  ipcMain.handle(IPC_CHANNELS.thumbnail.download, (_event, request: ThumbnailRequest) =>
+    downloadThumbnail(request)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.thumbnail.copyImage, (_event, request: ThumbnailRequest) =>
+    copyThumbnailImage(request)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.thumbnail.openExternal, (_event, request: ThumbnailRequest) =>
+    openThumbnailExternal(request)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.shell.openPath, async (_event, request: OpenPathRequest) => {
+    if (existsSync(request.path) && statSync(request.path).isFile()) {
+      shell.showItemInFolder(request.path)
+      return ok(null)
+    }
+
+    const openablePath = getOpenablePath(request.path)
+    if (!openablePath) {
+      return fail('NOT_FOUND', 'Path was not found.')
+    }
+
+    const error = await shell.openPath(openablePath)
+    return error ? fail('PROCESS_FAILED', error) : ok(null)
   })
 
   ipcMain.handle(IPC_CHANNELS.system.detectCookieBrowsers, () => ok(detectCookieBrowsers()))
@@ -145,6 +227,18 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.history.openOutput, (_event, request: HistoryItemRequest) => {
     return historyService.openOutput(request.entryId)
+      ? ok(null)
+      : fail('NOT_FOUND', 'Downloaded file was not found.')
+  })
+
+  ipcMain.handle(IPC_CHANNELS.history.openMedia, async (_event, request: HistoryItemRequest) => {
+    return (await historyService.openMedia(request.entryId))
+      ? ok(null)
+      : fail('NOT_FOUND', 'Downloaded file was not found.')
+  })
+
+  ipcMain.handle(IPC_CHANNELS.history.openFolder, async (_event, request: HistoryItemRequest) => {
+    return (await historyService.openFolder(request.entryId))
       ? ok(null)
       : fail('NOT_FOUND', 'Downloaded file was not found.')
   })
