@@ -29,7 +29,7 @@ export function SnapSlider<T extends SliderValue>({
   return (
     <div className={cn('flex flex-col gap-2', disabled && 'opacity-40')}>
       <div className="flex items-center justify-between gap-4">
-        <label className="text-sm font-medium text-white/60">{label}</label>
+        <label className="text-sm font-medium text-white/50">{label}</label>
         <span className="text-sm font-bold text-white">{formatLabel(options[currentIndex])}</span>
       </div>
       <input
@@ -41,7 +41,7 @@ export function SnapSlider<T extends SliderValue>({
         value={currentIndex}
         onChange={(event) => onChange(options[Number(event.currentTarget.value)])}
         className={`
-          w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer z-10
+          w-full h-2 bg-white/10 rounded-lg appearance-none z-10
           bg-linear-to-r from-primary/50 to-primary bg-no-repeat
           [&::-webkit-slider-thumb]:appearance-none
           [&::-webkit-slider-thumb]:w-3.5 
@@ -49,8 +49,8 @@ export function SnapSlider<T extends SliderValue>({
           [&::-webkit-slider-thumb]:rounded-full 
           [&::-webkit-slider-thumb]:bg-white 
           [&::-webkit-slider-thumb]:transition-all
-          hover:[&::-webkit-slider-thumb]:bg-white 
-          hover:[&::-webkit-slider-thumb]:scale-125
+          
+          ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:[&::-webkit-slider-thumb]:bg-white hover:[&::-webkit-slider-thumb]:scale-125'}
         `}
         style={{
           backgroundSize: `${progress}% 100%`
