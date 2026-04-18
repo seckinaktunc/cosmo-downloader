@@ -4,7 +4,7 @@ import { getBrowserCandidates } from './browserDetector'
 describe('getBrowserCandidates', () => {
   it('includes expected Windows yt-dlp cookie browser ids', () => {
     expect(getBrowserCandidates('win32').map((candidate) => candidate.id)).toEqual(
-      expect.arrayContaining(['chrome', 'edge', 'firefox', 'brave'])
+      expect.arrayContaining(['chrome', 'chromium', 'edge', 'firefox', 'brave'])
     )
   })
 

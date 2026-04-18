@@ -12,6 +12,24 @@ function envPath(name: string): string {
   return process.env[name] ?? ''
 }
 
+function pathDirectories(): string[] {
+  const delimiter = process.platform === 'win32' ? ';' : ':'
+  return envPath('PATH')
+    .split(delimiter)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+}
+
+function windowsChromiumPathCandidates(): string[] {
+  return pathDirectories().flatMap((directory) => {
+    const chromiumExecutable = join(directory, 'chromium.exe')
+    const chromeExecutable = join(directory, 'chrome.exe')
+    return /chromium/i.test(directory)
+      ? [chromiumExecutable, chromeExecutable]
+      : [chromiumExecutable]
+  })
+}
+
 export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidate[] {
   const localAppData = envPath('LOCALAPPDATA')
   const programFiles = envPath('PROGRAMFILES')
@@ -28,6 +46,17 @@ export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidat
           join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe'),
           join(programFilesX86, 'Google', 'Chrome', 'Application', 'chrome.exe'),
           join(localAppData, 'Google', 'Chrome', 'Application', 'chrome.exe')
+        ]
+      },
+      {
+        id: 'chromium',
+        label: 'Chromium',
+        paths: [
+          join(localAppData, 'Chromium', 'Application', 'chrome.exe'),
+          join(localAppData, 'Programs', 'Chromium', 'chrome.exe'),
+          join(programFiles, 'Chromium', 'Application', 'chrome.exe'),
+          join(programFilesX86, 'Chromium', 'Application', 'chrome.exe'),
+          ...windowsChromiumPathCandidates()
         ]
       },
       {
