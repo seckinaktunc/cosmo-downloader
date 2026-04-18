@@ -36,9 +36,9 @@ function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1100,
-    height: 760,
-    minWidth: 980,
-    minHeight: 680,
+    height: 768,
+    minWidth: 1100,
+    minHeight: 768,
     title: APP_NAME,
     show: false,
     alwaysOnTop: readStartupAlwaysOnTop(),
