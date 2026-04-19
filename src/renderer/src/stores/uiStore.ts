@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults'
-import type { ExportSettings } from '../../../shared/types'
+import type { AppSettings, ExportSettings, VideoMetadata } from '../../../shared/types'
+import { buildOutputPath, getOutputDirectory } from '../lib/outputPath'
 
 type MediaPanel = 'metadata' | 'queue' | 'history'
 type Panel = MediaPanel | null
@@ -25,7 +26,7 @@ type UiState = {
   toggleMediaPanel: (panel: MediaPanel) => void
   setActiveContent: (panel: Content) => void
   setActiveExportTarget: (target: ActiveExportTarget | null) => void
-  initializePreviewExportSettings: () => void
+  initializePreviewExportSettings: (metadata: VideoMetadata, settings: AppSettings) => void
   clearPreviewExportTarget: () => void
   updatePreviewExportSettings: (update: Partial<ExportSettings>) => ExportSettings
   setLastEditableExportSettings: (settings: ExportSettings) => void
@@ -41,6 +42,24 @@ function clampMediaOverviewWidth(width: number): number {
 
 function normalizePanel(panel: Panel): MediaPanel {
   return panel ?? 'metadata'
+}
+
+function createPreviewExportSettings(
+  baseSettings: ExportSettings,
+  metadata: VideoMetadata,
+  settings: AppSettings
+): ExportSettings {
+  const saveDirectory =
+    getOutputDirectory(baseSettings.savePath) ??
+    settings.lastDownloadDirectory ??
+    settings.defaultDownloadLocation
+
+  return {
+    ...baseSettings,
+    savePath: settings.alwaysAskDownloadLocation
+      ? buildOutputPath(saveDirectory, metadata.title, baseSettings.outputFormat)
+      : undefined
+  }
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -78,10 +97,14 @@ export const useUiStore = create<UiState>((set) => ({
     ),
   setActiveContent: (content) => set({ activeContent: content }),
   setActiveExportTarget: (target) => set({ activeExportTarget: target }),
-  initializePreviewExportSettings: () =>
+  initializePreviewExportSettings: (metadata, settings) =>
     set((state) => ({
       activeExportTarget: { type: 'preview' },
-      previewExportSettings: state.lastEditableExportSettings
+      previewExportSettings: createPreviewExportSettings(
+        state.lastEditableExportSettings,
+        metadata,
+        settings
+      )
     })),
   clearPreviewExportTarget: () =>
     set((state) => ({
