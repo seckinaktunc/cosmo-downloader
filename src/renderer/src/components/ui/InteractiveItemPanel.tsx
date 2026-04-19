@@ -1,4 +1,7 @@
+import { formatPercent } from '@renderer/lib/formatters'
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
+import { useTranslation } from 'react-i18next'
+import { DownloadHistoryStatus, QueueItem, QueueItemStatus } from '../../../../shared/types'
 import { cn } from '../../lib/utils'
 import Icon from '../miscellaneous/Icon'
 import { ActionMenu, type ActionMenuAnchor, type ActionMenuItem } from './ActionMenu'
@@ -26,18 +29,20 @@ type MenuState = {
   anchor: ActionMenuAnchor
 }
 
+type ItemStatus = QueueItemStatus | DownloadHistoryStatus
+
 export type InteractiveItemPanelProps<TItem> = {
   title: string
   subtitle: string
   items: TItem[]
   getId: (item: TItem) => string
+  getStatus: (item: TItem) => ItemStatus
   getTitle: (item: TItem) => string
+  getHint?: (item: TItem, index: number) => string | undefined
   getThumbnail?: (item: TItem) => string | undefined
   getThumbnailBadge?: (item: TItem) => string | undefined
   getThumbnailActions?: (item: TItem) => ThumbnailAction[] | undefined
   getThumbnailActionsEnabled?: (item: TItem) => boolean
-  getLeadingLabel?: (item: TItem, index: number) => string | undefined
-  getStatusLabel?: (item: TItem) => string | undefined
   getMetaLabel?: (item: TItem) => string | undefined
   getDetail?: (item: TItem) => string | undefined
   getActions?: (item: TItem) => ActionMenuItem[]
@@ -93,20 +98,31 @@ function getTargetIndex<TItem>(
   )
 }
 
+function getStatusLabel(
+  item: QueueItem,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  if (item.status === 'active') {
+    const percent = formatPercent(item.progress?.percentage)
+    return percent ? percent : t('queue.status.active')
+  }
+
+  return t(`queue.status.${item.status}`)
+}
+
 export function InteractiveItemPanel<TItem>({
   title,
   subtitle,
   items,
   getId,
   getTitle,
+  getStatus,
+  getHint,
   getThumbnail,
   getThumbnailBadge,
   getThumbnailActions,
   getThumbnailActionsEnabled,
-  getLeadingLabel,
-  getStatusLabel,
   getMetaLabel,
-  getDetail,
   getActions,
   activeItemId,
   onActivateItem,
@@ -120,13 +136,13 @@ export function InteractiveItemPanel<TItem>({
   onClearSelection,
   onClear,
   onClose,
-  emptyDetail = 'No details',
   clearLabel = 'Clear',
   deleteLabel = (count) => `Delete (${count})`,
   closeLabel = 'Close',
   actionsLabel = (title) => `Actions for ${title}`,
   menuLabel = `${title} item actions`
 }: InteractiveItemPanelProps<TItem>): React.JSX.Element {
+  const { t } = useTranslation()
   const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(() => new Set())
   const [menuState, setMenuState] = useState<MenuState | null>(null)
   const [dragItems, setDragItems] = useState<TItem[] | null>(null)
@@ -410,7 +426,9 @@ export function InteractiveItemPanel<TItem>({
         >
           {displayItems.map((item, index) => {
             const itemId = getId(item)
+            const itemStatus: ItemStatus = getStatus(item)
             const itemTitle = getTitle(item)
+            const itemHint = getHint ? getHint(item, index) : undefined
             const isActiveItem = activeItemId === itemId
             const isBulkSelected = visibleBulkSelectedIds.includes(itemId)
             const isDragging = draggingItemIds.includes(itemId)
@@ -421,10 +439,8 @@ export function InteractiveItemPanel<TItem>({
             const thumbnailBadge = getThumbnailBadge?.(item)
             const thumbnailActions = getThumbnailActions?.(item)
             const thumbnailActionsEnabled = getThumbnailActionsEnabled?.(item) ?? true
-            const leadingLabel = getLeadingLabel?.(item, index)
-            const statusLabel = getStatusLabel?.(item)
+            const statusLabel = getStatusLabel(item as QueueItem, t)
             const metaLabel = getMetaLabel?.(item)
-            const detail = getDetail?.(item) ?? emptyDetail
 
             return (
               <article
@@ -434,7 +450,7 @@ export function InteractiveItemPanel<TItem>({
                 tabIndex={activatable || bulkSelectable ? 0 : -1}
                 aria-selected={isActiveItem || isBulkSelected}
                 className={cn(
-                  'relative grid min-w-0 select-none grid-cols-[2rem_minmax(0,1fr)] items-center outline-none transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-white/70',
+                  'relative grid min-w-0 select-none grid-cols-[1.5rem_minmax(0,1fr)] items-center outline-none transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-white/70',
                   (activatable || bulkSelectable) && 'cursor-pointer',
                   draggable && 'cursor-grab active:cursor-grabbing',
                   (isActiveItem || isBulkSelected) && 'bg-white/10 hover:bg-white/10',
@@ -506,6 +522,11 @@ export function InteractiveItemPanel<TItem>({
                 </button>
 
                 <div className="flex min-w-0 gap-2 p-2 pl-0">
+                  {itemHint && (
+                    <span className="absolute right-2 z-10 text-xs font-bold text-white/50">
+                      {itemHint}
+                    </span>
+                  )}
                   <Thumbnail
                     src={thumbnail}
                     title={itemTitle}
@@ -516,24 +537,24 @@ export function InteractiveItemPanel<TItem>({
                     actions={thumbnailActions}
                     actionsEnabled={thumbnailActionsEnabled}
                   />
-                  <div className="min-w-0 flex-1 self-center">
-                    <div className="flex min-w-0 items-center gap-2">
-                      {leadingLabel ? (
-                        <span className="shrink-0 text-xs font-bold uppercase text-primary">
-                          {leadingLabel}
-                        </span>
-                      ) : null}
+                  <div className="flex flex-col gap-1 min-w-0 flex-1 self-center">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <div
+                        className={cn(
+                          'w-3 h-3 rounded-full bg-primary shrink-0',
+                          (itemStatus === 'pending' || itemStatus === 'paused') && 'bg-yellow',
+                          itemStatus === 'active' && 'bg-green animate-pulse',
+                          itemStatus === 'completed' && 'bg-blue'
+                        )}
+                      />
                       {statusLabel ? (
                         <span className="truncate text-xs uppercase text-white/40">
                           {statusLabel}
                         </span>
                       ) : null}
-                      {metaLabel ? (
-                        <span className="truncate text-xs text-white/40">{metaLabel}</span>
-                      ) : null}
                     </div>
                     <h3 className="truncate font-bold">{itemTitle}</h3>
-                    <p className="truncate text-sm text-white/50">{detail}</p>
+                    <p className="truncate text-xs text-white/50">{metaLabel}</p>
                   </div>
                 </div>
               </article>
@@ -543,13 +564,13 @@ export function InteractiveItemPanel<TItem>({
       </div>
 
       {onDeleteSelected || onClear ? (
-        <div className="flex shrink-0 divide-x divide-white/10 border-t border-white/10">
+        <div className="flex shrink-0 divide-x divide-white/10">
           {selectedCount > 0 && onDeleteSelected ? (
             <Button
               icon="trash"
               label={deleteLabel(selectedCount)}
               size="lg"
-              className="w-full rounded-none"
+              className="w-full rounded-none border-none"
               onClick={() => void deleteSelected()}
             />
           ) : onClear ? (
@@ -557,7 +578,7 @@ export function InteractiveItemPanel<TItem>({
               icon="trash"
               label={clearLabel}
               size="lg"
-              className="w-full rounded-none"
+              className="w-full rounded-none border-none"
               onClick={() => void onClear()}
             />
           ) : null}

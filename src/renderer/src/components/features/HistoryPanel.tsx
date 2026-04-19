@@ -97,17 +97,14 @@ export function HistoryPanel(): React.JSX.Element {
       }
       items={entries}
       getId={(entry) => entry.id}
+      getStatus={(entry) => entry.status}
       getTitle={(entry) => entry.metadata.title}
       getThumbnail={(entry) => entry.metadata.thumbnail}
       getThumbnailActions={getThumbnailActions}
       getThumbnailBadge={(entry) =>
         entry.metadata.duration ? formatDuration(entry.metadata.duration) : undefined
       }
-      getLeadingLabel={(entry) => t(`history.status.${entry.status}`)}
       getMetaLabel={(entry) => new Date(entry.createdAt).toLocaleString()}
-      getDetail={(entry) =>
-        entry.error ?? entry.outputPath ?? entry.metadata.uploader ?? t('common.noDetails')
-      }
       getActions={getActions}
       activeItemId={activeExportTarget?.type === 'history' ? activeExportTarget.entryId : undefined}
       onActivateItem={(entry) => {

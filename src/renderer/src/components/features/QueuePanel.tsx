@@ -2,22 +2,10 @@ import { useUiStore } from '@renderer/stores/uiStore'
 import { useTranslation } from 'react-i18next'
 import { movePendingItems } from '../../../../shared/queueModel'
 import type { QueueItem } from '../../../../shared/types'
-import { formatPercent, formatTransferDetail } from '../../lib/formatters'
+import { formatTransferDetail } from '../../lib/formatters'
 import { useQueueStore } from '../../stores/queueStore'
-import { InteractiveItemPanel } from '../ui/InteractiveItemPanel'
 import type { ActionMenuItem } from '../ui/ActionMenu'
-
-function statusLabel(
-  item: QueueItem,
-  t: (key: string, options?: Record<string, unknown>) => string
-): string {
-  if (item.status === 'active') {
-    const percent = formatPercent(item.progress?.percentage)
-    return percent ? t('queue.status.activePercent', { percent }) : t('queue.status.active')
-  }
-
-  return t(`queue.status.${item.status}`)
-}
+import { InteractiveItemPanel } from '../ui/InteractiveItemPanel'
 
 export function QueuePanel(): React.JSX.Element {
   const { t } = useTranslation()
@@ -76,10 +64,10 @@ export function QueuePanel(): React.JSX.Element {
       }
       items={items}
       getId={(item) => item.id}
+      getStatus={(item) => item.status}
       getTitle={(item) => item.metadata.title}
+      getHint={(_item, index) => `#${index + 1}`}
       getThumbnail={(item) => item.metadata.thumbnail}
-      getLeadingLabel={(_item, index) => `#${index + 1}`}
-      getStatusLabel={(item) => statusLabel(item, t)}
       getDetail={(item) => item.error ?? formatTransferDetail(item.progress)}
       getActions={getActions}
       activeItemId={activeExportTarget?.type === 'queue' ? activeExportTarget.itemId : undefined}

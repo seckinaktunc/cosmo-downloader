@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useDisplayMetadata } from '../../hooks/useDisplayMetadata'
 import { renderFormattedDescription } from '../../lib/descriptionFormatter'
 import { extractDroppedUrl } from '../../lib/urlInput'
+import { useHistoryStore } from '../../stores/historyStore'
 import { useQueueStore } from '../../stores/queueStore'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { useUiStore } from '../../stores/uiStore'
@@ -24,8 +25,10 @@ export function MetadataPanel(): React.JSX.Element {
   const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath)
   const previewExportSettings = useUiStore((state) => state.previewExportSettings)
   const updatePreviewExportSettings = useUiStore((state) => state.updatePreviewExportSettings)
+  const activeExportTarget = useUiStore((state) => state.activeExportTarget)
   const queueItems = useQueueStore((state) => state.items)
   const addToQueue = useQueueStore((state) => state.add)
+  const requeue = useHistoryStore((state) => state.requeue)
   const openMediaPanel = useUiStore((state) => state.openMediaPanel)
 
   if (!metadata) {
@@ -108,16 +111,16 @@ export function MetadataPanel(): React.JSX.Element {
   }
 
   return (
-    <section className="flex flex-col h-full text-white">
+    <section className="flex flex-col h-full text-white divide-y divide-white/10">
       <Thumbnail
         src={metadata.thumbnail}
         title={metadata.title}
         duration={metadata.duration}
-        className="aspect-video border-b border-white/10 shrink-0"
+        className="aspect-video shrink-0"
         placeholderClassName="min-h-64"
       />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col divide-y divide-white/10">
         <div className="flex min-w-0 shrink-0 flex-col gap-1 p-4">
           {metadata.platform ? (
             <span className="text-sm font-bold uppercase tracking-wide text-primary">
@@ -148,19 +151,27 @@ export function MetadataPanel(): React.JSX.Element {
           )}
         </div>
 
-        {metadata.description ? (
-          <div className="min-h-0 flex-1 overflow-y-auto border-t border-white/10 p-4 text-sm leading-relaxed text-white/70">
-            {renderFormattedDescription(metadata.description)}
-          </div>
-        ) : null}
+        <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 text-sm leading-relaxed text-white/70 wrap-break-word">
+          {metadata.description && renderFormattedDescription(metadata.description)}
+        </div>
 
-        {previewMetadata ? (
-          <div className="shrink-0 border-t border-white/10">
+        {activeExportTarget?.type === 'history' ? (
+          <div className="shrink-0">
+            <Button
+              icon="add"
+              label={t('history.actions.requeue')}
+              size="lg"
+              className="w-full rounded-none border-none"
+              onClick={() => void requeue(activeExportTarget.entryId)}
+            />
+          </div>
+        ) : activeExportTarget?.type === 'queue' ? null : previewMetadata ? (
+          <div className="shrink-0">
             <Button
               icon="add"
               label={t('queue.add')}
               size="lg"
-              className="w-full rounded-none"
+              className="w-full rounded-none border-none"
               disabled={!settings}
               onClick={requestAddToQueue}
             />
