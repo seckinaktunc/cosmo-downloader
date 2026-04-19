@@ -20,6 +20,7 @@ const queueItem: QueueItem = {
     hardwareAcceleration: true,
     automaticUpdates: true,
     alwaysAskDownloadLocation: false,
+    createFolderPerDownload: false,
     defaultDownloadLocation: '/downloads',
     interfaceLanguage: 'en_US',
     cookiesBrowser: 'none',
@@ -56,7 +57,7 @@ describe('getBottomButtonState', () => {
     ).toBe('Queue 1 of 1 (42%)')
   })
 
-  it('shows start download when pending queue items exist', () => {
+  it('shows start queue when pending queue items exist', () => {
     expect(
       getBottomButtonState({
         queueItems: [queueItem],
@@ -67,7 +68,22 @@ describe('getBottomButtonState', () => {
         currentPreviewCompleted: false,
         hasPendingQueueItems: true
       })
-    ).toMatchObject({ mode: 'start', primary: 'Start Download' })
+    ).toMatchObject({ mode: 'start', primary: 'Start Queue (1)' })
+  })
+
+  it('uses the supplied queue start count in the queue button label', () => {
+    expect(
+      getBottomButtonState({
+        queueItems: [queueItem],
+        downloadStage: 'idle',
+        progress: null,
+        videoStage: 'ready',
+        canDownloadPreview: true,
+        currentPreviewCompleted: false,
+        hasPendingQueueItems: true,
+        queueStartCount: 5
+      })
+    ).toMatchObject({ mode: 'start', primary: 'Start Queue (5)' })
   })
 
   it('lets pending queue items take priority over a completed preview', () => {
@@ -81,7 +97,7 @@ describe('getBottomButtonState', () => {
         currentPreviewCompleted: true,
         hasPendingQueueItems: true
       })
-    ).toMatchObject({ mode: 'start', primary: 'Start Download' })
+    ).toMatchObject({ mode: 'start', primary: 'Start Queue (1)' })
   })
 
   it('shows new video only for the current completed preview without pending work', () => {

@@ -1,6 +1,32 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults'
+import type { AppSettings, VideoMetadata } from '../../../shared/types'
 import { useUiStore } from './uiStore'
+
+const settings: AppSettings = {
+  hardwareAcceleration: true,
+  automaticUpdates: true,
+  alwaysAskDownloadLocation: true,
+  createFolderPerDownload: false,
+  defaultDownloadLocation: 'C:\\Users\\me\\Downloads',
+  lastDownloadDirectory: 'C:\\Users\\me\\Downloads',
+  interfaceLanguage: 'en_US',
+  cookiesBrowser: 'none',
+  alwaysOnTop: false
+}
+
+function metadata(title: string): VideoMetadata {
+  return {
+    requestId: title,
+    url: `https://example.com/${title}`,
+    title,
+    containers: [],
+    videoCodecs: [],
+    audioCodecs: [],
+    fpsOptions: [],
+    formats: []
+  }
+}
 
 beforeEach(() => {
   useUiStore.setState({
@@ -37,14 +63,17 @@ describe('useUiStore per-video export settings', () => {
     const lastSettings = { ...DEFAULT_EXPORT_SETTINGS, outputFormat: 'mkv' as const }
     useUiStore.getState().setLastEditableExportSettings(lastSettings)
 
-    useUiStore.getState().initializePreviewExportSettings()
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), settings)
 
     expect(useUiStore.getState().activeExportTarget).toEqual({ type: 'preview' })
-    expect(useUiStore.getState().previewExportSettings).toEqual(lastSettings)
+    expect(useUiStore.getState().previewExportSettings).toEqual({
+      ...lastSettings,
+      savePath: 'C:\\Users\\me\\Downloads\\New Video.mkv'
+    })
   })
 
   it('updates preview settings without mutating the default object', () => {
-    useUiStore.getState().initializePreviewExportSettings()
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), settings)
 
     const nextSettings = useUiStore.getState().updatePreviewExportSettings({
       outputFormat: 'webm'
@@ -53,6 +82,83 @@ describe('useUiStore per-video export settings', () => {
     expect(nextSettings.outputFormat).toBe('webm')
     expect(useUiStore.getState().lastEditableExportSettings.outputFormat).toBe('webm')
     expect(DEFAULT_EXPORT_SETTINGS.outputFormat).toBe('mp4')
+  })
+
+  it('keeps the previous Windows directory and uses the new metadata title as the filename', () => {
+    useUiStore.getState().setLastEditableExportSettings({
+      ...DEFAULT_EXPORT_SETTINGS,
+      savePath: 'C:\\Downloads\\Old Video.mp4'
+    })
+
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), settings)
+
+    expect(useUiStore.getState().previewExportSettings.savePath).toBe(
+      'C:\\Downloads\\New Video.mp4'
+    )
+  })
+
+  it('keeps the previous POSIX directory and selected output format', () => {
+    useUiStore.getState().setLastEditableExportSettings({
+      ...DEFAULT_EXPORT_SETTINGS,
+      outputFormat: 'mkv',
+      savePath: '/Users/me/Downloads/Old.webm'
+    })
+
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), {
+      ...settings,
+      defaultDownloadLocation: '/Users/me/Downloads',
+      lastDownloadDirectory: '/Users/me/Downloads'
+    })
+
+    expect(useUiStore.getState().previewExportSettings.savePath).toBe(
+      '/Users/me/Downloads/New Video.mkv'
+    )
+  })
+
+  it('sanitizes the new metadata title before building the preview save path', () => {
+    useUiStore.getState().setLastEditableExportSettings({
+      ...DEFAULT_EXPORT_SETTINGS,
+      savePath: 'C:\\Downloads\\Old Video.mp4'
+    })
+
+    useUiStore
+      .getState()
+      .initializePreviewExportSettings(metadata('New: Video? <Final>.'), settings)
+
+    expect(useUiStore.getState().previewExportSettings.savePath).toBe(
+      'C:\\Downloads\\New Video Final.mp4'
+    )
+  })
+
+  it('clears inherited save paths when always ask for location is disabled', () => {
+    useUiStore.getState().setLastEditableExportSettings({
+      ...DEFAULT_EXPORT_SETTINGS,
+      savePath: 'C:\\Downloads\\Old Video.mp4'
+    })
+
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), {
+      ...settings,
+      alwaysAskDownloadLocation: false
+    })
+
+    expect(useUiStore.getState().previewExportSettings.savePath).toBeUndefined()
+  })
+
+  it('keeps the new basename when output format changes', () => {
+    useUiStore.getState().setLastEditableExportSettings({
+      ...DEFAULT_EXPORT_SETTINGS,
+      savePath: 'C:\\Downloads\\Old Video.mp4'
+    })
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), settings)
+
+    useUiStore.getState().updatePreviewExportSettings({
+      savePath: 'C:\\Downloads\\New Video.webm',
+      outputFormat: 'webm'
+    })
+
+    expect(useUiStore.getState().previewExportSettings.savePath).toBe(
+      'C:\\Downloads\\New Video.webm'
+    )
   })
 
   it('does not clear queue or history targets when clearing preview state', () => {
