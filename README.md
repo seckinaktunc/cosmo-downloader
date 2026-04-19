@@ -19,7 +19,6 @@ Download and try now: https://github.com/seckinaktunc/cosmo-downloader/releases
 - **Lightweight:** Uses system's WebView2 (Edge) instead of bundling a full browser engine like Electron.
 - **Advanced Control:** Full control over codecs, bitrate, framerate, and resolutions via FFmpeg.
 - **Smart Parsing:** Paste a link and let the internal engine handle the rest.
-<br>
 
 ## Architecture & Dependencies
 Cosmo Downloader is built using **Electron** for the heavy lifting and **React (TypeScript)** for the user interface.
@@ -29,7 +28,6 @@ The application handles the orchestration of external tools automatically.
 - **React + TailwindCSS** — A modern, reactive user interface.
 - **yt-dlp** — Platform extraction & media handling (managed internally).
 - **FFmpeg** — Encoding, remuxing, and processing (managed internally).
-<br>
 
 ## To-Do
 - [x] Electron + React architecture
@@ -47,7 +45,6 @@ The application handles the orchestration of external tools automatically.
 - [ ] Multi-language support
 - [ ] MacOS build
 - [ ] Linux build
-<br>
 
 ## Build Instructions
 
