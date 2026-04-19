@@ -14,8 +14,10 @@ export type BottomButtonStateInput = {
   canDownloadPreview: boolean
   currentPreviewCompleted: boolean
   hasPendingQueueItems: boolean
+  queueStartCount?: number
   labels?: {
     startDownload: string
+    startQueue: (count: number) => string
     newVideo: string
     fetchingMetadata: string
     queueProgress: (index: number, total: number, percent: string) => string
@@ -37,8 +39,10 @@ export function getBottomButtonState({
   canDownloadPreview,
   currentPreviewCompleted,
   hasPendingQueueItems,
+  queueStartCount,
   labels = {
     startDownload: 'Start Download',
+    startQueue: (count) => `Start Queue (${count})`,
     newVideo: 'New Video',
     fetchingMetadata: 'Fetching Metadata',
     queueProgress: (index, total, percent) => `Queue ${index} of ${total} (${percent})`
@@ -63,7 +67,7 @@ export function getBottomButtonState({
   }
 
   if (hasPendingQueueItems) {
-    return { mode: 'start', primary: labels.startDownload }
+    return { mode: 'start', primary: labels.startQueue(queueStartCount ?? queueItems.length) }
   }
 
   if (currentPreviewCompleted) {
