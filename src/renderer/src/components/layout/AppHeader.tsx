@@ -151,6 +151,19 @@ export function AppHeader(): React.JSX.Element {
       className={cn(
         'drag-region grid min-h-16 grid-cols-[1fr_minmax(20rem,36rem)_1fr] items-center gap-6 bg-black p-2'
       )}
+      onMouseDown={(event) => {
+        const target = event.target as HTMLElement
+        if (
+          target.closest(
+            'input, textarea, select, button, a, [contenteditable="true"], [role="button"]'
+          )
+        ) {
+          return
+        }
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur()
+        }
+      }}
     >
       <div className="flex items-center">{!isMac ? headerActions : null}</div>
 
