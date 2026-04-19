@@ -124,12 +124,17 @@ export function Thumbnail({
       onClick={onClick}
     >
       {src ? (
-        <img
-          src={src}
-          alt=""
-          className={cn('h-full w-full object-cover', imageClassName)}
-          referrerPolicy="no-referrer"
-        />
+        <div
+          className="h-full w-full bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${src})` }}
+        >
+          <img
+            src={src}
+            alt=""
+            className={cn('h-full w-full object-contain backdrop-brightness-10', imageClassName)}
+            referrerPolicy="no-referrer"
+          />
+        </div>
       ) : (
         <div
           className={cn(
