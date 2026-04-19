@@ -48,8 +48,9 @@ import {
   IconWorld,
   IconX
 } from '@tabler/icons-react'
+import AppIcon from './AppIcon'
 
-interface IconProps {
+export interface IconProps {
   name: IconName
   size?: number
   thickness?: number
@@ -62,6 +63,7 @@ interface IconProps {
 addCollection(logos)
 
 const iconMap = {
+  appIcon: AppIcon,
   home: IconSmartHome,
   video: IconVideo,
   videoFilled: IconVideoFilled,

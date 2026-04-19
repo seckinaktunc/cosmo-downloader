@@ -65,8 +65,8 @@ export function BottomBar(): React.JSX.Element {
   const completedPreviewItem =
     currentSourceUrl && currentPreviewCompleted
       ? queueItems.find(
-          (item) => item.status === 'completed' && getSourceUrl(item.metadata) === currentSourceUrl
-        )
+        (item) => item.status === 'completed' && getSourceUrl(item.metadata) === currentSourceUrl
+      )
       : undefined
   const buttonText = getBottomButtonState({
     activeItem,
@@ -220,7 +220,7 @@ export function BottomBar(): React.JSX.Element {
               ? 'close'
               : buttonText.mode === 'new_video'
                 ? 'reload'
-                : 'download'
+                : 'appIcon'
           }
           label={buttonText.primary}
           active={activeContent === 'export'}
