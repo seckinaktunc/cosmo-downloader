@@ -1,39 +1,63 @@
 # Cosmo Downloader
+**Cosmo Downloader** is a high-performance video downloader designed for power users who value speed and aesthetics.
+It combines the raw power of **yt-dlp** and **FFmpeg** with a sleek user interface.
 
-An Electron application with React and TypeScript.
+Designed to stay fast, minimal, and lightweight. No more pay-walled apps that barely work;
+Cosmo Downloader is an all-in-one power-house of a video downloader.
 
-## Recommended IDE Setup
+I've started to build this out of necessity and kept developing out of passion for creating something useful.
+Very excited and happy to be finally able to share this with other people.
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+Please feel free to suggest anything or contribute!
 
-## Project Setup
+Download and try now: https://github.com/seckinaktunc/cosmo-downloader/releases
 
-### Install
+> **Currently only available for Windows**
+<br>
+<br>
 
-```bash
-$ npm install
-$ npm run download:binaries:current
-```
+## Features
+- **Hybrid Architecture:** Native C++ performance meets modern Web UI design.
+- **Lightweight:** Uses system's WebView2 (Edge) instead of bundling a full browser engine like Electron.
+- **Advanced Control:** Full control over codecs, bitrate, framerate, and resolutions via FFmpeg.
+- **Smart Parsing:** Paste a link and let the internal engine handle the rest.
+<br>
 
-Use `npm run download:binaries` to stage binaries for all configured platforms before cross-platform packaging.
+## Architecture & Dependencies
+Cosmo Downloader is built using **Electron** for the heavy lifting and **React (TypeScript)** for the user interface.
+The application handles the orchestration of external tools automatically.
 
-### Development
+- **Electron Core** — Application logic, process management, and native system integration.
+- **React + TailwindCSS** — A modern, reactive user interface.
+- **yt-dlp** — Platform extraction & media handling (managed internally).
+- **FFmpeg** — Encoding, remuxing, and processing (managed internally).
 
-```bash
-$ npm run dev
-```
+*Note: The application doesn't require any additional installs to be able to work properly.*
+<br>
 
-### Build
+## To-Do
+- [x] Electron + React architecture
+- [x] FFmpeg integration
+- [x] Export UI & implementation
+- [x] Settings UI & implementation
+- [x] Browser selection for cookies
+- [x] Multi-platform downloader
+- [x] Audio extraction
+- [x] Thumbnail downloader
+- [x] Queueing
+- [x] Download history
+- [x] Clipboard detection
+- [ ] Subtitle support
+- [ ] Multi-language support
+- [ ] MacOS build
+- [ ] Linux build
+<br>
 
-```bash
-# For windows
-$ npm run build:win
+## Build Instructions
 
-# For macOS
-$ npm run build:mac
+### Prerequisites
+- **Node.js & npm** (For building the UI)
+- **Git**
 
-# For Linux
-$ npm run build:linux
-```
-
-If Electron exits as plain Node during development, clear `ELECTRON_RUN_AS_NODE` before running `npm run dev`.
+### Building
+--WIP--
