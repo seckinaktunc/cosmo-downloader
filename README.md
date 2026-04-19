@@ -13,8 +13,6 @@ Please feel free to suggest anything or contribute!
 Download and try now: https://github.com/seckinaktunc/cosmo-downloader/releases
 
 > **Currently only available for Windows**
-<br>
-<br>
 
 ## Features
 - **Hybrid Architecture:** Native C++ performance meets modern Web UI design.
@@ -31,8 +29,6 @@ The application handles the orchestration of external tools automatically.
 - **React + TailwindCSS** — A modern, reactive user interface.
 - **yt-dlp** — Platform extraction & media handling (managed internally).
 - **FFmpeg** — Encoding, remuxing, and processing (managed internally).
-
-*Note: The application doesn't require any additional installs to be able to work properly.*
 <br>
 
 ## To-Do
