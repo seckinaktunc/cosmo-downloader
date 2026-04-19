@@ -10,16 +10,16 @@ export function useDisplayMetadata(): VideoMetadata | null {
   const queueItems = useQueueStore((state) => state.items)
   const historyEntries = useHistoryStore((state) => state.entries)
 
-  if (previewMetadata) {
-    return previewMetadata
-  }
-
   if (activeExportTarget?.type === 'queue') {
     return queueItems.find((item) => item.id === activeExportTarget.itemId)?.metadata ?? null
   }
 
   if (activeExportTarget?.type === 'history') {
     return historyEntries.find((entry) => entry.id === activeExportTarget.entryId)?.metadata ?? null
+  }
+
+  if (previewMetadata) {
+    return previewMetadata
   }
 
   return null
