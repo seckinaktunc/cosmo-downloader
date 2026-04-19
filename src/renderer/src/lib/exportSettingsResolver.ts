@@ -14,7 +14,6 @@ export type ResolvedExportSettingsTarget = {
   exportSettings: ExportSettings
   readOnly: boolean
   editable: boolean
-  label: string
 }
 
 type ExportSettingsTargetLabels = {
@@ -23,14 +22,6 @@ type ExportSettingsTargetLabels = {
   historyReadOnly: string
   previewEditable: string
   unavailable: string
-}
-
-const DEFAULT_LABELS: ExportSettingsTargetLabels = {
-  queuedEditable: 'Editing queued video settings',
-  queuedReadOnly: 'Queue item settings are read-only',
-  historyReadOnly: 'History settings are read-only',
-  previewEditable: 'Editing preview video settings',
-  unavailable: 'Select a video to edit export settings'
 }
 
 export function isQueueExportEditable(status: QueueItemStatus): boolean {
@@ -44,8 +35,7 @@ export function resolveExportSettingsTarget({
   previewMetadata,
   previewExportSettings,
   queueItems,
-  historyEntries,
-  labels = DEFAULT_LABELS
+  historyEntries
 }: {
   activeTarget: ActiveExportTarget | null
   previewMetadata: VideoMetadata | null
@@ -63,8 +53,7 @@ export function resolveExportSettingsTarget({
         metadata: item.metadata,
         exportSettings: item.exportSettings,
         readOnly: !editable,
-        editable,
-        label: editable ? labels.queuedEditable : labels.queuedReadOnly
+        editable
       }
     }
   }
@@ -77,8 +66,7 @@ export function resolveExportSettingsTarget({
         metadata: entry.metadata,
         exportSettings: entry.exportSettings,
         readOnly: true,
-        editable: false,
-        label: labels.historyReadOnly
+        editable: false
       }
     }
   }
@@ -89,8 +77,7 @@ export function resolveExportSettingsTarget({
       metadata: previewMetadata,
       exportSettings: previewExportSettings,
       readOnly: false,
-      editable: true,
-      label: labels.previewEditable
+      editable: true
     }
   }
 
@@ -99,7 +86,6 @@ export function resolveExportSettingsTarget({
     metadata: null,
     exportSettings: DEFAULT_EXPORT_SETTINGS,
     readOnly: true,
-    editable: false,
-    label: labels.unavailable
+    editable: false
   }
 }
