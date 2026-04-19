@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { createWriteStream, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
+import {
+  copyFileSync,
+  createWriteStream,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  rmSync
+} from 'node:fs'
 import { chmod, mkdtemp } from 'node:fs/promises'
 import { get } from 'node:https'
 import { tmpdir } from 'node:os'
@@ -176,6 +183,22 @@ function findBinary(directory, binaryName, sourcePath) {
   return null
 }
 
+function moveFile(source, destination) {
+  mkdirSync(dirname(destination), { recursive: true })
+
+  try {
+    renameSync(source, destination)
+  } catch (error) {
+    if (error && error.code === 'EXDEV') {
+      copyFileSync(source, destination)
+      rmSync(source, { force: true })
+      return
+    }
+
+    throw error
+  }
+}
+
 async function extractArchive(archivePath, binaryName, destination, sourcePath) {
   const tempDir = await mkdtemp(join(tmpdir(), 'cosmo-bin-'))
   const result = spawnSync('tar', ['-xf', archivePath, '-C', tempDir], { stdio: 'inherit' })
@@ -190,7 +213,7 @@ async function extractArchive(archivePath, binaryName, destination, sourcePath) 
     throw new Error(`Could not find ${binaryName} inside ${basename(archivePath)}.`)
   }
 
-  renameSync(binaryPath, destination)
+  moveFile(binaryPath, destination)
   rmSync(tempDir, { recursive: true, force: true })
 }
 
