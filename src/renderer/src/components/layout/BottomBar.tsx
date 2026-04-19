@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { VideoMetadata } from '../../../../shared/types'
 import { useDisplayMetadata } from '../../hooks/useDisplayMetadata'
@@ -9,7 +9,6 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { useUiStore } from '../../stores/uiStore'
 import { useVideoStore } from '../../stores/videoStore'
 import { Button } from '../ui/Button'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { Thumbnail } from '../ui/Thumbnail'
 
 function getSourceUrl(metadata: VideoMetadata): string {
@@ -18,7 +17,6 @@ function getSourceUrl(metadata: VideoMetadata): string {
 
 export function BottomBar(): React.JSX.Element {
   const { t } = useTranslation()
-  const [confirmDuplicate, setConfirmDuplicate] = useState(false)
   const metadata = useVideoStore((state) => state.metadata)
   const displayMetadata = useDisplayMetadata()
   const videoStage = useVideoStore((state) => state.stage)
@@ -49,14 +47,21 @@ export function BottomBar(): React.JSX.Element {
   const cancelActive = useQueueStore((state) => state.cancelActive)
   const flushExportSettingsSaves = useQueueStore((state) => state.flushExportSettingsSaves)
   const activeItem = queueItems.find((item) => item.id === activeQueueItemId)
-  const summaryMetadata = activeItem?.metadata ?? metadata ?? displayMetadata
+  const summaryMetadata = activeItem?.metadata ?? displayMetadata ?? metadata
   const canDownload = metadata != null && settings != null && videoStage === 'ready'
   const pendingItems = queueItems.filter((item) => item.status === 'pending')
   const hasPendingQueueItems = pendingItems.length > 0
   const currentSourceUrl = metadata ? getSourceUrl(metadata) : undefined
+  const isDuplicate =
+    metadata != null &&
+    queueItems.some((item) => getSourceUrl(item.metadata) === getSourceUrl(metadata))
   const currentPreviewCompleted = Boolean(
     currentSourceUrl && completedPreviewUrl === currentSourceUrl
   )
+  const willAddPreviewToQueue = canDownload && !currentPreviewCompleted && !isDuplicate
+  const queueStartCount = hasPendingQueueItems
+    ? queueItems.length + (willAddPreviewToQueue ? 1 : 0)
+    : undefined
   const completedPreviewItem =
     currentSourceUrl && currentPreviewCompleted
       ? queueItems.find(
@@ -72,8 +77,10 @@ export function BottomBar(): React.JSX.Element {
     canDownloadPreview: canDownload,
     currentPreviewCompleted,
     hasPendingQueueItems,
+    queueStartCount,
     labels: {
       startDownload: t('bottom.startDownload'),
+      startQueue: (count) => t('bottom.startQueue', { count }),
       newVideo: t('bottom.newVideo'),
       fetchingMetadata: t('metadata.fetching'),
       queueProgress: (index, total, progressPercent) =>
@@ -86,10 +93,6 @@ export function BottomBar(): React.JSX.Element {
     isActive || currentPreviewCompleted
       ? (activeProgress?.percentage ?? (currentPreviewCompleted ? 100 : 0))
       : 0
-  const isDuplicate =
-    metadata != null &&
-    queueItems.some((item) => getSourceUrl(item.metadata) === getSourceUrl(metadata))
-
   useEffect(() => {
     if (!trackedPreviewQueueItemId) {
       return
@@ -135,6 +138,11 @@ export function BottomBar(): React.JSX.Element {
     }
   }
 
+  const startExistingQueue = async (): Promise<void> => {
+    await flushExportSettingsSaves()
+    await (queuePaused ? resumeQueue() : startQueue())
+  }
+
   const handleMainClick = (): void => {
     if (buttonText.mode === 'cancel') {
       void (activeItem ? cancelActive() : cancelDownload())
@@ -146,21 +154,18 @@ export function BottomBar(): React.JSX.Element {
       return
     }
 
-    if (buttonText.mode === 'start' && canDownload && !currentPreviewCompleted) {
-      if (isDuplicate) {
-        setConfirmDuplicate(true)
+    if (buttonText.mode === 'start' && hasPendingQueueItems) {
+      if (canDownload && !currentPreviewCompleted && !isDuplicate) {
+        void addPreviewAndStart()
         return
       }
 
-      void addPreviewAndStart()
+      void startExistingQueue()
       return
     }
 
-    if (buttonText.mode === 'start' && hasPendingQueueItems) {
-      void (async () => {
-        await flushExportSettingsSaves()
-        await (queuePaused ? resumeQueue() : startQueue())
-      })()
+    if (buttonText.mode === 'start' && canDownload && !currentPreviewCompleted) {
+      void addPreviewAndStart()
     }
   }
 
@@ -251,20 +256,6 @@ export function BottomBar(): React.JSX.Element {
           style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}
         />
       </div>
-
-      {confirmDuplicate ? (
-        <ConfirmDialog
-          title={t('queue.duplicateTitle')}
-          message={t('queue.duplicateMessage')}
-          confirmLabel={t('queue.addDuplicate')}
-          cancelLabel={t('actions.cancel')}
-          onCancel={() => setConfirmDuplicate(false)}
-          onConfirm={() => {
-            setConfirmDuplicate(false)
-            void addPreviewAndStart()
-          }}
-        />
-      ) : null}
     </footer>
   )
 }
