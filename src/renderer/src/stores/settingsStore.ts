@@ -12,6 +12,7 @@ type SettingsState = {
   environment: AppEnvironment | null
   cookieBrowsers: CookieBrowserOption[]
   restartRequired: boolean
+  initialHardwareAcceleration: boolean | null
   isLoading: boolean
   error?: string
   load: () => Promise<void>
@@ -29,6 +30,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   environment: null,
   cookieBrowsers: [{ id: 'none', label: 'None', exists: true }],
   restartRequired: false,
+  initialHardwareAcceleration: null,
   isLoading: false,
 
   load: async () => {
@@ -42,6 +44,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({
       isLoading: false,
       settings: settingsResult.ok ? settingsResult.data : null,
+      initialHardwareAcceleration: settingsResult.ok
+        ? settingsResult.data.hardwareAcceleration
+        : null,
+      restartRequired: false,
       cookieBrowsers: browsersResult.ok
         ? browsersResult.data
         : [{ id: 'none', label: 'None', exists: true }],
@@ -51,20 +57,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   update: async (update) => {
-    const current = get().settings
     const result = await window.cosmo.settings.update(update)
     if (!result.ok) {
       set({ error: result.error.message })
       return
     }
 
+    const initialHardwareAcceleration = get().initialHardwareAcceleration
     set({
       settings: result.data,
       restartRequired:
-        get().restartRequired ||
-        (current != null &&
-          update.hardwareAcceleration != null &&
-          current.hardwareAcceleration !== update.hardwareAcceleration)
+        initialHardwareAcceleration != null &&
+        result.data.hardwareAcceleration !== initialHardwareAcceleration
     })
   },
 
