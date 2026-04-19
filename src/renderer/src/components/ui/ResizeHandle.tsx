@@ -1,5 +1,13 @@
-import { useEffect, useState, type KeyboardEvent, type PointerEvent, type RefObject } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type RefObject
+} from 'react'
 import { cn } from '../../lib/utils'
+import { calculateResizePercent, clampResizePercent } from '../../lib/resizeMath'
 
 type ResizeHandleProps = {
   value: number
@@ -8,10 +16,6 @@ type ResizeHandleProps = {
   onChange: (value: number) => void
   containerRef: RefObject<HTMLElement | null>
   label: string
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value))
 }
 
 export function ResizeHandle({
@@ -23,12 +27,16 @@ export function ResizeHandle({
   label
 }: ResizeHandleProps): React.JSX.Element {
   const [dragging, setDragging] = useState(false)
+  const pointerOffsetRef = useRef(0)
 
-  const updateFromClientX = (clientX: number): void => {
+  const getContainerMetrics = (): {
+    contentLeft: number
+    contentWidth: number
+  } | null => {
     const container = containerRef.current
 
     if (!container) {
-      return
+      return null
     }
 
     const rect = container.getBoundingClientRect()
@@ -39,17 +47,42 @@ export function ResizeHandle({
     const contentWidth = rect.width - paddingLeft - paddingRight
 
     if (contentWidth <= 0) {
+      return null
+    }
+
+    return { contentLeft, contentWidth }
+  }
+
+  const updateFromClientX = (clientX: number): void => {
+    const metrics = getContainerMetrics()
+
+    if (!metrics) {
       return
     }
 
-    onChange(clamp(((clientX - contentLeft) / contentWidth) * 100, min, max))
+    onChange(
+      calculateResizePercent(
+        clientX,
+        metrics.contentLeft,
+        metrics.contentWidth,
+        pointerOffsetRef.current,
+        min,
+        max
+      )
+    )
   }
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
+    const metrics = getContainerMetrics()
+    if (metrics) {
+      const dividerX = metrics.contentLeft + (metrics.contentWidth * value) / 100
+      pointerOffsetRef.current = event.clientX - dividerX
+    } else {
+      pointerOffsetRef.current = 0
+    }
     setDragging(true)
-    updateFromClientX(event.clientX)
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>): void => {
@@ -64,17 +97,18 @@ export function ResizeHandle({
     }
 
     setDragging(false)
+    pointerOffsetRef.current = 0
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     switch (event.key) {
       case 'ArrowLeft':
         event.preventDefault()
-        onChange(clamp(value - 1, min, max))
+        onChange(clampResizePercent(value - 1, min, max))
         break
       case 'ArrowRight':
         event.preventDefault()
-        onChange(clamp(value + 1, min, max))
+        onChange(clampResizePercent(value + 1, min, max))
         break
       case 'Home':
         event.preventDefault()
