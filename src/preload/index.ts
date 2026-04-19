@@ -25,6 +25,7 @@ import type {
   QueueSnapshot,
   SettingsUpdate,
   ThumbnailRequest,
+  UpdateState,
   VideoMetadata,
   WindowAction
 } from '../shared/types'
@@ -97,6 +98,13 @@ export type CosmoApi = {
     openFolder: (request: HistoryItemRequest) => Promise<IpcResult<null>>
     copySource: (request: HistoryItemRequest) => Promise<IpcResult<null>>
     onChanged: (listener: (entries: DownloadHistoryEntry[]) => void) => Unsubscribe
+  }
+  updates: {
+    getState: () => Promise<IpcResult<UpdateState>>
+    checkNow: () => Promise<IpcResult<UpdateState>>
+    download: () => Promise<IpcResult<UpdateState>>
+    install: () => Promise<IpcResult<UpdateState>>
+    onState: (listener: (state: UpdateState) => void) => Unsubscribe
   }
   window: {
     minimize: () => Promise<IpcResult<null>>
@@ -188,6 +196,13 @@ const api: CosmoApi = {
     copySource: (request) => invoke<null>(IPC_CHANNELS.history.copySource, request),
     onChanged: (listener) =>
       subscribe<DownloadHistoryEntry[]>(IPC_CHANNELS.history.changed, listener)
+  },
+  updates: {
+    getState: () => invoke<UpdateState>(IPC_CHANNELS.updates.getState),
+    checkNow: () => invoke<UpdateState>(IPC_CHANNELS.updates.checkNow),
+    download: () => invoke<UpdateState>(IPC_CHANNELS.updates.download),
+    install: () => invoke<UpdateState>(IPC_CHANNELS.updates.install),
+    onState: (listener) => subscribe<UpdateState>(IPC_CHANNELS.updates.state, listener)
   },
   window: {
     minimize: () => windowAction('minimize'),

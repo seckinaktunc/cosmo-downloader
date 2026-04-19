@@ -86,6 +86,10 @@ export class QueueService {
     }
   }
 
+  hasActiveItem(): boolean {
+    return this.items.some((item) => item.status === 'active') || this.running
+  }
+
   async add(request: QueueAddRequest): Promise<IpcResult<QueueSnapshot>> {
     const requestedOutputPath = await this.resolveRequestedOutputPath(request)
     if (requestedOutputPath === null) {

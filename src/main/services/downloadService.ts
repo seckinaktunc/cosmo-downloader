@@ -272,6 +272,10 @@ export class DownloadService {
 
   constructor(private readonly binaryService: BinaryService) {}
 
+  isActive(): boolean {
+    return this.activeJob != null
+  }
+
   cancel(): IpcResult<null> {
     if (this.activeJob == null) {
       return { ok: true, data: null }

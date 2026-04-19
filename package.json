@@ -4,7 +4,14 @@
   "description": "Cosmo Downloader",
   "main": "./out/main/index.js",
   "author": "seckinaktunc.com",
-  "homepage": "https://seckinaktunc.com",
+  "homepage": "https://github.com/seckinaktunc/cosmo-downloader#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seckinaktunc/cosmo-downloader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seckinaktunc/cosmo-downloader/issues"
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -31,6 +38,8 @@
     "@iconify/react": "^6.0.2",
     "@tabler/icons-react": "^3.41.1",
     "clsx": "^2.1.1",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.3",
     "i18next": "^26.0.4",
     "motion": "^12.38.0",
     "react-i18next": "^17.0.3",

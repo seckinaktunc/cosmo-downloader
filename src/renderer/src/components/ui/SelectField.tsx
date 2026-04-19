@@ -29,10 +29,7 @@ export function SelectField<T extends string>({
       className={`flex ${orientation === 'horizontal' ? 'flex-row items-center justify-between' : 'flex-col'} gap-1`}
     >
       <div className="flex gap-1">
-        <span
-          id={labelId}
-          className={`font-medium text-white/50 ${orientation === 'vertical' && 'text-sm'}`}
-        >
+        <span id={labelId} className={`text-white/50 ${orientation === 'vertical' && 'text-sm'}`}>
           {label}
         </span>
 

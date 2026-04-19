@@ -61,6 +61,13 @@ export const IPC_CHANNELS = {
     copySource: 'history:copy-source',
     changed: 'history:changed'
   },
+  updates: {
+    getState: 'updates:get-state',
+    checkNow: 'updates:check-now',
+    download: 'updates:download',
+    install: 'updates:install',
+    state: 'updates:state'
+  },
   window: {
     action: 'window:action',
     setAlwaysOnTop: 'window:set-always-on-top'

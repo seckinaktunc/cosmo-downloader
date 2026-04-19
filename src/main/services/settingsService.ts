@@ -24,6 +24,11 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
       typeof saved.automaticUpdates === 'boolean'
         ? saved.automaticUpdates
         : defaults.automaticUpdates,
+    lastAutomaticUpdateCheckAt:
+      typeof saved.lastAutomaticUpdateCheckAt === 'string' &&
+      saved.lastAutomaticUpdateCheckAt.length > 0
+        ? saved.lastAutomaticUpdateCheckAt
+        : defaults.lastAutomaticUpdateCheckAt,
     alwaysAskDownloadLocation:
       typeof saved.alwaysAskDownloadLocation === 'boolean'
         ? saved.alwaysAskDownloadLocation

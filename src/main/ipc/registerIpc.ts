@@ -30,6 +30,7 @@ import { VideoMetadataService } from '../services/videoMetadataService'
 import { DownloadService } from '../services/downloadService'
 import { HistoryService } from '../services/historyService'
 import { QueueService } from '../services/queueService'
+import { UpdateService } from '../services/updateService'
 import { createUniquePath } from '../services/filename'
 import {
   copyThumbnailImage,
@@ -54,6 +55,9 @@ export function registerIpcHandlers(): void {
   const downloadService = new DownloadService(binaryService)
   const historyService = new HistoryService()
   const queueService = new QueueService(downloadService, historyService)
+  const updateService = new UpdateService(settingsService, {
+    isMediaBusy: () => downloadService.isActive() || queueService.hasActiveItem()
+  })
 
   ipcMain.handle(IPC_CHANNELS.app.environment, () => {
     const environment: AppEnvironment = {
@@ -68,7 +72,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.settings.get, () => ok(settingsService.get()))
 
   ipcMain.handle(IPC_CHANNELS.settings.update, (_event, update: SettingsUpdate) => {
-    return ok(settingsService.update(update))
+    const settings = settingsService.update(update)
+    if (update.automaticUpdates === true) {
+      void updateService.checkAutomatic()
+    }
+    return ok(settings)
   })
 
   ipcMain.handle(IPC_CHANNELS.settings.chooseDownloadDirectory, async () => {
@@ -249,6 +257,14 @@ export function registerIpcHandlers(): void {
       : fail('NOT_FOUND', 'Source URL was not found.')
   })
 
+  ipcMain.handle(IPC_CHANNELS.updates.getState, () => ok(updateService.getState()))
+
+  ipcMain.handle(IPC_CHANNELS.updates.checkNow, () => updateService.checkNow())
+
+  ipcMain.handle(IPC_CHANNELS.updates.download, () => updateService.download())
+
+  ipcMain.handle(IPC_CHANNELS.updates.install, () => updateService.install())
+
   ipcMain.handle(IPC_CHANNELS.window.action, (event, action: WindowAction) => {
     const window = BrowserWindow.fromWebContents(event.sender)
     if (window == null) {
@@ -279,4 +295,6 @@ export function registerIpcHandlers(): void {
     window.setAlwaysOnTop(enabled)
     return ok(null)
   })
+
+  updateService.scheduleAutomaticChecks()
 }

@@ -6,6 +6,7 @@ export type IpcErrorCode =
   | 'CANCELLED'
   | 'BUSY'
   | 'NOT_FOUND'
+  | 'UPDATE_UNAVAILABLE'
   | 'UNKNOWN'
 
 export type IpcError = {
@@ -50,6 +51,7 @@ export type CookieBrowserOption = {
 export type AppSettings = {
   hardwareAcceleration: boolean
   automaticUpdates: boolean
+  lastAutomaticUpdateCheckAt?: string
   alwaysAskDownloadLocation: boolean
   createFolderPerDownload: boolean
   defaultDownloadLocation: string
@@ -248,4 +250,37 @@ export type ThumbnailRequest = {
 
 export type OpenPathRequest = {
   path: string
+}
+
+export type UpdateStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'not_available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error'
+  | 'unavailable'
+
+export type UpdateInfoSummary = {
+  version: string
+  releaseName?: string
+  releaseDate?: string
+  releaseNotes?: string
+}
+
+export type UpdateDownloadProgress = {
+  percent: number
+  transferred?: number
+  total?: number
+  bytesPerSecond?: number
+}
+
+export type UpdateState = {
+  status: UpdateStatus
+  updateInfo?: UpdateInfoSummary
+  progress?: UpdateDownloadProgress
+  error?: string
+  checkedAt?: string
+  unavailableReason?: string
 }

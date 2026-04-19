@@ -4,7 +4,9 @@ import type { IconName } from '../miscellaneous/Icon'
 import { SelectField } from '../ui/SelectField'
 import { Switch } from '../ui/Switch'
 import { useSettingsStore } from '../../stores/settingsStore'
+import { useUpdateStore } from '../../stores/updateStore'
 import { LocationSelector } from '../ui/LocationSelector'
+import { Button } from '../ui/Button'
 
 const COOKIE_BROWSER_ICONS: Record<CookieBrowser, IconName> = {
   none: 'none',
@@ -25,6 +27,10 @@ export function SettingsPanel(): React.JSX.Element {
   const restartRequired = useSettingsStore((state) => state.restartRequired)
   const update = useSettingsStore((state) => state.update)
   const chooseDownloadDirectory = useSettingsStore((state) => state.chooseDownloadDirectory)
+  const updateState = useUpdateStore((state) => state.state)
+  const checkForUpdates = useUpdateStore((state) => state.checkNow)
+  const downloadUpdate = useUpdateStore((state) => state.download)
+  const installUpdate = useUpdateStore((state) => state.install)
 
   if (!settings) {
     return <div className="text-white/60">{t('settings.loading')}</div>
@@ -56,6 +62,7 @@ export function SettingsPanel(): React.JSX.Element {
           onChange={(automaticUpdates) => void update({ automaticUpdates })}
         />
       </div>
+
       <div className="p-4">
         <SelectField<CookieBrowser>
           label={t('settings.cookiesBrowser')}
@@ -99,6 +106,46 @@ export function SettingsPanel(): React.JSX.Element {
           }
         />
       ) : null}
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <span className="text-white/50">{t('updates.checkNow')}</span>
+            <p className="min-w-0 text-sm text-white/25">
+              {updateState.error ??
+                updateState.unavailableReason ??
+                t(`updates.status.${updateState.status}`, {
+                  version: updateState.updateInfo?.version,
+                  percent: Math.round(updateState.progress?.percent ?? 0)
+                })}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {updateState.status === 'available' ? (
+              <Button
+                label={t('updates.download')}
+                size="sm"
+                className="rounded-none"
+                onClick={() => void downloadUpdate()}
+              />
+            ) : null}
+            {updateState.status === 'downloaded' ? (
+              <Button
+                label={t('updates.restartNow')}
+                size="sm"
+                className="rounded-none"
+                onClick={() => void installUpdate()}
+              />
+            ) : null}
+            <Button
+              label={t('updates.checkNow')}
+              size="sm"
+              className="rounded-none"
+              disabled={updateState.status === 'checking' || updateState.status === 'downloading'}
+              onClick={() => void checkForUpdates()}
+            />
+          </div>
+        </div>
+      </div>
     </section>
   )
 }

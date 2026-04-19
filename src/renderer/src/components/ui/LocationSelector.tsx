@@ -66,7 +66,7 @@ export function LocationSelector({
   if (layout === 'stacked') {
     return (
       <div className={cn('flex flex-col gap-1', className, disabled && 'opacity-40')}>
-        <span className={cn('text-sm font-medium text-white/50', labelClassName)}>{label}</span>
+        <span className={cn('text-sm text-white/50', labelClassName)}>{label}</span>
         <div className="flex border border-white/10 divide-x divide-white/10">
           {pathButton}
           {chooseButton}
@@ -77,7 +77,7 @@ export function LocationSelector({
 
   return (
     <div className={cn('flex items-center justify-between gap-16 min-w-0', className)}>
-      <div className={cn('font-medium text-white/50 text-nowrap', labelClassName)}>{label}</div>
+      <div className={cn('text-white/50 text-nowrap', labelClassName)}>{label}</div>
       <div className="flex min-w-0 flex-1 items-center border border-white/10 divide-x divide-white/10">
         {pathButton}
         {chooseButton}

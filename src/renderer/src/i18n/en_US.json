@@ -52,6 +52,26 @@
     "language": "Interface language",
     "restartRequired": "Restart required for hardware acceleration changes."
   },
+  "updates": {
+    "checkNow": "Check for updates",
+    "download": "Download",
+    "restartNow": "Restart now",
+    "later": "Later",
+    "availableTitle": "Update available",
+    "availableMessage": "Version {{version}} is available.",
+    "downloadedTitle": "Update ready",
+    "downloadedMessage": "Version {{version}} has been downloaded.",
+    "status": {
+      "idle": "Updates are ready to check.",
+      "checking": "Checking for updates...",
+      "available": "Version {{version}} is available.",
+      "not_available": "Cosmo Downloader is up to date.",
+      "downloading": "Downloading update {{percent}}%",
+      "downloaded": "Update downloaded. Restart when ready.",
+      "error": "Update check failed.",
+      "unavailable": "Updates are unavailable."
+    }
+  },
   "layout": {
     "resizeMediaOverview": "Resize media overview"
   },

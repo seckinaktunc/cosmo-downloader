@@ -20,7 +20,7 @@ export function Switch({
   return (
     <label className="flex cursor-pointer items-center justify-between gap-4 text-white">
       <span className="flex min-w-0 items-center gap-1">
-        <span className={`font-medium ${error ? 'text-primary' : 'text-white/50'}`}>{label}</span>
+        <span className={`${error ? 'text-primary' : 'text-white/50'}`}>{label}</span>
         {description && (
           <Tooltip label={description}>
             <Icon name="info" className="opacity-50" />

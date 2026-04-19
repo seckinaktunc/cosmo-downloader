@@ -44,6 +44,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
   return {
     hardwareAcceleration: true,
     automaticUpdates: true,
+    lastAutomaticUpdateCheckAt: undefined,
     alwaysAskDownloadLocation: false,
     createFolderPerDownload: false,
     defaultDownloadLocation: downloadsPath,

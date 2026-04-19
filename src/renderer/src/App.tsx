@@ -2,10 +2,12 @@ import { useEffect } from 'react'
 import { AppHeader } from './components/layout/AppHeader'
 import { BottomBar } from './components/layout/BottomBar'
 import { MainContent } from './components/layout/MainContent'
+import { UpdatePrompt } from './components/features/UpdatePrompt'
 import { useDownloadStore } from './stores/downloadStore'
 import { useHistoryStore } from './stores/historyStore'
 import { useQueueStore } from './stores/queueStore'
 import { useSettingsStore } from './stores/settingsStore'
+import { useUpdateStore } from './stores/updateStore'
 
 export default function App(): React.JSX.Element {
   const loadSettings = useSettingsStore((state) => state.load)
@@ -14,21 +16,27 @@ export default function App(): React.JSX.Element {
   const subscribeToQueue = useQueueStore((state) => state.subscribe)
   const loadHistory = useHistoryStore((state) => state.load)
   const subscribeToHistory = useHistoryStore((state) => state.subscribe)
+  const loadUpdates = useUpdateStore((state) => state.load)
+  const subscribeToUpdates = useUpdateStore((state) => state.subscribe)
 
   useEffect(() => {
     void loadSettings()
     void loadQueue()
     void loadHistory()
+    void loadUpdates()
     subscribeToDownloads()
     subscribeToQueue()
     subscribeToHistory()
+    subscribeToUpdates()
   }, [
     loadHistory,
     loadQueue,
     loadSettings,
+    loadUpdates,
     subscribeToDownloads,
     subscribeToHistory,
-    subscribeToQueue
+    subscribeToQueue,
+    subscribeToUpdates
   ])
 
   return (
@@ -36,6 +44,7 @@ export default function App(): React.JSX.Element {
       <AppHeader />
       <MainContent />
       <BottomBar />
+      <UpdatePrompt />
     </div>
   )
 }

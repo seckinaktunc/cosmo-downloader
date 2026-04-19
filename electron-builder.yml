@@ -31,6 +31,7 @@ mac:
   icon: icon.icns
   target:
     - dmg
+    - zip
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -50,5 +51,7 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: seckinaktunc
+  repo: cosmo-downloader
+  releaseType: release

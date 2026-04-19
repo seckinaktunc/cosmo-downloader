@@ -31,4 +31,14 @@ describe('mergeSettings', () => {
 
     expect(mergeSettings(defaults, {}).createFolderPerDownload).toBe(false)
   })
+
+  it('merges the last automatic update check timestamp', () => {
+    const defaults = createDefaultSettings('/downloads')
+    const timestamp = '2026-04-19T10:00:00.000Z'
+
+    expect(mergeSettings(defaults, { lastAutomaticUpdateCheckAt: timestamp })).toEqual({
+      ...defaults,
+      lastAutomaticUpdateCheckAt: timestamp
+    })
+  })
 })
