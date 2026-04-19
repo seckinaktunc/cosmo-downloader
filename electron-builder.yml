@@ -1,4 +1,4 @@
-appId: com.cosmo.downloader
+appId: com.seckinaktunc.cosmodownloader
 productName: Cosmo Downloader
 directories:
   buildResources: build
