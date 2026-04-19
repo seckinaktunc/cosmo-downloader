@@ -102,6 +102,8 @@ export type ExportSettings = {
   videoBitrate: number | 'auto'
   audioBitrate: number | 'auto'
   frameRate: number | 'auto'
+  trimStartSeconds: number
+  trimEndSeconds?: number
   videoCodec: VideoCodec
   audioCodec: AudioCodec
   savePath?: string

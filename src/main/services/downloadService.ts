@@ -22,6 +22,7 @@ import type {
   VideoCodec
 } from '../../shared/types'
 import { isAudioOnlyFormat } from '../../shared/formatOptions'
+import { formatTimecode, isTrimActive, normalizeTrimRange } from '../../shared/trim'
 import { APP_ICON } from '../appIdentity'
 import { BinaryMissingError, BinaryService, type BinaryPaths } from './binaryService'
 import { fetchThumbnailImage } from './thumbnailService'
@@ -204,6 +205,65 @@ export function buildFfmpegTranscodeArgs(
   }
 
   args.push('-progress', 'pipe:1', '-nostats', outputPath)
+  return args
+}
+
+function buildDownloadSection(request: DownloadStartRequest): string | undefined {
+  if (!isTrimActive(request.exportSettings, request.metadata.duration)) {
+    return undefined
+  }
+
+  const range = normalizeTrimRange(
+    request.exportSettings.trimStartSeconds,
+    request.exportSettings.trimEndSeconds,
+    request.metadata.duration ?? 0
+  )
+
+  return `*${formatTimecode(range.startSeconds)}-${formatTimecode(range.endSeconds)}`
+}
+
+export function buildYtDlpArgs({
+  tempDir,
+  ffmpegDirectory,
+  request,
+  plan
+}: {
+  tempDir: string
+  ffmpegDirectory: string
+  request: DownloadStartRequest
+  plan: ReturnType<typeof createDownloadPlan>
+}): string[] {
+  const args = [
+    '--no-playlist',
+    '--newline',
+    '--progress',
+    '--progress-template',
+    YTDLP_PROGRESS_TEMPLATE,
+    '--ffmpeg-location',
+    ffmpegDirectory,
+    '-f',
+    plan.formatSelector,
+    '-o',
+    join(tempDir, 'source.%(ext)s')
+  ]
+
+  const section = buildDownloadSection(request)
+  if (section) {
+    args.push('--download-sections', section)
+  }
+
+  if (plan.ytdlpMergeFormat != null) {
+    args.push('--merge-output-format', plan.ytdlpMergeFormat)
+  } else if (!isAudioOnlyFormat(request.exportSettings.outputFormat)) {
+    args.push('--merge-output-format', 'mkv')
+  }
+
+  if (request.settings.cookiesBrowser !== 'none') {
+    args.push('--cookies-from-browser', request.settings.cookiesBrowser)
+  }
+
+  args.push(request.metadata.url)
+
   return args
 }
 
@@ -418,31 +478,12 @@ export class DownloadService {
     request: DownloadStartRequest,
     plan: ReturnType<typeof createDownloadPlan>
   ): Promise<string> {
-    const args = [
-      '--no-playlist',
-      '--newline',
-      '--progress',
-      '--progress-template',
-      YTDLP_PROGRESS_TEMPLATE,
-      '--ffmpeg-location',
+    const args = buildYtDlpArgs({
+      tempDir: job.tempDir,
       ffmpegDirectory,
-      '-f',
-      plan.formatSelector,
-      '-o',
-      join(job.tempDir, 'source.%(ext)s')
-    ]
-
-    if (plan.ytdlpMergeFormat != null) {
-      args.push('--merge-output-format', plan.ytdlpMergeFormat)
-    } else if (!isAudioOnlyFormat(request.exportSettings.outputFormat)) {
-      args.push('--merge-output-format', 'mkv')
-    }
-
-    if (request.settings.cookiesBrowser !== 'none') {
-      args.push('--cookies-from-browser', request.settings.cookiesBrowser)
-    }
-
-    args.push(request.metadata.url)
+      request,
+      plan
+    })
 
     return new Promise((resolve, reject) => {
       const child = spawnProcess(ytdlpPath, args, {

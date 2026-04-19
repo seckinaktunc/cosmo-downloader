@@ -41,6 +41,8 @@ const exportSettings: ExportSettings = {
   videoBitrate: 'auto',
   audioBitrate: 'auto',
   frameRate: 'auto',
+  trimStartSeconds: 0,
+  trimEndSeconds: undefined,
   videoCodec: 'auto',
   audioCodec: 'auto'
 }
@@ -87,7 +89,7 @@ afterEach(() => {
 })
 
 describe('HistoryService', () => {
-  it('merges missing video bitrate into persisted history entries', () => {
+  it('merges missing video bitrate and trim settings into persisted history entries', () => {
     const directory = mkdtempSync(join(tmpdir(), 'cosmo-history-'))
     tempDirs.push(directory)
     const filePath = join(directory, 'history.json')
@@ -117,6 +119,8 @@ describe('HistoryService', () => {
     const service = new HistoryService(filePath)
 
     expect(service.get()[0].exportSettings.videoBitrate).toBe('auto')
+    expect(service.get()[0].exportSettings.trimStartSeconds).toBe(0)
+    expect(service.get()[0].exportSettings.trimEndSeconds).toBeUndefined()
   })
 
   it('removes many selected entries in one update', () => {

@@ -42,14 +42,14 @@ export function MainContent(): React.JSX.Element {
       <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-linear-to-b from-dark to-white/10">
         <div className="flex w-full divide-x divide-white/10">
           <div
-            className={`py-2 px-3 flex-1 text-center cursor-pointer ${activeContent !== 'export' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark' : 'bg-dark text-white'}`}
-            onClick={() => setActiveContent('export')}
+            className={`py-2 px-3 flex-1 text-center ${activeContent !== 'export' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark cursor-pointer' : 'bg-dark text-white'}`}
+            onClick={() => activeContent !== 'export' && setActiveContent('export')}
           >
             {t('export.title')}
           </div>
           <div
-            className={`py-2 px-3 flex-1 text-center cursor-pointer ${activeContent !== 'settings' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark' : 'bg-dark text-white'}`}
-            onClick={() => setActiveContent('settings')}
+            className={`py-2 px-3 flex-1 text-center ${activeContent !== 'settings' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark cursor-pointer' : 'bg-dark text-white'}`}
+            onClick={() => activeContent !== 'settings' && setActiveContent('settings')}
           >
             {t('settings.title')}
           </div>

@@ -3,6 +3,7 @@ import { Icon as IconifyIcon, addCollection } from '@iconify/react'
 import {
   IconAdjustmentsHorizontal,
   IconAdjustmentsHorizontalFilled,
+  IconAlertTriangle,
   IconArrowRight,
   IconBrandChrome,
   IconBrandEdge,
@@ -14,12 +15,12 @@ import {
   IconCheck,
   IconChevronDown,
   IconChevronsDown,
+  IconCircleOff,
   IconClipboardText,
   IconClock,
   IconCopy,
   IconDotsVerticalFilled,
   IconDownload,
-  IconExclamationCircle,
   IconExternalLink,
   IconFolder,
   IconFolderOpen,
@@ -96,7 +97,7 @@ const iconMap = {
   language: IconLanguage,
   list: IconList,
   info: IconInfoCircle,
-  warning: IconExclamationCircle,
+  warning: IconAlertTriangle,
   world: IconWorld,
   pin: IconPinned,
   pinFilled: IconPinFilled,
@@ -105,7 +106,8 @@ const iconMap = {
   reload: IconReload,
   search: IconSearch,
   move: IconDotsVerticalFilled,
-  folderOpen: IconFolderOpen
+  folderOpen: IconFolderOpen,
+  none: IconCircleOff
 } as const
 
 export type TablerIconName = keyof typeof iconMap

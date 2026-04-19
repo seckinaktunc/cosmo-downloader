@@ -35,6 +35,8 @@ const baseSettings: ExportSettings = {
   videoBitrate: 'auto',
   audioBitrate: 'auto',
   frameRate: 'auto',
+  trimStartSeconds: 0,
+  trimEndSeconds: undefined,
   videoCodec: 'auto',
   audioCodec: 'auto'
 }

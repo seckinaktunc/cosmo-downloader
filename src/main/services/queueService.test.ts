@@ -85,7 +85,7 @@ afterEach(() => {
 })
 
 describe('QueueService export settings updates', () => {
-  it('merges missing video bitrate into persisted queue items', () => {
+  it('merges missing video bitrate and trim settings into persisted queue items', () => {
     const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'))
     tempDirs.push(directory)
     const filePath = join(directory, 'queue.json')
@@ -115,6 +115,8 @@ describe('QueueService export settings updates', () => {
     const service = new QueueService({} as DownloadService, {} as HistoryService, filePath)
 
     expect(service.getSnapshot().items[0].exportSettings.videoBitrate).toBe('auto')
+    expect(service.getSnapshot().items[0].exportSettings.trimStartSeconds).toBe(0)
+    expect(service.getSnapshot().items[0].exportSettings.trimEndSeconds).toBeUndefined()
   })
 
   it('prunes completed and cancelled persisted queue items', () => {

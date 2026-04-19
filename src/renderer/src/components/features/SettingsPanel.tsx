@@ -7,7 +7,7 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { LocationSelector } from '../ui/LocationSelector'
 
 const COOKIE_BROWSER_ICONS: Record<CookieBrowser, IconName> = {
-  none: 'browser',
+  none: 'none',
   chrome: 'logos:chrome',
   chromium: 'logos:chrome',
   edge: 'logos:microsoft-edge',

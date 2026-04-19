@@ -10,11 +10,13 @@ import {
   VIDEO_CODECS,
   isAudioOnlyFormat
 } from '../../../../shared/formatOptions'
+import { normalizeTrimRange } from '../../../../shared/trim'
 import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types'
 import { useActiveExportSettings } from '../../hooks/useActiveExportSettings'
 import { getEffectiveSavePath, replaceOutputExtension } from '../../lib/outputPath'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { LocationSelector } from '../ui/LocationSelector'
+import { RangeSlider } from '../ui/RangeSlider'
 import { RadioBoxes } from '../ui/RadioBoxes'
 import { SnapSlider } from '../ui/SnapSlider'
 
@@ -26,6 +28,12 @@ export function ExportSettingsPanel(): React.JSX.Element {
   const audioOnly = isAudioOnlyFormat(exportSettings.outputFormat)
   const controlsDisabled = readOnly || metadata == null
   const showSavePath = Boolean(settings?.alwaysAskDownloadLocation)
+  const durationSeconds = metadata?.duration ? Math.floor(metadata.duration) : 0
+  const trimRange = normalizeTrimRange(
+    exportSettings.trimStartSeconds,
+    exportSettings.trimEndSeconds,
+    durationSeconds
+  )
   const displaySavePath = getEffectiveSavePath(
     exportSettings.savePath,
     exportSettings.outputFormat,
@@ -52,6 +60,28 @@ export function ExportSettingsPanel(): React.JSX.Element {
       void updateExportSettings({ resolution: resolutionOptions[resolutionOptions.length - 1] })
     }
   }, [controlsDisabled, exportSettings.resolution, resolutionOptions, updateExportSettings])
+
+  useEffect(() => {
+    if (
+      !controlsDisabled &&
+      durationSeconds > 0 &&
+      (trimRange.startSeconds !== exportSettings.trimStartSeconds ||
+        trimRange.endSeconds !== exportSettings.trimEndSeconds)
+    ) {
+      void updateExportSettings({
+        trimStartSeconds: trimRange.startSeconds,
+        trimEndSeconds: trimRange.endSeconds
+      })
+    }
+  }, [
+    controlsDisabled,
+    durationSeconds,
+    exportSettings.trimEndSeconds,
+    exportSettings.trimStartSeconds,
+    trimRange.endSeconds,
+    trimRange.startSeconds,
+    updateExportSettings
+  ])
 
   useEffect(() => {
     if (
@@ -126,6 +156,24 @@ export function ExportSettingsPanel(): React.JSX.Element {
           options={OUTPUT_FORMATS.map((format) => ({ value: format, label: format }))}
           disabled={controlsDisabled}
           onChange={(outputFormat) => void updateExportSettings({ outputFormat })}
+        />
+      </div>
+
+      <div className="p-4">
+        <RangeSlider
+          label={t('export.trim')}
+          startLabel={t('export.trimStart')}
+          endLabel={t('export.trimEnd')}
+          value={trimRange}
+          max={durationSeconds}
+          disabled={controlsDisabled}
+          invalidLabel={t('export.trimInvalid')}
+          onChange={({ startSeconds, endSeconds }) =>
+            void updateExportSettings({
+              trimStartSeconds: startSeconds,
+              trimEndSeconds: endSeconds
+            })
+          }
         />
       </div>
       <div className="grid grid-cols-2 divide-x divide-white/10">

@@ -15,11 +15,12 @@ const settings: AppSettings = {
   alwaysOnTop: false
 }
 
-function metadata(title: string): VideoMetadata {
+function metadata(title: string, duration?: number): VideoMetadata {
   return {
     requestId: title,
     url: `https://example.com/${title}`,
     title,
+    duration,
     containers: [],
     videoCodecs: [],
     audioCodecs: [],
@@ -159,6 +160,19 @@ describe('useUiStore per-video export settings', () => {
     expect(useUiStore.getState().previewExportSettings.savePath).toBe(
       'C:\\Downloads\\New Video.webm'
     )
+  })
+
+  it('resets trim to the new video duration instead of carrying previous trim bounds', () => {
+    useUiStore.getState().setLastEditableExportSettings({
+      ...DEFAULT_EXPORT_SETTINGS,
+      trimStartSeconds: 15,
+      trimEndSeconds: 45
+    })
+
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video', 180), settings)
+
+    expect(useUiStore.getState().previewExportSettings.trimStartSeconds).toBe(0)
+    expect(useUiStore.getState().previewExportSettings.trimEndSeconds).toBe(180)
   })
 
   it('does not clear queue or history targets when clearing preview state', () => {

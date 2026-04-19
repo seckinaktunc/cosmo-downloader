@@ -6,6 +6,8 @@ export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
   videoBitrate: 'auto',
   audioBitrate: 'auto',
   frameRate: 'auto',
+  trimStartSeconds: 0,
+  trimEndSeconds: undefined,
   videoCodec: 'auto',
   audioCodec: 'auto',
   savePath: undefined
@@ -23,6 +25,14 @@ export function mergeExportSettings(value: unknown): ExportSettings {
   return {
     ...DEFAULT_EXPORT_SETTINGS,
     ...value,
+    trimStartSeconds:
+      typeof value.trimStartSeconds === 'number' && Number.isFinite(value.trimStartSeconds)
+        ? Math.max(0, Math.round(value.trimStartSeconds))
+        : DEFAULT_EXPORT_SETTINGS.trimStartSeconds,
+    trimEndSeconds:
+      typeof value.trimEndSeconds === 'number' && Number.isFinite(value.trimEndSeconds)
+        ? Math.max(0, Math.round(value.trimEndSeconds))
+        : undefined,
     savePath:
       typeof value.savePath === 'string' && value.savePath.trim().length > 0
         ? value.savePath

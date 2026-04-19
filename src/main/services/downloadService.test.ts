@@ -6,9 +6,11 @@ import { DEFAULT_EXPORT_SETTINGS } from '../../shared/defaults'
 import type { AppSettings, DownloadStartRequest, VideoMetadata } from '../../shared/types'
 import {
   buildFfmpegTranscodeArgs,
+  buildYtDlpArgs,
   createFinalDestinationPath,
   shouldTranscodeAfterSourceProbe
 } from './downloadService'
+import { createDownloadPlan } from './formatPlanner'
 
 vi.mock('electron', () => ({
   app: {
@@ -40,6 +42,7 @@ const metadata: VideoMetadata = {
   requestId: 'request',
   url: 'https://example.com/video',
   title: 'Video',
+  duration: 120,
   containers: [],
   videoCodecs: [],
   audioCodecs: [],
@@ -92,6 +95,50 @@ describe('buildFfmpegTranscodeArgs', () => {
 
     expect(args).not.toContain('-b:v')
     expect(args).not.toContain('8M')
+  })
+})
+
+describe('buildYtDlpArgs', () => {
+  it('adds download sections when trim differs from the full duration', () => {
+    const trimmedRequest = request({ trimStartSeconds: 10, trimEndSeconds: 30 })
+    const args = buildYtDlpArgs({
+      tempDir: '/tmp/cosmo',
+      ffmpegDirectory: '/bin',
+      request: trimmedRequest,
+      plan: createDownloadPlan(trimmedRequest.metadata, trimmedRequest.exportSettings)
+    })
+
+    expect(args).toContain('--download-sections')
+    expect(args).toContain('*0:10-0:30')
+  })
+
+  it('omits download sections when trim covers the full duration', () => {
+    const untrimmedRequest = request({ trimStartSeconds: 0, trimEndSeconds: 120 })
+    const args = buildYtDlpArgs({
+      tempDir: '/tmp/cosmo',
+      ffmpegDirectory: '/bin',
+      request: untrimmedRequest,
+      plan: createDownloadPlan(untrimmedRequest.metadata, untrimmedRequest.exportSettings)
+    })
+
+    expect(args).not.toContain('--download-sections')
+  })
+
+  it('adds download sections for audio-only output', () => {
+    const trimmedRequest = request({
+      outputFormat: 'mp3',
+      trimStartSeconds: 5,
+      trimEndSeconds: 15
+    })
+    const args = buildYtDlpArgs({
+      tempDir: '/tmp/cosmo',
+      ffmpegDirectory: '/bin',
+      request: trimmedRequest,
+      plan: createDownloadPlan(trimmedRequest.metadata, trimmedRequest.exportSettings)
+    })
+
+    expect(args).toContain('--download-sections')
+    expect(args).toContain('*0:05-0:15')
   })
 })
 
