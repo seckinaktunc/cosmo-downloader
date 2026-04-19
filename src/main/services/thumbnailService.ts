@@ -1,4 +1,4 @@
-import { app, clipboard, dialog, nativeImage, net, shell } from 'electron'
+import { app, clipboard, dialog, nativeImage, net, shell, type NativeImage } from 'electron'
 import { writeFileSync } from 'fs'
 import { extname } from 'path'
 import type { IpcResult, ThumbnailRequest } from '../../shared/types'
@@ -102,6 +102,24 @@ export async function copyThumbnailImage(request: ThumbnailRequest): Promise<Ipc
     return ok(null)
   } catch (error) {
     return fail('PROCESS_FAILED', error instanceof Error ? error.message : String(error))
+  }
+}
+
+export async function fetchThumbnailImage(url: string | undefined): Promise<NativeImage | null> {
+  if (!url) {
+    return null
+  }
+
+  try {
+    const fetched = await fetchThumbnail({ url })
+    if ('ok' in fetched) {
+      return null
+    }
+
+    const image = nativeImage.createFromBuffer(fetched.buffer)
+    return image.isEmpty() ? null : image
+  } catch {
+    return null
   }
 }
 
