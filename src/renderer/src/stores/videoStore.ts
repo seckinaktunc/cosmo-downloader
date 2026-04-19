@@ -88,7 +88,7 @@ export const useVideoStore = create<VideoState>((set, get) => ({
     }
 
     if (result.ok) {
-      useUiStore.getState().initializePreviewExportSettings()
+      useUiStore.getState().initializePreviewExportSettings(result.data, settings)
       useDownloadStore.getState().resetForNewPreview()
       set({ metadata: result.data, stage: 'ready', error: undefined, activeRequestId: undefined })
       return
