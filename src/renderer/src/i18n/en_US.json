@@ -70,7 +70,7 @@
     "format": "Output format",
     "videoCodec": "Video codec",
     "audioCodec": "Audio codec",
-    "savePath": "Download file",
+    "savePath": "Download location",
     "noSavePath": "Choose where this video will be saved",
     "auto": "Auto"
   },
