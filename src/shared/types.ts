@@ -51,6 +51,7 @@ export type AppSettings = {
   hardwareAcceleration: boolean
   automaticUpdates: boolean
   alwaysAskDownloadLocation: boolean
+  createFolderPerDownload: boolean
   defaultDownloadLocation: string
   lastDownloadDirectory?: string
   interfaceLanguage: string

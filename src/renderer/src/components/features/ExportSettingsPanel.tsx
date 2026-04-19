@@ -12,7 +12,7 @@ import {
 } from '../../../../shared/formatOptions'
 import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types'
 import { useActiveExportSettings } from '../../hooks/useActiveExportSettings'
-import { replaceOutputExtension } from '../../lib/outputPath'
+import { getEffectiveSavePath, replaceOutputExtension } from '../../lib/outputPath'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { LocationSelector } from '../ui/LocationSelector'
 import { RadioBoxes } from '../ui/RadioBoxes'
@@ -20,13 +20,17 @@ import { SnapSlider } from '../ui/SnapSlider'
 
 export function ExportSettingsPanel(): React.JSX.Element {
   const { t } = useTranslation()
-  const { metadata, exportSettings, readOnly, updateExportSettings } =
-    useActiveExportSettings()
+  const { metadata, exportSettings, readOnly, updateExportSettings } = useActiveExportSettings()
   const settings = useSettingsStore((state) => state.settings)
   const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath)
   const audioOnly = isAudioOnlyFormat(exportSettings.outputFormat)
   const controlsDisabled = readOnly || metadata == null
   const showSavePath = Boolean(settings?.alwaysAskDownloadLocation)
+  const displaySavePath = getEffectiveSavePath(
+    exportSettings.savePath,
+    exportSettings.outputFormat,
+    Boolean(settings?.createFolderPerDownload)
+  )
 
   const resolutionOptions = useMemo(() => {
     const maxResolution = metadata?.maxResolution ?? 2160
@@ -204,12 +208,12 @@ export function ExportSettingsPanel(): React.JSX.Element {
       </div>
 
       {showSavePath ? (
-        <div className="p-4">
+        <div className="p-4 min-w-0">
           <LocationSelector
             mode="file"
             layout="stacked"
             label={t('export.savePath')}
-            value={exportSettings.savePath}
+            value={displaySavePath}
             placeholder={t('export.noSavePath')}
             chooseLabel={t('actions.choose')}
             disabled={controlsDisabled}

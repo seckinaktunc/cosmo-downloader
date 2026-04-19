@@ -28,6 +28,10 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
       typeof saved.alwaysAskDownloadLocation === 'boolean'
         ? saved.alwaysAskDownloadLocation
         : defaults.alwaysAskDownloadLocation,
+    createFolderPerDownload:
+      typeof saved.createFolderPerDownload === 'boolean'
+        ? saved.createFolderPerDownload
+        : defaults.createFolderPerDownload,
     defaultDownloadLocation:
       typeof saved.defaultDownloadLocation === 'string' && saved.defaultDownloadLocation.length > 0
         ? saved.defaultDownloadLocation

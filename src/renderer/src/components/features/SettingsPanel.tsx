@@ -76,6 +76,14 @@ export function SettingsPanel(): React.JSX.Element {
           onChange={(alwaysAskDownloadLocation) => void update({ alwaysAskDownloadLocation })}
         />
       </div>
+      <div className="p-4">
+        <Switch
+          label={t('settings.createFolderPerDownload')}
+          checked={settings.createFolderPerDownload}
+          onChange={(createFolderPerDownload) => void update({ createFolderPerDownload })}
+          description={t('settings.createFolderPerDownloadDescription')}
+        />
+      </div>
 
       {!settings.alwaysAskDownloadLocation ? (
         <LocationSelector

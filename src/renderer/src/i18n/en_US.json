@@ -46,6 +46,8 @@
     "cookiesBrowser": "Browser to use for cookies",
     "cookiesBrowserDescription": "Imports cookies from the selected browser to access to protected content more reliably (recommended).",
     "alwaysAsk": "Always ask for download location",
+    "createFolderPerDownload": "Create folder per download",
+    "createFolderPerDownloadDescription": "Save each download inside a folder named after its output file.",
     "downloadLocation": "Default download location",
     "language": "Interface language",
     "restartRequired": "Restart required for hardware acceleration changes."
@@ -66,13 +68,6 @@
     "noSavePath": "Choose where this video will be saved",
     "auto": "Auto"
   },
-  "exportTarget": {
-    "queuedEditable": "Editing queued video settings",
-    "queuedReadOnly": "Queue item settings are read-only",
-    "historyReadOnly": "History settings are read-only",
-    "previewEditable": "Editing preview video settings",
-    "unavailable": "Select a video to edit export settings"
-  },
   "metadata": {
     "fetching": "Fetching metadata",
     "emptyTitle": "Paste a video link",
@@ -92,6 +87,7 @@
   },
   "bottom": {
     "startDownload": "Start Download",
+    "startQueue": "Start Queue ({{count}})",
     "newVideo": "New Video",
     "noVideo": "No video selected",
     "pasteToBegin": "Paste a video link to begin",

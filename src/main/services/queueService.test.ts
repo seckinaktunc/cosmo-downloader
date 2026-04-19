@@ -33,6 +33,7 @@ const settings: AppSettings = {
   hardwareAcceleration: true,
   automaticUpdates: true,
   alwaysAskDownloadLocation: false,
+  createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',

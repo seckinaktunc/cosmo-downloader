@@ -24,8 +24,9 @@ import type {
 import { isAudioOnlyFormat } from '../../shared/formatOptions'
 import { APP_ICON } from '../appIdentity'
 import { BinaryMissingError, BinaryService, type BinaryPaths } from './binaryService'
+import { fetchThumbnailImage } from './thumbnailService'
 import { createDownloadPlan } from './formatPlanner'
-import { createUniquePath } from './filename'
+import { createUniquePath, sanitizeFilename } from './filename'
 import {
   assertSelectedCodecs,
   hasExplicitCodecSelection,
@@ -123,6 +124,21 @@ function requireFfprobePath(binaries: BinaryPaths): string {
   }
 
   throw new BinaryMissingError('ffprobe', join(dirname(binaries.ffmpeg), executableName('ffprobe')))
+}
+
+export function createFinalDestinationPath(
+  directory: string,
+  filename: string,
+  extension: string,
+  createFolderPerDownload: boolean
+): string {
+  if (!createFolderPerDownload) {
+    return createUniquePath(directory, filename, extension)
+  }
+
+  const safeFilename = sanitizeFilename(filename)
+  const targetDirectory = join(directory, safeFilename)
+  return createUniquePath(targetDirectory, safeFilename, extension)
 }
 
 export function shouldTranscodeAfterSourceProbe(
@@ -294,7 +310,7 @@ export class DownloadService {
           outputPath: destination
         }
         emit(progress)
-        this.notifyCompleted(request.metadata.title, destination)
+        void this.notifyCompleted(request.metadata.title, destination, request.metadata.thumbnail)
         return { ok: true, data: progress }
       }
 
@@ -320,7 +336,7 @@ export class DownloadService {
         outputPath: destination
       }
       emit(progress)
-      this.notifyCompleted(request.metadata.title, destination)
+      void this.notifyCompleted(request.metadata.title, destination, request.metadata.thumbnail)
       return { ok: true, data: progress }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -351,8 +367,12 @@ export class DownloadService {
     if (requestedPath) {
       const parsed = parse(requestedPath)
       const outputExtension = extname(requestedPath).replace(/^\./, '') || extension
-      ensureDirectory(parsed.dir)
-      return createUniquePath(parsed.dir, parsed.name, outputExtension)
+      return createFinalDestinationPath(
+        parsed.dir,
+        parsed.name,
+        outputExtension,
+        request.settings.createFolderPerDownload
+      )
     }
 
     if (request.settings.alwaysAskDownloadLocation) {
@@ -368,12 +388,27 @@ export class DownloadService {
         filters: [{ name: extension.toUpperCase(), extensions: [extension] }]
       })
 
-      return result.canceled || !result.filePath ? null : result.filePath
+      if (result.canceled || !result.filePath) {
+        return null
+      }
+
+      const parsed = parse(result.filePath)
+      const outputExtension = extname(result.filePath).replace(/^\./, '') || extension
+      return createFinalDestinationPath(
+        parsed.dir,
+        parsed.name,
+        outputExtension,
+        request.settings.createFolderPerDownload
+      )
     }
 
     const directory = request.settings.defaultDownloadLocation || app.getPath('downloads')
-    ensureDirectory(directory)
-    return createUniquePath(directory, request.metadata.title, extension)
+    return createFinalDestinationPath(
+      directory,
+      request.metadata.title,
+      extension,
+      request.settings.createFolderPerDownload
+    )
   }
 
   private runYtDlp(
@@ -537,15 +572,21 @@ export class DownloadService {
     }
   }
 
-  private notifyCompleted(title: string, outputPath: string): void {
+  private async notifyCompleted(
+    title: string,
+    outputPath: string,
+    thumbnailUrl: string | undefined
+  ): Promise<void> {
     if (!Notification.isSupported()) {
       return
     }
 
+    const thumbnailImage = await fetchThumbnailImage(thumbnailUrl)
+
     new Notification({
       title: 'Download complete',
       body: title,
-      icon: APP_ICON,
+      icon: thumbnailImage ?? APP_ICON,
       silent: false
     })
       .on('click', () => {

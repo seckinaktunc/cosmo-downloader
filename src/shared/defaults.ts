@@ -35,6 +35,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     hardwareAcceleration: true,
     automaticUpdates: true,
     alwaysAskDownloadLocation: false,
+    createFolderPerDownload: false,
     defaultDownloadLocation: downloadsPath,
     lastDownloadDirectory: downloadsPath,
     interfaceLanguage: 'en_US',

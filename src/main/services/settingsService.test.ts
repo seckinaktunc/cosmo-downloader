@@ -13,14 +13,22 @@ describe('mergeSettings', () => {
     expect(
       mergeSettings(defaults, {
         hardwareAcceleration: false,
+        createFolderPerDownload: true,
         alwaysOnTop: true,
         defaultDownloadLocation: '/custom'
       })
     ).toEqual({
       ...defaults,
       hardwareAcceleration: false,
+      createFolderPerDownload: true,
       alwaysOnTop: true,
       defaultDownloadLocation: '/custom'
     })
+  })
+
+  it('defaults create folder per download to off for legacy settings', () => {
+    const defaults = createDefaultSettings('/downloads')
+
+    expect(mergeSettings(defaults, {}).createFolderPerDownload).toBe(false)
   })
 })
