@@ -41,6 +41,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Verify Windows signing secrets
+        run: node scripts/require-windows-signing-env.mjs
       - run: npm run download:binaries:current
       - run: npm run build
-      - run: npx electron-builder --win --publish always
+      - run: npx electron-builder --win --publish never
+      - run: npm run verify:win-signing
+      - name: Publish release artifacts
+        shell: bash
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "Release $GITHUB_REF_NAME"
+          gh release upload "$GITHUB_REF_NAME" dist/*.exe dist/*.blockmap dist/latest.yml --clobber
