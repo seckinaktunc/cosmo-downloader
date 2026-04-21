@@ -21,7 +21,6 @@ win:
   executableName: Cosmo Downloader
   target:
     - nsis
-  signAndEditExecutable: false
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
