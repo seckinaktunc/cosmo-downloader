@@ -43,6 +43,11 @@ export function extractDroppedUrl(dataTransfer: DataTransfer): string | null {
   return text ? firstValidUrlFromText(text) : null
 }
 
+export function extractDroppedSingleVideoUrl(dataTransfer: DataTransfer): string | null {
+  const url = extractDroppedUrl(dataTransfer)
+  return url && classifyVideoUrl(url) === 'single' ? url : null
+}
+
 export function getValidClipboardUrl(text: string): string | null {
   return firstValidUrlFromText(text)
 }

@@ -5,7 +5,6 @@ import { QueuePanel } from './QueuePanel'
 
 export function MediaOverview(): React.JSX.Element {
   const activePanel = useUiStore((state) => state.activePanel)
-  /* const setActivePanel = useUiStore((state) => state.setActivePanel) */
 
   const panel =
     activePanel === 'queue' ? (

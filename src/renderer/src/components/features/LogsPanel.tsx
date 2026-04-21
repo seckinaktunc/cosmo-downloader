@@ -166,7 +166,11 @@ export function LogsPanel(): React.JSX.Element {
   return (
     <section className="grid h-full min-h-0 grid-rows-[1fr_auto] divide-y divide-white/10 text-white">
       <div className="relative min-h-0 bg-dark">
-        <div ref={scrollRef} className="h-full overflow-y-auto min-w-0" onScroll={handleScroll}>
+        <div
+          ref={scrollRef}
+          className="h-full overflow-y-auto min-w-0 selection:bg-white selection:text-black"
+          onScroll={handleScroll}
+        >
           {loading ? (
             <div className="p-4 text-sm text-white/50">{t('logs.loading')}</div>
           ) : errorMessage ? (
@@ -178,11 +182,11 @@ export function LogsPanel(): React.JSX.Element {
                   {t('logs.truncated')}
                 </div>
               ) : null}
-              <pre className="select-text min-w-0 whitespace-pre-wrap wrap-break-word p-4 font-mono text-xs leading-relaxed text-white/80">
+              <pre className="select-text min-w-0 whitespace-pre-wrap wrap-break-word p-4 font-mono text-xs leading-relaxed text-white/50">
                 {selectedLogResult.content || t('logs.emptyLog')}
 
                 {showScrollToBottom ? (
-                  <div className="absolute flex items-end justify-center bottom-0 left-0 w-full h-32 bg-linear-to-b from-transparent to-dark to-95% pointer-events-none">
+                  <div className="absolute flex items-end justify-center bottom-0 -left-2 w-full h-32 pl-4 bg-linear-to-b from-transparent to-dark to-95% pointer-events-none">
                     <Button
                       icon="chevronsDown"
                       label={t('logs.actions.scrollToBottom')}
@@ -201,11 +205,11 @@ export function LogsPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 min-w-0 divide-x divide-white/10 bg-dark">
+      <div className="grid grid-cols-2 min-w-0 divide-x divide-white/10 bg-dark">
         <div className="w-full">
           <Button
             icon="folderOpen"
-            label={t('logs.actions.open')}
+            label={t('logs.actions.openFolder')}
             size="lg"
             className="w-full rounded-none border-none"
             disabled={!selectedLogPath}
@@ -215,21 +219,11 @@ export function LogsPanel(): React.JSX.Element {
         <div className="w-full">
           <Button
             icon="copy"
-            label={t('logs.actions.copyLog')}
+            label={t('logs.actions.copyLogs')}
             size="lg"
             className="w-full rounded-none border-none"
             disabled={!selectedLogResult?.content}
             onClick={() => void copyText(selectedLogResult?.content ?? '')}
-          />
-        </div>
-        <div className="w-full">
-          <Button
-            icon="copy"
-            label={t('logs.actions.copyPath')}
-            size="lg"
-            className="w-full rounded-none border-none"
-            disabled={!selectedLogPath}
-            onClick={() => void copyText(selectedLogPath ?? '')}
           />
         </div>
       </div>

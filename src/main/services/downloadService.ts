@@ -23,11 +23,13 @@ import type {
 } from '../../shared/types'
 import { isAudioOnlyFormat } from '../../shared/formatOptions'
 import { formatTimecode, isTrimActive, normalizeTrimRange } from '../../shared/trim'
+import type { NormalizedTrimRange } from '../../shared/trim'
 import { APP_ICON } from '../appIdentity'
 import { BinaryMissingError, BinaryService, type BinaryPaths } from './binaryService'
 import { fetchThumbnailImage } from './thumbnailService'
 import { createDownloadPlan } from './formatPlanner'
 import { createUniquePath, sanitizeFilename } from './filename'
+import { compactDownloadLogFile } from './logCompactionService'
 import {
   assertSelectedCodecs,
   hasExplicitCodecSelection,
@@ -57,6 +59,11 @@ type ActiveJob = {
 type DownloadStartOptions = {
   decorateProgress?: (progress: DownloadProgress) => DownloadProgress
   onProgress?: (progress: DownloadProgress) => void
+}
+
+type FfmpegProcessingOptions = {
+  trimRange: NormalizedTrimRange | null
+  transcode: boolean
 }
 
 function getAudioEncoder(codec: AudioCodec, outputFormat: OutputFormat): string {
@@ -129,6 +136,56 @@ function requireFfprobePath(binaries: BinaryPaths): string {
   throw new BinaryMissingError('ffprobe', join(dirname(binaries.ffmpeg), executableName('ffprobe')))
 }
 
+export function getFfmpegTrimRange(request: DownloadStartRequest): NormalizedTrimRange | null {
+  if (!isTrimActive(request.exportSettings, request.metadata.duration)) {
+    return null
+  }
+
+  return normalizeTrimRange(
+    request.exportSettings.trimStartSeconds,
+    request.exportSettings.trimEndSeconds,
+    request.metadata.duration ?? 0
+  )
+}
+
+function hasRequestedTrimWithoutDuration(request: DownloadStartRequest): boolean {
+  return (
+    (request.metadata.duration == null || request.metadata.duration <= 0) &&
+    (request.exportSettings.trimStartSeconds > 0 || request.exportSettings.trimEndSeconds != null)
+  )
+}
+
+function getTrimDurationSeconds(trimRange: NormalizedTrimRange | null): number | undefined {
+  if (!trimRange) {
+    return undefined
+  }
+
+  return Math.max(0, trimRange.endSeconds - trimRange.startSeconds)
+}
+
+function appendFfmpegInputArgs(
+  args: string[],
+  request: DownloadStartRequest,
+  inputPath: string,
+  trimRange: NormalizedTrimRange | null,
+  useHardwareAcceleration: boolean
+): void {
+  if (useHardwareAcceleration && request.settings.hardwareAcceleration) {
+    args.push('-hwaccel', 'auto')
+  }
+
+  if (trimRange) {
+    args.push('-ss', formatTimecode(trimRange.startSeconds))
+  }
+
+  args.push('-i', inputPath)
+
+  const trimDuration = getTrimDurationSeconds(trimRange)
+  if (trimDuration != null) {
+    args.push('-t', formatTimecode(trimDuration))
+  }
+}
+
 export function createFinalDestinationPath(
   directory: string,
   filename: string,
@@ -163,14 +220,11 @@ export function shouldTranscodeAfterSourceProbe(
 export function buildFfmpegTranscodeArgs(
   request: DownloadStartRequest,
   inputPath: string,
-  outputPath: string
+  outputPath: string,
+  trimRange: NormalizedTrimRange | null = null
 ): string[] {
   const args = ['-hide_banner', '-y']
-  if (request.settings.hardwareAcceleration) {
-    args.push('-hwaccel', 'auto')
-  }
-
-  args.push('-i', inputPath)
+  appendFfmpegInputArgs(args, request, inputPath, trimRange, true)
 
   if (isAudioOnlyFormat(request.exportSettings.outputFormat)) {
     args.push(
@@ -210,18 +264,29 @@ export function buildFfmpegTranscodeArgs(
   return args
 }
 
-function buildDownloadSection(request: DownloadStartRequest): string | undefined {
-  if (!isTrimActive(request.exportSettings, request.metadata.duration)) {
-    return undefined
-  }
-
-  const range = normalizeTrimRange(
-    request.exportSettings.trimStartSeconds,
-    request.exportSettings.trimEndSeconds,
-    request.metadata.duration ?? 0
+export function buildFfmpegStreamCopyTrimArgs(
+  request: DownloadStartRequest,
+  inputPath: string,
+  outputPath: string,
+  trimRange: NormalizedTrimRange
+): string[] {
+  const args = ['-hide_banner', '-y']
+  appendFfmpegInputArgs(args, request, inputPath, trimRange, false)
+  args.push(
+    '-map',
+    '0:v:0?',
+    '-map',
+    '0:a:0?',
+    '-c',
+    'copy',
+    '-avoid_negative_ts',
+    'make_zero',
+    '-progress',
+    'pipe:1',
+    '-nostats',
+    outputPath
   )
-
-  return `*${formatTimecode(range.startSeconds)}-${formatTimecode(range.endSeconds)}`
+  return args
 }
 
 export function buildYtDlpArgs({
@@ -248,11 +313,6 @@ export function buildYtDlpArgs({
     '-o',
     join(tempDir, 'source.%(ext)s')
   ]
-
-  const section = buildDownloadSection(request)
-  if (section) {
-    args.push('--download-sections', section)
-  }
 
   if (plan.ytdlpMergeFormat != null) {
     args.push('--merge-output-format', plan.ytdlpMergeFormat)
@@ -368,6 +428,7 @@ export class DownloadService {
       )
       const binaries = this.binaryService.getPaths()
       const plan = createDownloadPlan(request.metadata, request.exportSettings)
+      const trimRange = getFfmpegTrimRange(request)
       const ffprobePath = hasExplicitCodecSelection(request.exportSettings)
         ? requireFfprobePath(binaries)
         : undefined
@@ -383,6 +444,10 @@ export class DownloadService {
           ok: false,
           error: { code: 'CANCELLED', message: 'Download cancelled.', details: logPath }
         }
+      }
+
+      if (!trimRange && hasRequestedTrimWithoutDuration(request)) {
+        appendLog(`[${new Date().toISOString()}] Trim skipped: media duration unavailable.\n`)
       }
 
       appendLog(`[${new Date().toISOString()}] Stage: downloading\n`)
@@ -408,8 +473,9 @@ export class DownloadService {
           sourceProbe
         )
       }
+      const needsFfmpegProcessing = needsFfmpegTranscode || trimRange != null
 
-      if (!needsFfmpegTranscode) {
+      if (!needsFfmpegProcessing) {
         ensureDirectory(dirname(destination))
         renameSync(sourceFile, destination)
         const progress = {
@@ -428,7 +494,10 @@ export class DownloadService {
       appendLog(`\n[${new Date().toISOString()}] Stage: processing\n`)
       emit({ stage: 'processing', stageLabel: 'Processing', percentage: 0 })
       const processingOutput = join(tempDir, `processed.${plan.targetExtension}`)
-      await this.runFfmpeg(job, binaries.ffmpeg, sourceFile, processingOutput, request)
+      await this.runFfmpeg(job, binaries.ffmpeg, sourceFile, processingOutput, request, {
+        trimRange,
+        transcode: needsFfmpegTranscode
+      })
 
       if (job.cancelled) {
         throw new Error('Download cancelled.')
@@ -473,7 +542,12 @@ export class DownloadService {
       return { ok: false, error: { code: 'PROCESS_FAILED', message, details: logPath } }
     } finally {
       job.flushLog?.()
-      logStream.end()
+      await new Promise<void>((resolve) => logStream.end(resolve))
+      try {
+        compactDownloadLogFile(logPath)
+      } catch {
+        // Log compaction must not change the terminal download result.
+      }
       removeTempDir(tempDir)
       this.activeJob = null
     }
@@ -612,9 +686,20 @@ export class DownloadService {
     ffmpegPath: string,
     inputPath: string,
     outputPath: string,
-    request: DownloadStartRequest
+    request: DownloadStartRequest,
+    options: FfmpegProcessingOptions
   ): Promise<void> {
-    const args = buildFfmpegTranscodeArgs(request, inputPath, outputPath)
+    let args: string[]
+    if (options.transcode) {
+      args = buildFfmpegTranscodeArgs(request, inputPath, outputPath, options.trimRange)
+    } else {
+      if (!options.trimRange) {
+        throw new Error('FFmpeg stream-copy processing requires an active trim range.')
+      }
+      args = buildFfmpegStreamCopyTrimArgs(request, inputPath, outputPath, options.trimRange)
+    }
+    const progressDurationSeconds =
+      getTrimDurationSeconds(options.trimRange) ?? request.metadata.duration
 
     return new Promise((resolve, reject) => {
       job.appendLog?.(`\n[${new Date().toISOString()}] Process: ffmpeg\n\n`)
@@ -630,7 +715,7 @@ export class DownloadService {
       child.stderr.setEncoding('utf8')
       child.stdout.on('data', (chunk: string) => {
         job.appendLog?.(chunk)
-        const parsed = parseFfmpegProgressChunk(progressBuffer, chunk, request.metadata.duration)
+        const parsed = parseFfmpegProgressChunk(progressBuffer, chunk, progressDurationSeconds)
         progressBuffer = parsed.buffer
         if (parsed.progress) {
           this.emitProgress({

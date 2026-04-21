@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDisplayMetadata } from '../../hooks/useDisplayMetadata'
+import { useMetadataDrop } from '../../hooks/useMetadataDrop'
 import { renderFormattedDescription } from '../../lib/descriptionFormatter'
-import { extractDroppedUrl } from '../../lib/urlInput'
 import { useHistoryStore } from '../../stores/historyStore'
 import { useQueueStore } from '../../stores/queueStore'
 import { useSettingsStore } from '../../stores/settingsStore'
@@ -30,25 +30,13 @@ export function MetadataPanel(): React.JSX.Element {
   const addToQueue = useQueueStore((state) => state.add)
   const requeue = useHistoryStore((state) => state.requeue)
   const openMediaPanel = useUiStore((state) => state.openMediaPanel)
+  const dropHandlers = useMetadataDrop(setUrl)
 
   if (!metadata) {
     return (
       <section
         className="flex h-full flex-col items-center justify-center gap-4 text-center"
-        onDragOver={(event) => {
-          if (extractDroppedUrl(event.dataTransfer)) {
-            event.preventDefault()
-          }
-        }}
-        onDrop={(event) => {
-          const droppedUrl = extractDroppedUrl(event.dataTransfer)
-          if (!droppedUrl) {
-            return
-          }
-
-          event.preventDefault()
-          setUrl(droppedUrl)
-        }}
+        {...dropHandlers}
       >
         <Icon
           name={stage === 'fetching_metadata' ? 'spinner' : 'copy'}
@@ -111,7 +99,7 @@ export function MetadataPanel(): React.JSX.Element {
   }
 
   return (
-    <section className="flex flex-col h-full text-white divide-y divide-white/10">
+    <section className="flex flex-col h-full text-white divide-y divide-white/10" {...dropHandlers}>
       <Thumbnail
         src={metadata.thumbnail}
         title={metadata.title}

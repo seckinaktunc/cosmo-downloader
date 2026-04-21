@@ -17,7 +17,8 @@ const COOKIE_BROWSER_ICONS: Record<CookieBrowser, IconName> = {
   brave: 'logos:brave',
   opera: 'logos:opera',
   vivaldi: 'logos:vivaldi',
-  safari: 'logos:safari'
+  safari: 'logos:safari',
+  whale: 'browser'
 }
 
 export function SettingsPanel(): React.JSX.Element {

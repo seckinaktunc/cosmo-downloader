@@ -2,11 +2,13 @@ import { existsSync } from 'fs'
 import { join } from 'path'
 import type { CookieBrowser, CookieBrowserOption } from '../../shared/types'
 
-type BrowserCandidate = {
+export type BrowserCandidate = {
   id: CookieBrowser
   label: string
   paths: string[]
 }
+
+type PathExists = (path: string) => boolean
 
 function envPath(name: string): string {
   return process.env[name] ?? ''
@@ -28,6 +30,12 @@ function windowsChromiumPathCandidates(): string[] {
       ? [chromiumExecutable, chromeExecutable]
       : [chromiumExecutable]
   })
+}
+
+function windowsProgramPaths(...parts: string[]): string[] {
+  const programFiles = envPath('PROGRAMFILES')
+  const programFilesX86 = envPath('PROGRAMFILES(X86)')
+  return [join(programFiles, ...parts), join(programFilesX86, ...parts)]
 }
 
 export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidate[] {
@@ -79,17 +87,41 @@ export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidat
       {
         id: 'brave',
         label: 'Brave',
-        paths: [join(programFiles, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe')]
+        paths: [
+          join(programFiles, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+          join(programFilesX86, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+          join(localAppData, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe')
+        ]
       },
       {
         id: 'opera',
         label: 'Opera',
-        paths: [join(localAppData, 'Programs', 'Opera', 'opera.exe')]
+        paths: [
+          join(localAppData, 'Programs', 'Opera', 'opera.exe'),
+          join(localAppData, 'Programs', 'Opera GX', 'opera.exe'),
+          join(localAppData, 'Programs', 'Opera beta', 'opera.exe'),
+          join(localAppData, 'Programs', 'Opera developer', 'opera.exe'),
+          ...windowsProgramPaths('Opera', 'opera.exe'),
+          ...windowsProgramPaths('Opera GX', 'opera.exe'),
+          ...windowsProgramPaths('Opera beta', 'opera.exe'),
+          ...windowsProgramPaths('Opera developer', 'opera.exe')
+        ]
       },
       {
         id: 'vivaldi',
         label: 'Vivaldi',
-        paths: [join(localAppData, 'Vivaldi', 'Application', 'vivaldi.exe')]
+        paths: [
+          join(localAppData, 'Vivaldi', 'Application', 'vivaldi.exe'),
+          ...windowsProgramPaths('Vivaldi', 'Application', 'vivaldi.exe')
+        ]
+      },
+      {
+        id: 'whale',
+        label: 'Whale',
+        paths: [
+          join(localAppData, 'Naver', 'Naver Whale', 'Application', 'whale.exe'),
+          ...windowsProgramPaths('Naver', 'Naver Whale', 'Application', 'whale.exe')
+        ]
       }
     ]
   }
@@ -102,7 +134,8 @@ export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidat
       { id: 'firefox', label: 'Firefox', paths: ['/Applications/Firefox.app'] },
       { id: 'brave', label: 'Brave', paths: ['/Applications/Brave Browser.app'] },
       { id: 'opera', label: 'Opera', paths: ['/Applications/Opera.app'] },
-      { id: 'vivaldi', label: 'Vivaldi', paths: ['/Applications/Vivaldi.app'] }
+      { id: 'vivaldi', label: 'Vivaldi', paths: ['/Applications/Vivaldi.app'] },
+      { id: 'whale', label: 'Whale', paths: ['/Applications/Whale.app'] }
     ]
   }
 
@@ -125,15 +158,17 @@ export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidat
     },
     { id: 'brave', label: 'Brave', paths: ['/usr/bin/brave-browser', '/usr/bin/brave'] },
     { id: 'opera', label: 'Opera', paths: ['/usr/bin/opera'] },
-    { id: 'vivaldi', label: 'Vivaldi', paths: ['/usr/bin/vivaldi'] }
+    { id: 'vivaldi', label: 'Vivaldi', paths: ['/usr/bin/vivaldi'] },
+    { id: 'whale', label: 'Whale', paths: ['/usr/bin/whale', '/usr/bin/naver-whale'] }
   ]
 }
 
 export function detectCookieBrowsers(
-  platform: NodeJS.Platform = process.platform
+  platform: NodeJS.Platform = process.platform,
+  pathExists: PathExists = existsSync
 ): CookieBrowserOption[] {
   const detected = getBrowserCandidates(platform)
-    .filter((candidate) => candidate.paths.some((path) => path.length > 0 && existsSync(path)))
+    .filter((candidate) => candidate.paths.some((path) => path.length > 0 && pathExists(path)))
     .map<CookieBrowserOption>((candidate) => ({
       id: candidate.id,
       label: candidate.label,
