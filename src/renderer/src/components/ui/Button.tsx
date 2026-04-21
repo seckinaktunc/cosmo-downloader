@@ -46,13 +46,14 @@ export function Button({
       type="button"
       aria-label={onlyIcon ? label : undefined}
       className={cn(
-        'cursor-pointer no-drag inline-flex items-center justify-center gap-2 rounded-lg text-white outline-none transition focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-40',
+        'group cursor-pointer no-drag inline-flex items-center justify-center gap-2 rounded-lg text-white outline-none focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-40',
         onlyIcon ? resolvedSize.square : resolvedSize.base,
         ghost
           ? 'bg-transparent opacity-50 hover:bg-transparent hover:opacity-100'
           : 'bg-white/5 hover:bg-white/10 border border-white/10',
         active && !ghost && 'bg-white text-black hover:bg-white',
         active && ghost && 'opacity-100',
+        active && 'opacity-100',
         className
       )}
       {...props}
@@ -61,11 +62,15 @@ export function Button({
         <Icon
           name={icon}
           size={resolvedSize.icon}
-          className={cn(active && !ghost ? undefined : 'opacity-70 text-white')}
+          className={cn(
+            active && !ghost ? undefined : 'opacity-50 text-white group-hover:opacity-100'
+          )}
         />
       ) : null}
       {showLabel ? (
-        <span className={cn('min-w-0', children == null && 'truncate')}>{children ?? label}</span>
+        <span className={cn('min-w-0', children == null && 'truncate', !active && 'text-white/50')}>
+          {children ?? label}
+        </span>
       ) : null}
     </button>
   )
