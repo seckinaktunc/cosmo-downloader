@@ -42,11 +42,13 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Verify Windows signing secrets
+        if: env.WIN_CSC_LINK != ''
         run: node scripts/require-windows-signing-env.mjs
       - run: npm run download:binaries:current
       - run: npm run build
       - run: npx electron-builder --win --publish never
-      - run: npm run verify:win-signing
+      - if: env.WIN_CSC_LINK != ''
+        run: npm run verify:win-signing
       - name: Publish release artifacts
         shell: bash
         run: |
