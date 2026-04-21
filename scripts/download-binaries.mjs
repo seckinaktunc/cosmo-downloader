@@ -2,10 +2,12 @@
 import {
   copyFileSync,
   createWriteStream,
+  existsSync,
   mkdirSync,
   readdirSync,
   renameSync,
-  rmSync
+  rmSync,
+  statSync
 } from 'node:fs'
 import { chmod, mkdtemp } from 'node:fs/promises'
 import { get } from 'node:https'
@@ -18,6 +20,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const resourcesDir = join(root, 'resources', 'bin')
 
 const YTDLP_VERSION = '2026.03.17'
+const DOWNLOAD_TIMEOUT_MS = 60_000
 
 const ytdlpBase = `https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}`
 const gyanReleaseEssentials = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
@@ -124,9 +127,14 @@ const platforms = {
   }
 }
 
+function isExistingBinary(filePath) {
+  return existsSync(filePath) && statSync(filePath).isFile() && statSync(filePath).size > 0
+}
+
 function download(url, destination) {
   return new Promise((resolve, reject) => {
     mkdirSync(dirname(destination), { recursive: true })
+    let settled = false
     const request = get(url, (response) => {
       if (
         response.statusCode &&
@@ -134,11 +142,13 @@ function download(url, destination) {
         response.statusCode < 400 &&
         response.headers.location
       ) {
+        response.resume()
         download(response.headers.location, destination).then(resolve, reject)
         return
       }
 
       if (response.statusCode !== 200) {
+        response.resume()
         reject(new Error(`Failed to download ${url}: HTTP ${response.statusCode}`))
         return
       }
@@ -146,12 +156,28 @@ function download(url, destination) {
       const file = createWriteStream(destination)
       response.pipe(file)
       file.on('finish', () => {
-        file.close(resolve)
+        file.close(() => {
+          settled = true
+          resolve()
+        })
       })
-      file.on('error', reject)
+      file.on('error', (error) => {
+        settled = true
+        reject(error)
+      })
     })
 
-    request.on('error', reject)
+    request.setTimeout(DOWNLOAD_TIMEOUT_MS, () => {
+      request.destroy(
+        new Error(`Timed out downloading ${url} after ${DOWNLOAD_TIMEOUT_MS / 1000} seconds.`)
+      )
+    })
+    request.on('error', (error) => {
+      if (!settled) {
+        rmSync(destination, { force: true })
+        reject(error)
+      }
+    })
   })
 }
 
@@ -232,12 +258,22 @@ async function downloadPlatform(platformKey) {
   const downloadedArchives = new Map()
 
   const ytdlpPath = join(targetDir, manifest.ytDlp.output)
-  console.log(`Downloading yt-dlp ${YTDLP_VERSION} for ${platformKey}`)
-  await download(manifest.ytDlp.url, ytdlpPath)
+  if (isExistingBinary(ytdlpPath)) {
+    console.log(`Using existing yt-dlp ${YTDLP_VERSION} for ${platformKey}`)
+  } else {
+    console.log(`Downloading yt-dlp ${YTDLP_VERSION} for ${platformKey}`)
+    await download(manifest.ytDlp.url, ytdlpPath)
+  }
   await chmod(ytdlpPath, 0o755)
 
   for (const asset of manifest.ffmpeg) {
     const destination = join(targetDir, asset.binary)
+    if (isExistingBinary(destination)) {
+      console.log(`Using existing ${asset.binary} for ${platformKey}`)
+      await chmod(destination, 0o755)
+      continue
+    }
+
     console.log(`Downloading ${asset.binary} for ${platformKey}`)
     if (asset.direct) {
       await download(asset.url, destination)
