@@ -41,6 +41,7 @@ export type CookieBrowser =
   | 'opera'
   | 'vivaldi'
   | 'safari'
+  | 'whale'
 
 export type CookieBrowserOption = {
   id: CookieBrowser
