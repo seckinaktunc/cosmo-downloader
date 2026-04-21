@@ -109,10 +109,8 @@
       "queue": "Queue"
     },
     "actions": {
-      "open": "Open File",
-      "copyLog": "Copy Log",
-      "copyPath": "Copy Path",
-      "scrollToBottom": "Scroll to bottom"
+      "openFolder": "Open Folder",
+      "copyLogs": "Copy Logs"
     }
   },
   "metadata": {
