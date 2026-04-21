@@ -9,16 +9,30 @@ import { ExportSettingsPanel } from '../features/ExportSettingsPanel'
 import { MediaOverview } from '../features/MediaOverview'
 import { SettingsPanel } from '../features/SettingsPanel'
 import { ResizeHandle } from '../ui/ResizeHandle'
+import ContentTab, { ContentTabItem } from '../features/ContentTab'
+import { LogsPanel } from '../features/LogsPanel'
 
 export function MainContent(): React.JSX.Element {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLElement | null>(null)
-  const activeContent = useUiStore((state) => state.activeContent)
-  const setActiveContent = useUiStore((state) => state.setActiveContent)
   const mediaOverviewWidthPercent = useUiStore((state) => state.mediaOverviewWidthPercent)
   const setMediaOverviewWidthPercent = useUiStore((state) => state.setMediaOverviewWidthPercent)
 
-  const panel = activeContent === 'settings' ? <SettingsPanel /> : <ExportSettingsPanel />
+  const tabs: ContentTabItem[] = [
+    {
+      id: 'export',
+      title: t('export.title'),
+      icon: 'adjustments',
+      content: <ExportSettingsPanel />
+    },
+    {
+      id: 'settings',
+      title: t('settings.title'),
+      icon: 'settings',
+      content: <SettingsPanel />
+    },
+    { id: 'logs', icon: 'logs', content: <LogsPanel /> }
+  ]
 
   return (
     <main
@@ -39,23 +53,7 @@ export function MainContent(): React.JSX.Element {
         containerRef={containerRef}
         label={t('layout.resizeMediaOverview')}
       />
-      <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-linear-to-b from-dark to-white/10">
-        <div className="flex w-full divide-x divide-white/10">
-          <div
-            className={`py-2 px-3 flex-1 text-center ${activeContent !== 'export' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark cursor-pointer' : 'bg-dark text-white'}`}
-            onClick={() => activeContent !== 'export' && setActiveContent('export')}
-          >
-            {t('export.title')}
-          </div>
-          <div
-            className={`py-2 px-3 flex-1 text-center ${activeContent !== 'settings' ? 'bg-black border-b border-white/10 text-white/50 hover:bg-dark cursor-pointer' : 'bg-dark text-white'}`}
-            onClick={() => activeContent !== 'settings' && setActiveContent('settings')}
-          >
-            {t('settings.title')}
-          </div>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">{panel}</div>
-      </div>
+      <ContentTab tabs={tabs} />
     </main>
   )
 }
