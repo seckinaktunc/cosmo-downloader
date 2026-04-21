@@ -30,6 +30,7 @@ import {
   IconLanguage,
   IconList,
   IconLoader2,
+  IconLogs,
   IconMinus,
   IconMusic,
   IconPinFilled,
@@ -109,7 +110,8 @@ const iconMap = {
   search: IconSearch,
   move: IconDotsVerticalFilled,
   folderOpen: IconFolderOpen,
-  none: IconCircleOff
+  none: IconCircleOff,
+  logs: IconLogs
 } as const
 
 export type TablerIconName = keyof typeof iconMap

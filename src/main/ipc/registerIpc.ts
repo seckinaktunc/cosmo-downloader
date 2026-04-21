@@ -1,6 +1,6 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron'
 import { existsSync, statSync } from 'fs'
-import { dirname, parse } from 'path'
+import { dirname, join, parse } from 'path'
 import { IPC_CHANNELS } from '../../shared/ipc'
 import type {
   AppEnvironment,
@@ -17,6 +17,7 @@ import type {
   QueueMoveManyRequest,
   QueueMoveRequest,
   QueueReorderRequest,
+  DownloadLogReadRequest,
   DownloadStartRequest,
   FetchMetadataRequest,
   SettingsUpdate,
@@ -32,6 +33,7 @@ import { HistoryService } from '../services/historyService'
 import { QueueService } from '../services/queueService'
 import { UpdateService } from '../services/updateService'
 import { createUniquePath } from '../services/filename'
+import { readDownloadLogTail } from '../services/logService'
 import {
   copyThumbnailImage,
   downloadThumbnail,
@@ -122,6 +124,11 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.clipboard.readText, () => ok(clipboard.readText()))
 
+  ipcMain.handle(IPC_CHANNELS.clipboard.writeText, (_event, text: string) => {
+    clipboard.writeText(text)
+    return ok(null)
+  })
+
   ipcMain.handle(IPC_CHANNELS.thumbnail.download, (_event, request: ThumbnailRequest) =>
     downloadThumbnail(request)
   )
@@ -165,6 +172,10 @@ export function registerIpcHandlers(): void {
   )
 
   ipcMain.handle(IPC_CHANNELS.download.cancel, () => downloadService.cancel())
+
+  ipcMain.handle(IPC_CHANNELS.logs.read, (_event, request: DownloadLogReadRequest) =>
+    readDownloadLogTail(join(app.getPath('userData'), 'logs'), request)
+  )
 
   ipcMain.handle(IPC_CHANNELS.queue.get, () => ok(queueService.getSnapshot()))
 

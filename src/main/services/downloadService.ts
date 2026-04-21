@@ -1,4 +1,4 @@
-import { app, dialog, Notification, WebContents, webContents } from 'electron'
+import { app, dialog, Notification, WebContents, webContents as allWebContents } from 'electron'
 import { ChildProcessWithoutNullStreams } from 'child_process'
 import {
   createWriteStream,
@@ -7,14 +7,14 @@ import {
   readdirSync,
   renameSync,
   rmSync,
-  statSync,
-  writeFileSync
+  statSync
 } from 'fs'
 import { dirname, extname, join, parse } from 'path'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../../shared/ipc'
 import type {
   AudioCodec,
+  DownloadLogAppend,
   DownloadProgress,
   DownloadStartRequest,
   IpcResult,
@@ -50,6 +50,8 @@ type ActiveJob = {
   cancelled: boolean
   decorateProgress?: (progress: DownloadProgress) => DownloadProgress
   onProgress?: (progress: DownloadProgress) => void
+  appendLog?: (chunk: string) => void
+  flushLog?: () => void
 }
 
 type DownloadStartOptions = {
@@ -320,14 +322,50 @@ export class DownloadService {
     this.activeJob = job
 
     const logStream = createWriteStream(logPath, { flags: 'a' })
+    let pendingLogLine = ''
+    const emitLogLines = (lines: string[]): void => {
+      if (lines.length === 0) {
+        return
+      }
+
+      const append: DownloadLogAppend = {
+        logPath,
+        lines,
+        timestamp: new Date().toISOString()
+      }
+
+      for (const contents of allWebContents.getAllWebContents()) {
+        if (!contents.isDestroyed()) {
+          contents.send(IPC_CHANNELS.logs.append, append)
+        }
+      }
+    }
+    const appendLog = (chunk: string): void => {
+      logStream.write(chunk)
+      const parts = `${pendingLogLine}${chunk}`.split(/\r?\n|\r/)
+      pendingLogLine = parts.pop() ?? ''
+      emitLogLines(parts)
+    }
+    const flushLog = (): void => {
+      if (pendingLogLine.length > 0) {
+        emitLogLines([pendingLogLine])
+        pendingLogLine = ''
+      }
+    }
+    job.appendLog = appendLog
+    job.flushLog = flushLog
     const emit = (progress: DownloadProgress): void => {
-      const decorated = options.decorateProgress?.(progress) ?? progress
+      const progressWithLogPath = progress.logPath ? progress : { ...progress, logPath }
+      const decorated = options.decorateProgress?.(progressWithLogPath) ?? progressWithLogPath
       webContents.send(IPC_CHANNELS.download.progress, decorated)
       webContents.send(IPC_CHANNELS.download.state, decorated)
       options.onProgress?.(decorated)
     }
 
     try {
+      appendLog(
+        `[${new Date().toISOString()}] Download started\nTitle: ${request.metadata.title}\nURL: ${request.metadata.webpageUrl ?? request.metadata.url}\nLog: ${logPath}\n\n`
+      )
       const binaries = this.binaryService.getPaths()
       const plan = createDownloadPlan(request.metadata, request.exportSettings)
       const ffprobePath = hasExplicitCodecSelection(request.exportSettings)
@@ -337,10 +375,17 @@ export class DownloadService {
 
       if (destination == null) {
         job.cancelled = true
+        appendLog(
+          `[${new Date().toISOString()}] Download cancelled before destination selection.\n`
+        )
         emit({ stage: 'cancelled', stageLabel: 'Cancelled', message: 'Download cancelled.' })
-        return { ok: false, error: { code: 'CANCELLED', message: 'Download cancelled.' } }
+        return {
+          ok: false,
+          error: { code: 'CANCELLED', message: 'Download cancelled.', details: logPath }
+        }
       }
 
+      appendLog(`[${new Date().toISOString()}] Stage: downloading\n`)
       emit({ stage: 'downloading', stageLabel: 'Downloading', percentage: 0 })
       const sourceFile = await this.runYtDlp(
         job,
@@ -371,13 +416,16 @@ export class DownloadService {
           stage: 'completed' as const,
           stageLabel: 'Completed',
           percentage: 100,
-          outputPath: destination
+          outputPath: destination,
+          logPath
         }
+        appendLog(`[${new Date().toISOString()}] Download completed\nOutput: ${destination}\n`)
         emit(progress)
         void this.notifyCompleted(request.metadata.title, destination, request.metadata.thumbnail)
         return { ok: true, data: progress }
       }
 
+      appendLog(`\n[${new Date().toISOString()}] Stage: processing\n`)
       emit({ stage: 'processing', stageLabel: 'Processing', percentage: 0 })
       const processingOutput = join(tempDir, `processed.${plan.targetExtension}`)
       await this.runFfmpeg(job, binaries.ffmpeg, sourceFile, processingOutput, request)
@@ -397,27 +445,34 @@ export class DownloadService {
         stage: 'completed' as const,
         stageLabel: 'Completed',
         percentage: 100,
-        outputPath: destination
+        outputPath: destination,
+        logPath
       }
+      appendLog(`[${new Date().toISOString()}] Download completed\nOutput: ${destination}\n`)
       emit(progress)
       void this.notifyCompleted(request.metadata.title, destination, request.metadata.thumbnail)
       return { ok: true, data: progress }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (job.cancelled) {
+        appendLog(`[${new Date().toISOString()}] Download cancelled.\n`)
         emit({ stage: 'cancelled', stageLabel: 'Cancelled', message: 'Download cancelled.' })
-        return { ok: false, error: { code: 'CANCELLED', message: 'Download cancelled.' } }
+        return {
+          ok: false,
+          error: { code: 'CANCELLED', message: 'Download cancelled.', details: logPath }
+        }
       }
 
-      writeFileSync(logPath, `\nFailure:\n${message}\n`, { flag: 'a' })
+      appendLog(`\nFailure:\n${message}\n`)
       emit({ stage: 'failed', stageLabel: 'Failed', message, logPath })
 
       if (error instanceof BinaryMissingError) {
-        return { ok: false, error: { code: 'BINARY_MISSING', message } }
+        return { ok: false, error: { code: 'BINARY_MISSING', message, details: logPath } }
       }
 
       return { ok: false, error: { code: 'PROCESS_FAILED', message, details: logPath } }
     } finally {
+      job.flushLog?.()
       logStream.end()
       removeTempDir(tempDir)
       this.activeJob = null
@@ -490,6 +545,7 @@ export class DownloadService {
     })
 
     return new Promise((resolve, reject) => {
+      job.appendLog?.(`[${new Date().toISOString()}] Process: yt-dlp\n\n`)
       const child = spawnProcess(ytdlpPath, args, {
         cwd: job.tempDir,
         detached: process.platform !== 'win32'
@@ -497,7 +553,6 @@ export class DownloadService {
       job.children.add(child)
       const stderrLines: string[] = []
       let stdoutBuffer = ''
-      let stderrBuffer = ''
 
       const handleChunk = (chunk: string): void => {
         stdoutBuffer += chunk
@@ -518,13 +573,19 @@ export class DownloadService {
 
       child.stdout.setEncoding('utf8')
       child.stderr.setEncoding('utf8')
-      child.stdout.on('data', handleChunk)
+      child.stdout.on('data', (chunk: string) => {
+        job.appendLog?.(chunk)
+        handleChunk(chunk)
+      })
       child.stderr.on('data', (chunk: string) => {
-        stderrBuffer += chunk
+        job.appendLog?.(chunk)
         stderrLines.push(chunk)
         handleChunk(chunk)
       })
-      child.on('error', reject)
+      child.on('error', (error) => {
+        job.children.delete(child)
+        reject(error)
+      })
       child.on('close', (exitCode) => {
         job.children.delete(child)
         if (job.cancelled) {
@@ -535,10 +596,6 @@ export class DownloadService {
         if (exitCode !== 0) {
           reject(new Error(stderrLines.join('').trim() || `yt-dlp exited with code ${exitCode}.`))
           return
-        }
-
-        if (stderrBuffer.length > 0) {
-          writeFileSync(job.logPath, stderrBuffer, { flag: 'a' })
         }
 
         try {
@@ -560,6 +617,7 @@ export class DownloadService {
     const args = buildFfmpegTranscodeArgs(request, inputPath, outputPath)
 
     return new Promise((resolve, reject) => {
+      job.appendLog?.(`\n[${new Date().toISOString()}] Process: ffmpeg\n\n`)
       const child = spawnProcess(ffmpegPath, args, {
         cwd: job.tempDir,
         detached: process.platform !== 'win32'
@@ -571,6 +629,7 @@ export class DownloadService {
       child.stdout.setEncoding('utf8')
       child.stderr.setEncoding('utf8')
       child.stdout.on('data', (chunk: string) => {
+        job.appendLog?.(chunk)
         const parsed = parseFfmpegProgressChunk(progressBuffer, chunk, request.metadata.duration)
         progressBuffer = parsed.buffer
         if (parsed.progress) {
@@ -582,6 +641,7 @@ export class DownloadService {
         }
       })
       child.stderr.on('data', (chunk: string) => {
+        job.appendLog?.(chunk)
         stderrLines.push(chunk)
       })
       child.on('error', reject)
@@ -597,19 +657,20 @@ export class DownloadService {
           return
         }
 
-        if (stderrLines.length > 0) {
-          writeFileSync(job.logPath, stderrLines.join(''), { flag: 'a' })
-        }
         resolve()
       })
     })
   }
 
   private emitProgress(progress: DownloadProgress): void {
-    const decorated = this.activeJob?.decorateProgress?.(progress) ?? progress
+    const progressWithLogPath =
+      this.activeJob && !progress.logPath
+        ? { ...progress, logPath: this.activeJob.logPath }
+        : progress
+    const decorated = this.activeJob?.decorateProgress?.(progressWithLogPath) ?? progressWithLogPath
     this.activeJob?.onProgress?.(decorated)
 
-    for (const contents of webContents.getAllWebContents()) {
+    for (const contents of allWebContents.getAllWebContents()) {
       if (!contents.isDestroyed()) {
         contents.send(IPC_CHANNELS.download.progress, decorated)
         contents.send(IPC_CHANNELS.download.state, decorated)

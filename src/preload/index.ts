@@ -7,6 +7,9 @@ import type {
   ChooseOutputPathRequest,
   ChooseOutputPathResult,
   CookieBrowserOption,
+  DownloadLogAppend,
+  DownloadLogReadRequest,
+  DownloadLogReadResult,
   DownloadHistoryEntry,
   DownloadProgress,
   DownloadStartRequest,
@@ -46,6 +49,7 @@ export type CosmoApi = {
   }
   clipboard: {
     readText: () => Promise<IpcResult<string>>
+    writeText: (text: string) => Promise<IpcResult<null>>
   }
   thumbnail: {
     download: (request: ThumbnailRequest) => Promise<IpcResult<string | null>>
@@ -67,6 +71,10 @@ export type CosmoApi = {
     cancel: () => Promise<IpcResult<null>>
     onProgress: (listener: (progress: DownloadProgress) => void) => Unsubscribe
     onState: (listener: (progress: DownloadProgress) => void) => Unsubscribe
+  }
+  logs: {
+    read: (request: DownloadLogReadRequest) => Promise<IpcResult<DownloadLogReadResult>>
+    onAppend: (listener: (append: DownloadLogAppend) => void) => Unsubscribe
   }
   queue: {
     get: () => Promise<IpcResult<QueueSnapshot>>
@@ -141,7 +149,8 @@ const api: CosmoApi = {
       invoke<ChooseOutputPathResult | null>(IPC_CHANNELS.settings.chooseOutputPath, request)
   },
   clipboard: {
-    readText: () => invoke<string>(IPC_CHANNELS.clipboard.readText)
+    readText: () => invoke<string>(IPC_CHANNELS.clipboard.readText),
+    writeText: (text) => invoke<null>(IPC_CHANNELS.clipboard.writeText, text)
   },
   thumbnail: {
     download: (request) => invoke<string | null>(IPC_CHANNELS.thumbnail.download, request),
@@ -164,6 +173,10 @@ const api: CosmoApi = {
     cancel: () => invoke<null>(IPC_CHANNELS.download.cancel),
     onProgress: (listener) => subscribe<DownloadProgress>(IPC_CHANNELS.download.progress, listener),
     onState: (listener) => subscribe<DownloadProgress>(IPC_CHANNELS.download.state, listener)
+  },
+  logs: {
+    read: (request) => invoke<DownloadLogReadResult>(IPC_CHANNELS.logs.read, request),
+    onAppend: (listener) => subscribe<DownloadLogAppend>(IPC_CHANNELS.logs.append, listener)
   },
   queue: {
     get: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.get),

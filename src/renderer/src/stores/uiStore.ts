@@ -3,9 +3,9 @@ import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults'
 import type { AppSettings, ExportSettings, VideoMetadata } from '../../../shared/types'
 import { buildOutputPath, getOutputDirectory } from '../lib/outputPath'
 
-type MediaPanel = 'metadata' | 'queue' | 'history'
-type Panel = MediaPanel | null
-type Content = 'export' | 'settings' | null
+export type MediaPanel = 'metadata' | 'queue' | 'history'
+export type Panel = MediaPanel | null
+export type Content = 'export' | 'logs' | 'settings' | null
 export type ActiveExportTarget =
   | { type: 'preview' }
   | { type: 'queue'; itemId: string }

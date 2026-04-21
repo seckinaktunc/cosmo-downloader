@@ -336,19 +336,33 @@ export class QueueService {
       }
     )
 
+    const resultLogPath = result.ok ? result.data.logPath : result.error.details
+
     if (this.pauseRequested) {
-      this.updateItem(item.id, { status: 'paused', progress: undefined, updatedAt: now() })
-      this.historyService.update(historyEntry.id, 'cancelled', { error: 'Paused.' })
+      this.updateItem(item.id, {
+        status: 'paused',
+        progress: undefined,
+        logPath: resultLogPath,
+        updatedAt: now()
+      })
+      this.historyService.update(historyEntry.id, 'cancelled', {
+        error: 'Paused.',
+        logPath: resultLogPath
+      })
     } else if (this.cancelRequested) {
       this.updateItem(
         item.id,
         {
           status: 'cancelled',
+          logPath: resultLogPath,
           progress: result.ok ? result.data : undefined
         },
         false
       )
-      this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' })
+      this.historyService.update(historyEntry.id, 'cancelled', {
+        error: 'Cancelled.',
+        logPath: resultLogPath
+      })
       this.pruneTerminalItems()
     } else if (result.ok) {
       this.updateItem(
@@ -356,12 +370,14 @@ export class QueueService {
         {
           status: 'completed',
           outputPath: result.data.outputPath,
+          logPath: result.data.logPath,
           progress: result.data
         },
         false
       )
       this.historyService.update(historyEntry.id, 'completed', {
-        outputPath: result.data.outputPath
+        outputPath: result.data.outputPath,
+        logPath: result.data.logPath
       })
       this.pruneTerminalItems()
     } else {
@@ -396,7 +412,7 @@ export class QueueService {
   }
 
   private handleProgress(itemId: string, progress: DownloadProgress): void {
-    this.updateItem(itemId, { progress, updatedAt: now() }, false)
+    this.updateItem(itemId, { progress, logPath: progress.logPath, updatedAt: now() }, false)
     this.writeAndBroadcast()
   }
 

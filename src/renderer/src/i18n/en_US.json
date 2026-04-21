@@ -94,6 +94,27 @@
     "noSavePath": "Choose where this video will be saved",
     "auto": "Auto"
   },
+  "logs": {
+    "title": "Logs",
+    "empty": "No logs",
+    "emptyDetail": "Download logs will appear here as new attempts start.",
+    "emptyLog": "Log file is empty.",
+    "unknownDownload": "Unknown download",
+    "noSelection": "No log selected",
+    "noSelectionDetail": "Select a queue or history item with a log.",
+    "loading": "Loading log...",
+    "truncated": "Showing the most recent 256 KB. Copy actions include only the visible log text.",
+    "sources": {
+      "history": "History",
+      "queue": "Queue"
+    },
+    "actions": {
+      "open": "Open File",
+      "copyLog": "Copy Log",
+      "copyPath": "Copy Path",
+      "scrollToBottom": "Scroll to bottom"
+    }
+  },
   "metadata": {
     "fetching": "Fetching metadata",
     "emptyTitle": "Paste a video link",

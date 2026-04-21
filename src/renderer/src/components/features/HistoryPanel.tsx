@@ -2,6 +2,7 @@ import { useUiStore } from '@renderer/stores/uiStore'
 import { useTranslation } from 'react-i18next'
 import type { DownloadHistoryEntry } from '../../../../shared/types'
 import { formatDuration } from '../../lib/formatters'
+import { getContentAfterItemActivation } from '../../lib/logSources'
 import { useHistoryStore } from '../../stores/historyStore'
 import type { ActionMenuItem } from '../ui/ActionMenu'
 import { InteractiveItemPanel } from '../ui/InteractiveItemPanel'
@@ -18,6 +19,7 @@ export function HistoryPanel(): React.JSX.Element {
   const openFolder = useHistoryStore((state) => state.openFolder)
   const copySource = useHistoryStore((state) => state.copySource)
   const activeExportTarget = useUiStore((state) => state.activeExportTarget)
+  const activeContent = useUiStore((state) => state.activeContent)
   const setActiveExportTarget = useUiStore((state) => state.setActiveExportTarget)
   const setActiveContent = useUiStore((state) => state.setActiveContent)
   const closeMediaPanel = useUiStore((state) => state.closeMediaPanel)
@@ -109,7 +111,7 @@ export function HistoryPanel(): React.JSX.Element {
       activeItemId={activeExportTarget?.type === 'history' ? activeExportTarget.entryId : undefined}
       onActivateItem={(entry) => {
         setActiveExportTarget({ type: 'history', entryId: entry.id })
-        setActiveContent('export')
+        setActiveContent(getContentAfterItemActivation(activeContent))
       }}
       onDeleteSelected={(entryIds) => void removeMany(entryIds)}
       onClearSelection={() => {

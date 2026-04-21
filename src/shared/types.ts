@@ -144,6 +144,26 @@ export type DownloadProgress = {
   queueTotal?: number
 }
 
+export type DownloadLogReadRequest = {
+  logPath: string
+  maxBytes?: number
+}
+
+export type DownloadLogReadResult = {
+  logPath: string
+  content: string
+  size: number
+  bytesRead: number
+  truncated: boolean
+  updatedAt?: string
+}
+
+export type DownloadLogAppend = {
+  logPath: string
+  lines: string[]
+  timestamp: string
+}
+
 export type AppEnvironment = {
   platform: NodeJS.Platform
   isPackaged: boolean

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { movePendingItems } from '../../../../shared/queueModel'
 import type { QueueItem } from '../../../../shared/types'
 import { formatTransferDetail } from '../../lib/formatters'
+import { getContentAfterItemActivation } from '../../lib/logSources'
 import { useQueueStore } from '../../stores/queueStore'
 import type { ActionMenuItem } from '../ui/ActionMenu'
 import { InteractiveItemPanel } from '../ui/InteractiveItemPanel'
@@ -17,6 +18,7 @@ export function QueuePanel(): React.JSX.Element {
   const moveMany = useQueueStore((state) => state.moveMany)
   const clear = useQueueStore((state) => state.clear)
   const activeExportTarget = useUiStore((state) => state.activeExportTarget)
+  const activeContent = useUiStore((state) => state.activeContent)
   const setActiveExportTarget = useUiStore((state) => state.setActiveExportTarget)
   const setActiveContent = useUiStore((state) => state.setActiveContent)
   const closeMediaPanel = useUiStore((state) => state.closeMediaPanel)
@@ -73,7 +75,7 @@ export function QueuePanel(): React.JSX.Element {
       activeItemId={activeExportTarget?.type === 'queue' ? activeExportTarget.itemId : undefined}
       onActivateItem={(item) => {
         setActiveExportTarget({ type: 'queue', itemId: item.id })
-        setActiveContent('export')
+        setActiveContent(getContentAfterItemActivation(activeContent))
       }}
       isBulkSelectable={(item) => item.status !== 'active'}
       isDraggable={(item) => item.status === 'pending'}

@@ -9,7 +9,8 @@ export const IPC_CHANNELS = {
     chooseOutputPath: 'settings:choose-output-path'
   },
   clipboard: {
-    readText: 'clipboard:read-text'
+    readText: 'clipboard:read-text',
+    writeText: 'clipboard:write-text'
   },
   thumbnail: {
     download: 'thumbnail:download',
@@ -31,6 +32,10 @@ export const IPC_CHANNELS = {
     cancel: 'download:cancel',
     progress: 'download:progress',
     state: 'download:state'
+  },
+  logs: {
+    read: 'logs:read',
+    append: 'logs:append'
   },
   queue: {
     get: 'queue:get',

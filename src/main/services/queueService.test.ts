@@ -179,7 +179,8 @@ describe('QueueService export settings updates', () => {
       stage: 'completed',
       stageLabel: 'Completed',
       percentage: 100,
-      outputPath: '/downloads/video.mp4'
+      outputPath: '/downloads/video.mp4',
+      logPath: '/logs/video.log'
     }
     const downloadService = {
       start: vi.fn().mockResolvedValue({ ok: true, data: completedProgress }),
@@ -214,7 +215,8 @@ describe('QueueService export settings updates', () => {
       expect(service.getSnapshot().items).toEqual([])
     })
     expect(historyService.update).toHaveBeenCalledWith('history-entry', 'completed', {
-      outputPath: '/downloads/video.mp4'
+      outputPath: '/downloads/video.mp4',
+      logPath: '/logs/video.log'
     })
   })
 })
