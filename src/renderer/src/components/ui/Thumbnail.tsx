@@ -126,12 +126,14 @@ export function Thumbnail({
       {src ? (
         <div
           className="h-full w-full bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${src})` }}
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), url(${src})`
+          }}
         >
           <img
             src={src}
             alt=""
-            className={cn('h-full w-full object-contain backdrop-brightness-10', imageClassName)}
+            className={cn('h-full w-full object-contain', imageClassName)}
             referrerPolicy="no-referrer"
           />
         </div>
