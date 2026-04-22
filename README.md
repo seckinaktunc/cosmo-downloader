@@ -55,9 +55,9 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 
 > Screenshots coming soon.
 
-![Main view](docs/screenshots/main.png)
-![Queue panel](docs/screenshots/queue.png)
+![Export](docs/screenshots/main.png)
 ![Settings](docs/screenshots/settings.png)
+![Logs](docs/screenshots/logs.png)
 
 ## Installation
 
