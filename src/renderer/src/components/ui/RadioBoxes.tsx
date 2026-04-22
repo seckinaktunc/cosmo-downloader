@@ -29,7 +29,7 @@ export function RadioBoxes<T extends string>({
             <label
               key={option.value}
               className={cn(
-                'flex cursor-pointer items-center justify-center gap-2 rounded-sm border px-3 py-2 text-sm font-semibold uppercase transition h-16',
+                'flex cursor-pointer items-center justify-center gap-2 rounded-sm border px-3 py-2 text-sm font-semibold uppercase h-16',
                 value === option.value
                   ? 'border-white bg-white text-black'
                   : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white',
