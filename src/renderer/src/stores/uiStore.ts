@@ -5,7 +5,7 @@ import { buildOutputPath, getOutputDirectory } from '../lib/outputPath'
 
 export type MediaPanel = 'metadata' | 'queue' | 'history'
 export type Panel = MediaPanel | null
-export type Content = 'export' | 'logs' | 'settings' | null
+export type Content = 'exportSettings' | 'logs' | 'preferences' | null
 export type ActiveExportTarget =
   | { type: 'preview' }
   | { type: 'queue'; itemId: string }
@@ -67,7 +67,7 @@ function createPreviewExportSettings(
 export const useUiStore = create<UiState>((set) => ({
   activePanel: 'metadata',
   previousMediaPanel: 'metadata',
-  activeContent: 'export',
+  activeContent: 'exportSettings',
   activeExportTarget: null,
   previewExportSettings: DEFAULT_EXPORT_SETTINGS,
   lastEditableExportSettings: DEFAULT_EXPORT_SETTINGS,
