@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { getLogScrollState } from '@renderer/lib/logScroll'
+import { getBottomScrollState } from '@renderer/lib/bottomScroll'
 
-describe('getLogScrollState', () => {
+describe('getBottomScrollState', () => {
   it('hides the scroll button when the viewer is not scrollable', () => {
     expect(
-      getLogScrollState({
+      getBottomScrollState({
         scrollHeight: 300,
         scrollTop: 0,
         clientHeight: 300
@@ -18,7 +18,7 @@ describe('getLogScrollState', () => {
 
   it('hides the scroll button when the viewer is within the bottom threshold', () => {
     expect(
-      getLogScrollState({
+      getBottomScrollState({
         scrollHeight: 1000,
         scrollTop: 560,
         clientHeight: 400
@@ -32,7 +32,7 @@ describe('getLogScrollState', () => {
 
   it('shows the scroll button when the viewer is scrollable and past the bottom threshold', () => {
     expect(
-      getLogScrollState({
+      getBottomScrollState({
         scrollHeight: 1000,
         scrollTop: 559,
         clientHeight: 400

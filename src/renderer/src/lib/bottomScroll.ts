@@ -1,21 +1,21 @@
-export const LOG_BOTTOM_FOLLOW_THRESHOLD = 40
+export const BOTTOM_SCROLL_THRESHOLD = 40
 
-export type LogScrollMetrics = {
+export type BottomScrollMetrics = {
   scrollHeight: number
   scrollTop: number
   clientHeight: number
 }
 
-export type LogScrollState = {
+export type BottomScrollState = {
   nearBottom: boolean
   scrollable: boolean
   showScrollToBottom: boolean
 }
 
-export function getLogScrollState(
-  metrics: LogScrollMetrics,
-  threshold = LOG_BOTTOM_FOLLOW_THRESHOLD
-): LogScrollState {
+export function getBottomScrollState(
+  metrics: BottomScrollMetrics,
+  threshold = BOTTOM_SCROLL_THRESHOLD
+): BottomScrollState {
   const remaining = metrics.scrollHeight - metrics.scrollTop - metrics.clientHeight
   const nearBottom = remaining <= threshold
   const scrollable = metrics.scrollHeight > metrics.clientHeight

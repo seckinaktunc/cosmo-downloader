@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { DownloadLogReadResult } from '../../../../shared/types'
+import { getBottomScrollState } from '../../lib/bottomScroll'
 import { appendLiveLogLines, LOG_TAIL_BYTES } from '../../lib/logContent'
 import { resolveDisplayedLogSource } from '../../lib/logSources'
-import { getLogScrollState } from '../../lib/logScroll'
 import { useHistoryStore } from '../../stores/historyStore'
 import { useQueueStore } from '../../stores/queueStore'
 import { useUiStore } from '../../stores/uiStore'
@@ -42,7 +42,7 @@ export function LogsPanel(): React.JSX.Element {
       return
     }
 
-    const scrollState = getLogScrollState(element)
+    const scrollState = getBottomScrollState(element)
     setAutoFollow(scrollState.nearBottom)
     setShowScrollToBottom(scrollState.showScrollToBottom)
   }, [])
@@ -186,10 +186,10 @@ export function LogsPanel(): React.JSX.Element {
                 {selectedLogResult.content || t('logs.emptyLog')}
 
                 {showScrollToBottom ? (
-                  <div className="absolute flex items-end justify-center bottom-0 -left-2 w-full h-32 pl-4 bg-linear-to-b from-transparent to-dark to-95% pointer-events-none">
+                  <div className="absolute flex items-end justify-center bottom-0 -left-3 w-full h-32 pl-3 bg-linear-to-b from-transparent to-dark to-95% pointer-events-none">
                     <Button
                       icon="chevronsDown"
-                      label={t('logs.actions.scrollToBottom')}
+                      label={t('actions.scrollToBottom')}
                       className="w-full rounded-none border-none pointer-events-auto"
                       onClick={scrollToBottom}
                       onlyIcon
