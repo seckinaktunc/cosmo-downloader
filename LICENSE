@@ -1,0 +1,111 @@
+Cosmo Downloader — Custom Non-Commercial License
+
+Copyright (c) 2026 Seçkin Aktunç. All rights reserved.
+
+This is NOT an OSI-approved open-source license. Read it in full before using,
+modifying, or redistributing the software.
+
+1. Definitions
+
+    "Software" means the source code, compiled binaries, documentation, and
+    all other materials contained in this repository.
+
+    "You" means any individual or legal entity exercising rights under this
+    License.
+
+    "Personal Use" means use by an individual for non-commercial,
+    non-revenue-generating purposes — for example, downloading content for
+    personal viewing, learning, or experimentation.
+
+    "Commercial Use" means any use intended for or directed toward commercial
+    advantage, monetary compensation, or revenue generation, including but
+    not limited to:
+      (a) selling, renting, sub-licensing, or distributing the Software or
+          any derivative of it for a fee;
+      (b) bundling the Software (or a derivative) into a paid product or
+          service;
+      (c) offering the Software (or a derivative) as part of a hosted
+          service (SaaS) to third parties;
+      (d) using the Software to generate, process, or deliver content that
+          is itself monetized, where the Software is a material component
+          of that monetization.
+
+2. Grant of Rights
+
+    Subject to the terms and conditions of this License, the copyright
+    holder grants You a worldwide, royalty-free, non-exclusive,
+    non-transferable license to:
+
+    (a) use the Software for Personal Use;
+    (b) copy and modify the Software for Personal Use;
+    (c) contribute modifications back to this repository, provided such
+        contributions are licensed under the same terms as this License
+        ("inbound = outbound").
+
+3. Commercial Use
+
+    Commercial Use of the Software — in its original or modified form — is
+    PROHIBITED without prior written permission from the copyright holder.
+    To request permission, open an issue in the project's GitHub repository
+    or contact the copyright holder directly.
+
+4. Redistribution
+
+    You may redistribute unmodified copies of the Software for Personal Use,
+    provided that:
+
+    (a) this License is included, unchanged, with every copy;
+    (b) the copyright notice in Section 1 is preserved;
+    (c) no fee is charged for the redistribution itself, and the
+        redistribution is not bundled with any Commercial Use as defined
+        in Section 1.
+
+    Redistribution of modified versions additionally requires that:
+
+    (d) modifications are clearly marked as such, with the date of
+        modification;
+    (e) the modified version carries no name, logo, or branding that would
+        reasonably cause confusion with the original Software.
+
+5. Third-Party Components
+
+    The Software bundles or depends on third-party components (including,
+    without limitation, yt-dlp and FFmpeg) that are licensed under their own
+    terms. Those components remain subject to their respective licenses,
+    which You must also comply with. Nothing in this License grants You any
+    rights over those components beyond what their licenses already grant.
+
+6. Trademarks
+
+    This License does not grant any rights in the trademarks, service marks,
+    or logos of the copyright holder, including the name "Cosmo Downloader".
+
+7. Disclaimer of Warranty
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+8. Limitation of Liability
+
+    IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES,
+    OR OTHER LIABILITY — WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE
+    — ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+    OTHER DEALINGS IN THE SOFTWARE.
+
+9. Termination
+
+    Any breach of this License automatically terminates the rights granted to
+    You under it. Upon termination, You must cease all use of the Software
+    and destroy all copies in Your possession or control. Sections 5 through
+    10 survive termination.
+
+10. Governing Terms
+
+    This License constitutes the entire agreement between You and the
+    copyright holder with respect to the Software. If any provision of this
+    License is found unenforceable, the remaining provisions shall remain in
+    full force and effect.
+
+For commercial licensing inquiries, please open an issue at:
+https://github.com/seckinaktunc/cosmo-downloader/issues

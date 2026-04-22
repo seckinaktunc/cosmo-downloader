@@ -1,0 +1,65 @@
+# Terms of Service
+
+*Last updated: 2026-04-22*
+
+These Terms govern your use of **Cosmo Downloader** (the "Software"). By downloading, installing, or using the Software, you agree to be bound by these Terms. If you do not agree, do not use the Software.
+
+## 1. Eligibility and acceptable use
+
+You may use the Software only if you are legally capable of entering into a binding agreement in your jurisdiction, and only for **personal, non-commercial purposes** as defined in the [LICENSE](LICENSE). Commercial use requires prior written permission — see the [LICENSE](LICENSE) for the exact terms.
+
+You agree to use the Software in compliance with:
+
+- All applicable laws and regulations in your jurisdiction.
+- The terms of service of any website, platform, or service you access through the Software.
+- Any applicable copyright, intellectual property, and licensing terms of the content you download or process.
+
+You are **solely responsible** for the content you download, store, or redistribute using the Software. See the [Disclaimer](DISCLAIMER.md) for more.
+
+## 2. Prohibited uses
+
+You may not use the Software to:
+
+- Circumvent DRM, encryption, or other technical protection measures (the Software does not do this natively, and modifying it to do so is not permitted under these Terms).
+- Acquire, distribute, or redistribute content you do not have the right to acquire or redistribute.
+- Engage in activity that is illegal in your jurisdiction or in the jurisdiction of any affected party.
+- Harm, harass, defraud, or impersonate others.
+- Repackage the Software or a derivative for commercial distribution without prior written permission (see [LICENSE](LICENSE)).
+
+## 3. Third-party services and content
+
+The Software lets you interact with third-party platforms (e.g., YouTube, TikTok, etc.) that are operated by independent parties. Your use of those platforms is governed by **their** terms of service and privacy policies. Cosmo Downloader is not a party to, nor responsible for, those relationships.
+
+The Software bundles third-party open-source components, including [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [FFmpeg](https://ffmpeg.org/), each governed by its own license.
+
+## 4. No warranty
+
+The Software is provided **"AS IS"** and **"AS AVAILABLE"**, without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, non-infringement, uninterrupted operation, or absence of defects. You use the Software at your own risk.
+
+## 5. Limitation of liability
+
+To the maximum extent permitted by applicable law, the author of the Software will not be liable for any direct, indirect, incidental, special, consequential, or punitive damages — including but not limited to loss of data, loss of profits, loss of goodwill, service interruption, or device damage — arising out of or in connection with your use of, or inability to use, the Software, even if the author has been advised of the possibility of such damages.
+
+## 6. Privacy
+
+The Software does not collect or transmit personal data to the developer. Details of local storage and network behavior are documented in [PRIVACY.md](PRIVACY.md).
+
+## 7. Updates
+
+The Software may check for and install updates automatically. You can disable this in Settings. Updates may modify or add features, fix bugs, or change behavior. Continued use of the Software after an update constitutes acceptance of these Terms as they apply to the updated version.
+
+## 8. Termination
+
+Your rights to use the Software terminate automatically if you breach these Terms or the [LICENSE](LICENSE). Upon termination, you must stop using the Software and delete all copies in your possession or control. Provisions that by their nature should survive termination (including limitations of liability, disclaimers, and governing terms) will survive.
+
+## 9. Changes to these Terms
+
+These Terms may be updated over time. The latest version is always in this repository; substantial changes will be noted in the release notes. Continued use after changes constitutes acceptance of the updated Terms.
+
+## 10. Governing terms
+
+These Terms operate alongside the [LICENSE](LICENSE). In the event of any conflict between these Terms and the LICENSE, the LICENSE governs matters of grant, scope of use, and redistribution, and these Terms govern the user-facing contractual relationship. If any provision of these Terms is found unenforceable, the remaining provisions remain in effect.
+
+## 11. Contact
+
+Questions, commercial licensing inquiries, or legal concerns: open an [issue](https://github.com/seckinaktunc/cosmo-downloader/issues) on the project repository.
