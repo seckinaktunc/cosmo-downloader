@@ -22,7 +22,7 @@ When in doubt — don't.
 
 The software is provided **"AS IS"**, without warranty of any kind, express or implied, including (but not limited to) the warranties of merchantability, fitness for a particular purpose, and non-infringement. The author will not be liable for any claim, damages, data loss, or other liability arising from your use of, or inability to use, the software.
 
-See the [LICENSE](LICENSE) for the full legal text.
+See the [LICENSE](../LICENSE) for the full legal text.
 
 ## No affiliation
 

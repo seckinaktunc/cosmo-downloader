@@ -6,7 +6,7 @@ These Terms govern your use of **Cosmo Downloader** (the "Software"). By downloa
 
 ## 1. Eligibility and acceptable use
 
-You may use the Software only if you are legally capable of entering into a binding agreement in your jurisdiction, and only for **personal, non-commercial purposes** as defined in the [LICENSE](LICENSE). Commercial use requires prior written permission — see the [LICENSE](LICENSE) for the exact terms.
+You may use the Software only if you are legally capable of entering into a binding agreement in your jurisdiction, and only for **personal, non-commercial purposes** as defined in the [LICENSE](../LICENSE). Commercial use requires prior written permission — see the [LICENSE](../LICENSE) for the exact terms.
 
 You agree to use the Software in compliance with:
 
@@ -24,7 +24,7 @@ You may not use the Software to:
 - Acquire, distribute, or redistribute content you do not have the right to acquire or redistribute.
 - Engage in activity that is illegal in your jurisdiction or in the jurisdiction of any affected party.
 - Harm, harass, defraud, or impersonate others.
-- Repackage the Software or a derivative for commercial distribution without prior written permission (see [LICENSE](LICENSE)).
+- Repackage the Software or a derivative for commercial distribution without prior written permission (see [LICENSE](../LICENSE)).
 
 ## 3. Third-party services and content
 
@@ -46,11 +46,11 @@ The Software does not collect or transmit personal data to the developer. Detail
 
 ## 7. Updates
 
-The Software may check for and install updates automatically. You can disable this in Settings. Updates may modify or add features, fix bugs, or change behavior. Continued use of the Software after an update constitutes acceptance of these Terms as they apply to the updated version.
+The Software may check for and install updates automatically. You can disable this in Preferences. Updates may modify or add features, fix bugs, or change behavior. Continued use of the Software after an update constitutes acceptance of these Terms as they apply to the updated version.
 
 ## 8. Termination
 
-Your rights to use the Software terminate automatically if you breach these Terms or the [LICENSE](LICENSE). Upon termination, you must stop using the Software and delete all copies in your possession or control. Provisions that by their nature should survive termination (including limitations of liability, disclaimers, and governing terms) will survive.
+Your rights to use the Software terminate automatically if you breach these Terms or the [LICENSE](../LICENSE). Upon termination, you must stop using the Software and delete all copies in your possession or control. Provisions that by their nature should survive termination (including limitations of liability, disclaimers, and governing terms) will survive.
 
 ## 9. Changes to these Terms
 
@@ -58,7 +58,7 @@ These Terms may be updated over time. The latest version is always in this repos
 
 ## 10. Governing terms
 
-These Terms operate alongside the [LICENSE](LICENSE). In the event of any conflict between these Terms and the LICENSE, the LICENSE governs matters of grant, scope of use, and redistribution, and these Terms govern the user-facing contractual relationship. If any provision of these Terms is found unenforceable, the remaining provisions remain in effect.
+These Terms operate alongside the [LICENSE](../LICENSE). In the event of any conflict between these Terms and the LICENSE, the LICENSE governs matters of grant, scope of use, and redistribution, and these Terms govern the user-facing contractual relationship. If any provision of these Terms is found unenforceable, the remaining provisions remain in effect.
 
 ## 11. Contact
 

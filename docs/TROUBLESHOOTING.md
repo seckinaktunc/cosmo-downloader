@@ -32,7 +32,7 @@ Common false positive — yt-dlp is frequently flagged because malware sometimes
 
 You need cookies from a browser where you're already signed in.
 
-1. In **Settings**, pick your browser under the cookie source option.
+1. In **Preferences**, pick your browser under the cookie source option.
 2. **Fully close** that browser (Chromium-based browsers lock the cookie database while running).
 3. Retry the download.
 
@@ -48,27 +48,27 @@ That's the FFmpeg remux or re-encode phase after yt-dlp finishes the raw downloa
 
 - Check your internet connection against a direct download from a browser.
 - Some platforms throttle — there's nothing the app can do about that.
-- Disabling hardware acceleration in Settings can help if your GPU driver is unstable; re-enabling it will speed up re-encodes.
+- Disabling hardware acceleration in Preferences can help if your GPU driver is unstable; re-enabling it will speed up re-encodes.
 
 ### "Output file already exists"
 
-Enable the de-dupe option in the export panel, or change the filename template in Settings.
+Choose a different path in Export Settings.
 
 ## Performance issues
 
 ### High CPU during downloads
 
-Expected during FFmpeg encoding, especially for AV1 / H.265 / H.264 re-encodes. Enable **hardware acceleration** in Settings if you have a modern GPU. Choosing `mkv` with `auto` codec avoids re-encoding entirely when yt-dlp can grab a compatible stream directly.
+Expected during FFmpeg encoding, especially for AV1 / H.265 / H.264 re-encodes. Enable **hardware acceleration** in Preferences if you have a modern GPU. Choosing `mkv` with `auto` codec avoids re-encoding entirely when yt-dlp can grab a compatible stream directly.
 
 ### App feels laggy
 
-Check the **Logs** tab — if logs are growing very fast, a download is very chatty. Logs are compacted automatically, but you can manually clear them in Settings.
+Check the **Logs** tab — if logs are growing very fast, a download is very chatty. Logs are compacted automatically.
 
 ## Updates
 
 ### Auto-update didn't pick up a new version
 
-- Check **Settings → Auto-update** is enabled.
+- Check **Preferences → Check for updates automatically** is enabled.
 - The app checks GitHub Releases; if your network blocks GitHub, auto-updates won't work. Install manually from the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page.
 - Restart the app — the check runs on launch.
 
@@ -80,7 +80,7 @@ The postinstall step runs `electron-builder install-app-deps`. On first install,
 
 ### `electron-builder` errors about symlinks on Windows
 
-Enable **Developer Mode** in Windows (Settings → Privacy & security → For developers), then restart your shell. Alternatively, run your build shell as Administrator.
+Enable **Developer Mode** in Windows (Windows Settings → Privacy & security → For developers), then restart your shell. Alternatively, run your build shell as Administrator.
 
 ### Local build doesn't match the release build
 
@@ -92,4 +92,4 @@ Use `npm run build:win:local`, not `npm run build:win`. The `:local` variant run
 - **Per-download logs:** visible in the **Logs** tab inside the app
 - **Build logs (from source):** console output of the `build:win:local` command
 
-When filing an issue, attach the relevant log and mention your Windows version, the app version (visible in Settings), and the URL you were trying to download.
+When filing an issue, attach the relevant log and mention your Windows version, the app version (visible in Preferences), and the URL you were trying to download.

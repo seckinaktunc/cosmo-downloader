@@ -8,13 +8,13 @@ YouTube, TikTok, Instagram, Twitch, Twitter/X, Vimeo, Reddit, SoundCloud, and [h
 
 ## Why is my download failing for a private or age-restricted video?
 
-You probably need to pass cookies from a browser that's already logged in. In **Settings**, pick the browser you're signed in with (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560)) under the cookie source option, then retry the download.
+You probably need to pass cookies from a browser that's already logged in. In **Preferences**, pick the browser you're signed in with (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560)) under the cookie source option, then retry the download.
 
 Make sure the selected browser is fully closed before downloading. Some browsers lock the cookie database while running.
 
 ## Where are my downloads saved?
 
-By default, to your system **Downloads** folder. You can change this in **Settings > Output folder**.
+By default, to your system **Downloads** folder. You can change the default in **Preferences > Default download location**, or choose a per-video location in **Export Settings**.
 
 ## Can I download audio only?
 
@@ -58,7 +58,7 @@ No. Currently. Normally yt-dlp supports playlists, but Cosmo will need a little 
 
 ## How do I update Cosmo Downloader?
 
-The app checks for updates automatically on launch. When a new release is available, you'll get a prompt to install it. You can also disable auto-updates in **Settings** and check the updates yourself by clicking on the **Check for Updates**.
+The app checks for updates automatically on launch. When a new release is available, you'll get a prompt to install it. You can also disable auto-updates in **Preferences** and check updates yourself by clicking **Check for updates**.
 
 ## Why is my download stuck at 99%?
 
@@ -66,7 +66,7 @@ It's almost certainly in the FFmpeg remux / encode phase, which happens after yt
 
 ## Can I use Cosmo Downloader commercially?
 
-Not without written permission. See the [LICENSE](LICENSE) for details. For commercial licensing, open an [issue](https://github.com/seckinaktunc/cosmo-downloader/issues).
+Not without written permission. See the [LICENSE](../LICENSE) for details. For commercial licensing, open an [issue](https://github.com/seckinaktunc/cosmo-downloader/issues).
 
 ## Still stuck?
 
