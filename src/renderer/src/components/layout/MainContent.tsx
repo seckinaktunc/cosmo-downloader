@@ -7,7 +7,7 @@ import {
 } from '../../stores/uiStore'
 import { ExportSettingsPanel } from '../features/ExportSettingsPanel'
 import { MediaOverview } from '../features/MediaOverview'
-import { SettingsPanel } from '../features/SettingsPanel'
+import { PreferencesPanel } from '../features/PreferencesPanel'
 import { ResizeHandle } from '../ui/ResizeHandle'
 import ContentTab, { ContentTabItem } from '../features/ContentTab'
 import { LogsPanel } from '../features/LogsPanel'
@@ -20,16 +20,16 @@ export function MainContent(): React.JSX.Element {
 
   const tabs: ContentTabItem[] = [
     {
-      id: 'export',
-      title: t('export.title'),
+      id: 'exportSettings',
+      title: t('exportSettings.title'),
       icon: 'adjustments',
       content: <ExportSettingsPanel />
     },
     {
-      id: 'settings',
-      title: t('settings.title'),
+      id: 'preferences',
+      title: t('preferences.title'),
       icon: 'settings',
-      content: <SettingsPanel />
+      content: <PreferencesPanel />
     },
     { id: 'logs', icon: 'logs', content: <LogsPanel /> }
   ]
@@ -42,7 +42,7 @@ export function MainContent(): React.JSX.Element {
         gridTemplateColumns: `${mediaOverviewWidthPercent}% 0.5rem minmax(0, 1fr)`
       }}
     >
-      <aside className="min-h-0 min-w-0 overflow-hidden rounded-lg bg-linear-to-b from-dark to-white/10 border border-white/10">
+      <aside className="min-h-0 min-w-0 overflow-hidden rounded-lg bg-linear-to-b from-dark to-gray border border-white/10">
         <MediaOverview />
       </aside>
       <ResizeHandle
