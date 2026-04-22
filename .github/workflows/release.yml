@@ -49,8 +49,12 @@ jobs:
       - run: npx electron-builder --win --publish never
       - if: env.WIN_CSC_LINK != ''
         run: npm run verify:win-signing
+      - name: Generate release notes
+        shell: bash
+        run: node scripts/extract-release-notes.mjs "$GITHUB_REF_NAME" > release-notes.md
       - name: Publish release artifacts
         shell: bash
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "Release $GITHUB_REF_NAME"
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+          gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
           gh release upload "$GITHUB_REF_NAME" dist/*.exe dist/*.blockmap dist/latest.yml --clobber
