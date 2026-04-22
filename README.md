@@ -27,6 +27,14 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 - **Zero external installs:** yt-dlp and FFmpeg ship bundled
 - **Local-only:** No telemetry, no analytics, no account required
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/main.png" alt="Export" width="32%" />
+  <img src="docs/screenshots/settings.png" alt="Settings" width="32%" />
+  <img src="docs/screenshots/logs.png" alt="Logs" width="32%" />
+</p>
+
 ## Features
 
 ### Downloading
@@ -50,14 +58,6 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 - Browser cookie import for age-restricted content (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560))
 - Auto-update checks via GitHub Releases
 - Configurable output folder and filename rules
-
-## Screenshots
-
-<p align="center">
-  <img src="docs/screenshots/main.png" alt="Export" width="32%" />
-  <img src="docs/screenshots/settings.png" alt="Settings" width="32%" />
-  <img src="docs/screenshots/logs.png" alt="Logs" width="32%" />
-</p>
 
 ## Installation
 
