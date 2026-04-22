@@ -225,9 +225,47 @@ function moveFile(source, destination) {
   }
 }
 
+/**
+ * On Windows, some `tar` builds mis-parse paths like `C:\...` ("Cannot connect to C: resolve failed").
+ * PowerShell's Expand-Archive is reliable for .zip without extra tools.
+ */
+function extractZipWindows(archivePath, destDir) {
+  return spawnSync(
+    'powershell.exe',
+    [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      'Expand-Archive -LiteralPath $env:COSMO_ARCHIVE_PATH -DestinationPath $env:COSMO_DEST_DIR -Force'
+    ],
+    {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        COSMO_ARCHIVE_PATH: archivePath,
+        COSMO_DEST_DIR: destDir
+      }
+    }
+  )
+}
+
+function pathForSystemTar(absolutePath) {
+  // Avoid Windows drive-letter parsing bugs in some tar/libarchive builds.
+  if (process.platform === 'win32') {
+    return absolutePath.replaceAll('\\', '/')
+  }
+  return absolutePath
+}
+
 async function extractArchive(archivePath, binaryName, destination, sourcePath) {
   const tempDir = await mkdtemp(join(tmpdir(), 'cosmo-bin-'))
-  const result = spawnSync('tar', ['-xf', archivePath, '-C', tempDir], { stdio: 'inherit' })
+  const isZip = archivePath.toLowerCase().endsWith('.zip')
+  const result =
+    process.platform === 'win32' && isZip
+      ? extractZipWindows(archivePath, tempDir)
+      : spawnSync('tar', ['-xf', pathForSystemTar(archivePath), '-C', pathForSystemTar(tempDir)], {
+          stdio: 'inherit'
+        })
   if (result.status !== 0) {
     throw new Error(
       `Failed to extract ${basename(archivePath)}. Install tar or extract it manually.`
