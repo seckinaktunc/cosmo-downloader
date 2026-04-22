@@ -1,4 +1,5 @@
 import { icons as logos } from '@iconify-json/logos'
+import { icons as flags } from '@iconify-json/flag'
 import { Icon as IconifyIcon, addCollection } from '@iconify/react'
 import {
   IconAdjustmentsHorizontal,
@@ -50,6 +51,7 @@ import {
   IconX
 } from '@tabler/icons-react'
 import AppIcon from './AppIcon'
+import { cn } from '@renderer/lib/utils'
 
 export interface IconProps {
   name: IconName
@@ -62,6 +64,7 @@ export interface IconProps {
 }
 
 addCollection(logos)
+addCollection(flags)
 
 const iconMap = {
   appIcon: AppIcon,
@@ -115,7 +118,10 @@ const iconMap = {
 } as const
 
 export type TablerIconName = keyof typeof iconMap
-export type IconName = TablerIconName | `logos:${string}`
+export type LogoIconName = `logos:${string}`
+export type FlagIconName = `flag:${string}`
+
+export type IconName = TablerIconName | LogoIconName | FlagIconName
 
 export default function Icon({
   name,
@@ -126,7 +132,7 @@ export default function Icon({
   color,
   className
 }: IconProps): React.JSX.Element | null {
-  if (name.startsWith('logos:')) {
+  if (name.startsWith('logos:') || name.startsWith('flag:')) {
     return (
       <IconifyIcon
         icon={name}
@@ -155,7 +161,7 @@ export default function Icon({
     <IconComponent
       stroke={thickness}
       color={color}
-      className={className}
+      className={cn(resolvedName === 'spinner' && 'animate-spin', className)}
       style={{
         width: `${size / 16}rem`,
         height: `${size / 16}rem`,

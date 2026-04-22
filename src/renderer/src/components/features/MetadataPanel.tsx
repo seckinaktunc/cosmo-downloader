@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDisplayMetadata } from '../../hooks/useDisplayMetadata'
-import { useMetadataDrop } from '../../hooks/useMetadataDrop'
 import { renderFormattedDescription } from '../../lib/descriptionFormatter'
 import { useHistoryStore } from '../../stores/historyStore'
 import { useQueueStore } from '../../stores/queueStore'
@@ -19,7 +18,6 @@ export function MetadataPanel(): React.JSX.Element {
   const metadata = useDisplayMetadata()
   const stage = useVideoStore((state) => state.stage)
   const error = useVideoStore((state) => state.error)
-  const setUrl = useVideoStore((state) => state.setUrl)
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
   const settings = useSettingsStore((state) => state.settings)
   const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath)
@@ -30,27 +28,27 @@ export function MetadataPanel(): React.JSX.Element {
   const addToQueue = useQueueStore((state) => state.add)
   const requeue = useHistoryStore((state) => state.requeue)
   const openMediaPanel = useUiStore((state) => state.openMediaPanel)
-  const dropHandlers = useMetadataDrop(setUrl)
 
   if (!metadata) {
     return (
-      <section
-        className="flex h-full flex-col items-center justify-center gap-4 text-center"
-        {...dropHandlers}
-      >
+      <section className="flex h-full flex-col items-center justify-center gap-4 text-center">
         <Icon
           name={stage === 'fetching_metadata' ? 'spinner' : 'copy'}
           size={96}
           thickness={1}
-          className={`opacity-50 ${stage === 'fetching_metadata' ? 'animate-spin' : undefined}`}
+          className={`opacity-50`}
         />
         <div>
           <h1 className="text-2xl font-bold text-white">
             {stage === 'fetching_metadata' ? t('metadata.fetching') : t('metadata.emptyTitle')}
           </h1>
-          <p className="mt-1 max-w-xl text-sm text-white/50">
-            {error ?? t('metadata.emptyDescription')}
-          </p>
+          {error ? (
+            <p className="mt-1 max-w-xl text-sm text-white/50">{error}</p>
+          ) : (
+            stage !== 'fetching_metadata' && (
+              <p className="mt-1 max-w-xl text-sm text-white/50">{t('metadata.emptySubtitle')}</p>
+            )
+          )}
         </div>
       </section>
     )
@@ -99,7 +97,7 @@ export function MetadataPanel(): React.JSX.Element {
   }
 
   return (
-    <section className="flex flex-col h-full text-white divide-y divide-white/10" {...dropHandlers}>
+    <section className="flex flex-col h-full text-white divide-y divide-white/10">
       <Thumbnail
         src={metadata.thumbnail}
         title={metadata.title}

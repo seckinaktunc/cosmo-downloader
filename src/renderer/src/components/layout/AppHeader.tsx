@@ -190,11 +190,11 @@ export function AppHeader(): React.JSX.Element {
           aria-label={actionLabel}
           disabled={stage === 'fetching_metadata'}
         >
-          {stage === 'fetching_metadata' ? (
-            <Icon name="spinner" size={22} className="animate-spin opacity-70" />
-          ) : (
-            <Icon name={actionIcon} size={22} className="opacity-70" />
-          )}
+          <Icon
+            name={stage === 'fetching_metadata' ? 'spinner' : actionIcon}
+            size={22}
+            className="opacity-70"
+          />
         </button>
         <ActionMenu
           open={contextMenuAnchor != null}

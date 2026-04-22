@@ -65,8 +65,8 @@ export function BottomBar(): React.JSX.Element {
   const completedPreviewItem =
     currentSourceUrl && currentPreviewCompleted
       ? queueItems.find(
-          (item) => item.status === 'completed' && getSourceUrl(item.metadata) === currentSourceUrl
-        )
+        (item) => item.status === 'completed' && getSourceUrl(item.metadata) === currentSourceUrl
+      )
       : undefined
   const buttonText = getBottomButtonState({
     activeItem,
@@ -171,12 +171,12 @@ export function BottomBar(): React.JSX.Element {
 
   return (
     <footer className="grid grid-cols-[1fr_auto] items-center gap-y-2 bg-black p-2">
-      <div className="flex min-w-0 max-w-[75%] items-center gap-3">
+      <div className="flex min-w-0 max-w-lg items-center gap-3">
         <Thumbnail
           src={summaryMetadata?.thumbnail}
           title={summaryMetadata?.title}
           duration={summaryMetadata?.duration}
-          className="aspect-video h-16 rounded-lg bg-white/10 shrink-0 border border-white/10"
+          className="aspect-video h-16 rounded-lg bg-gray shrink-0 border border-white/10"
           actionSize="xs"
           showPlaceholderIcon={false}
           actionsEnabled={false}
@@ -194,7 +194,7 @@ export function BottomBar(): React.JSX.Element {
             rel="noreferrer"
             className="block max-w-full truncate font-bold underline-offset-2 hover:underline text-white"
           >
-            {summaryMetadata?.title ?? t('bottom.noVideo')}
+            {summaryMetadata?.title ?? <div className="h-4 w-40 bg-gray rounded-lg mb-1" />}
           </a>
           {summaryMetadata?.uploaderUrl ? (
             <a
@@ -203,11 +203,11 @@ export function BottomBar(): React.JSX.Element {
               rel="noreferrer"
               className="block max-w-full truncate text-sm underline-offset-2 hover:underline text-white/50"
             >
-              {summaryMetadata.uploader ?? t('bottom.pasteToBegin')}
+              {summaryMetadata.uploader ?? <div className="h-4 w-24 bg-gray/50 rounded-lg" />}
             </a>
           ) : (
             <span className="block max-w-full truncate text-sm text-white/50">
-              {summaryMetadata?.uploader ?? t('bottom.pasteToBegin')}
+              {summaryMetadata?.uploader ?? <div className="h-4 w-24 bg-gray/50 rounded-lg" />}
             </span>
           )}
         </div>
@@ -216,14 +216,16 @@ export function BottomBar(): React.JSX.Element {
       <div className="flex items-center gap-2">
         <Button
           icon={
-            buttonText.mode === 'cancel'
-              ? 'close'
-              : buttonText.mode === 'new_video'
-                ? 'reload'
-                : 'appIcon'
+            videoStage === 'fetching_metadata'
+              ? 'spinner'
+              : buttonText.mode === 'cancel'
+                ? 'close'
+                : buttonText.mode === 'new_video'
+                  ? 'reload'
+                  : 'appIcon'
           }
           label={buttonText.primary}
-          active={activeContent === 'export'}
+          active={activeContent === 'exportSettings'}
           disabled={buttonText.mode === 'disabled'}
           onClick={handleMainClick}
           size="xl"
