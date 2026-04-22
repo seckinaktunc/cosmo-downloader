@@ -7,6 +7,7 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { useUpdateStore } from '../../stores/updateStore'
 import { LocationSelector } from '../ui/LocationSelector'
 import { Button } from '../ui/Button'
+import { SUPPORTED_LOCALES, resolveSupportedLocale } from '../../i18n'
 
 const COOKIE_BROWSER_ICONS: Record<CookieBrowser, IconName> = {
   none: 'none',
@@ -21,7 +22,7 @@ const COOKIE_BROWSER_ICONS: Record<CookieBrowser, IconName> = {
   whale: 'browser'
 }
 
-export function SettingsPanel(): React.JSX.Element {
+export function PreferencesPanel(): React.JSX.Element {
   const { t } = useTranslation()
   const settings = useSettingsStore((state) => state.settings)
   const cookieBrowsers = useSettingsStore((state) => state.cookieBrowsers)
@@ -34,31 +35,34 @@ export function SettingsPanel(): React.JSX.Element {
   const installUpdate = useUpdateStore((state) => state.install)
 
   if (!settings) {
-    return <div className="text-white/60">{t('settings.loading')}</div>
+    return <div className="text-white/60">{t('preferences.loading')}</div>
   }
 
   return (
     <section className="grid divide-y divide-white/10 border-b border-white/10">
       <div className="p-4">
         <SelectField
-          label={t('settings.language')}
-          value={settings.interfaceLanguage}
-          options={[{ value: 'en_US', label: t('settings.englishUs'), icon: 'language' }]}
+          label={t('preferences.language')}
+          value={resolveSupportedLocale(settings.interfaceLanguage)}
+          options={SUPPORTED_LOCALES.map((locale) => ({
+            ...locale,
+            icon: locale.icon
+          }))}
           onChange={(interfaceLanguage) => void update({ interfaceLanguage })}
         />
       </div>
       <div className="p-4">
         <Switch
-          label={t('settings.hardwareAcceleration')}
+          label={t('preferences.hardwareAcceleration')}
           checked={settings.hardwareAcceleration}
           onChange={(hardwareAcceleration) => void update({ hardwareAcceleration })}
-          description={t('settings.hardwareAccelerationDescription')}
-          error={restartRequired ? t('settings.restartRequired') : undefined}
+          description={t('preferences.hardwareAccelerationDescription')}
+          error={restartRequired ? t('preferences.restartRequired') : undefined}
         />
       </div>
       <div className="p-4">
         <Switch
-          label={t('settings.automaticUpdates')}
+          label={t('preferences.automaticUpdates')}
           checked={settings.automaticUpdates}
           onChange={(automaticUpdates) => void update({ automaticUpdates })}
         />
@@ -66,7 +70,7 @@ export function SettingsPanel(): React.JSX.Element {
 
       <div className="p-4">
         <SelectField<CookieBrowser>
-          label={t('settings.cookiesBrowser')}
+          label={t('preferences.cookiesBrowser')}
           value={settings.cookiesBrowser}
           options={cookieBrowsers.map((browser) => ({
             value: browser.id,
@@ -74,22 +78,22 @@ export function SettingsPanel(): React.JSX.Element {
             icon: COOKIE_BROWSER_ICONS[browser.id]
           }))}
           onChange={(cookiesBrowser) => void update({ cookiesBrowser })}
-          description={t('settings.cookiesBrowserDescription')}
+          description={t('preferences.cookiesBrowserDescription')}
         />
       </div>
       <div className="p-4">
         <Switch
-          label={t('settings.alwaysAsk')}
+          label={t('preferences.alwaysAsk')}
           checked={settings.alwaysAskDownloadLocation}
           onChange={(alwaysAskDownloadLocation) => void update({ alwaysAskDownloadLocation })}
         />
       </div>
       <div className="p-4">
         <Switch
-          label={t('settings.createFolderPerDownload')}
+          label={t('preferences.createFolderPerDownload')}
           checked={settings.createFolderPerDownload}
           onChange={(createFolderPerDownload) => void update({ createFolderPerDownload })}
-          description={t('settings.createFolderPerDownloadDescription')}
+          description={t('preferences.createFolderPerDownloadDescription')}
         />
       </div>
 
@@ -97,9 +101,9 @@ export function SettingsPanel(): React.JSX.Element {
         <LocationSelector
           mode="directory"
           className="p-4"
-          label={t('settings.downloadLocation')}
+          label={t('preferences.downloadLocation')}
           value={settings.defaultDownloadLocation}
-          placeholder={t('settings.downloadLocation')}
+          placeholder={t('preferences.downloadLocation')}
           chooseLabel={t('actions.choose')}
           onChoose={() => void chooseDownloadDirectory()}
           onOpen={() =>
