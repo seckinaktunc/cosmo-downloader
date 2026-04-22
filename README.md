@@ -10,6 +10,11 @@ A high-performance video downloader for power users who value speed and aestheti
 [![Platform](https://img.shields.io/badge/platform-Windows-blue?style=flat-square)](#installation)
 [![License](https://img.shields.io/badge/license-Non--Commercial-orange?style=flat-square)](LICENSE)
 
+<p align="center">
+  <img src="docs/screenshots/main.png" alt="Export Settings" width="32%" />
+  <img src="docs/screenshots/settings.png" alt="Preferences" width="32%" />
+  <img src="docs/screenshots/logs.png" alt="Logs" width="32%" />
+</p>
 </div>
 
 > **Currently Windows only.** macOS support is on the way and Linux is on the roadmap.
@@ -26,14 +31,6 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 
 - **Zero external installs:** yt-dlp and FFmpeg ship bundled
 - **Local-only:** No telemetry, no analytics, no account required
-
-## Screenshots
-
-<p align="center">
-  <img src="docs/screenshots/main.png" alt="Export" width="32%" />
-  <img src="docs/screenshots/settings.png" alt="Settings" width="32%" />
-  <img src="docs/screenshots/logs.png" alt="Logs" width="32%" />
-</p>
 
 ## Features
 
@@ -57,7 +54,7 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 - Clipboard-aware URL intake
 - Browser cookie import for age-restricted content (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560))
 - Auto-update checks via GitHub Releases
-- Configurable output folder and filename rules
+- Configurable download location and filename rules
 
 ## Installation
 
@@ -65,7 +62,7 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 2. Run the installer.
 3. Launch **Cosmo Downloader** from the Start Menu or your desktop.
 
-The app self-updates on launch when a new release is available (can be disabled in Settings).
+The app self-updates on launch when a new release is available (can be disabled in Preferences).
 
 ## Usage
 
@@ -74,13 +71,13 @@ The app self-updates on launch when a new release is available (can be disabled 
 3. Trim with in/out timecodes if you don't want to download the entire thing.
 4. Hit **Start Download**. That's it.
 
-See the [FAQ](FAQ.md) for more.
+See the [FAQ](docs/FAQ.md) for more.
 
 ## Architecture
 
 Cosmo Downloader is a standard Electron app:
 
-- **Electron main process:** Download orchestration, queue, history, settings, updates
+- **Electron main process:** Download orchestration, queue, history, preferences, updates
 - **React + TypeScript + TailwindCSS** combination for UI
 - **yt-dlp:** Platform extraction and media retrieval (bundled)
 - **FFmpeg:** Encoding, remuxing, trimming (bundled)
@@ -120,7 +117,7 @@ Starts the app with hot-reload for the renderer.
 npm run build:win:local
 ```
 
-Runs the full pipeline: fetch binaries → typecheck → bundle → preflight symlink check → `electron-builder`. The installer lands in `dist/cosmo-downloader-<version>-setup.exe`.
+Runs the full pipeline: fetch binaries -> typecheck -> bundle -> preflight symlink check -> `electron-builder`. The installer lands in `dist/cosmo-downloader-<version>-setup.exe`.
 
 > `build:win` (no `:local`) skips the preflight and binary-fetch steps - it's used by the CI workflow where those are handled separately. Use `build:win:local` for local builds.
 
@@ -147,8 +144,8 @@ If either is missing, an unsigned installer is produced. You can sanity-check a 
 
 - [x] Electron + React architecture
 - [x] FFmpeg integration
-- [x] Export UI & implementation
-- [x] Settings UI & implementation
+- [x] Export Settings UI & implementation
+- [x] Preferences UI & implementation
 - [x] Browser selection for cookies
 - [x] Multi-platform downloader
 - [x] Audio extraction
@@ -157,7 +154,7 @@ If either is missing, an unsigned installer is produced. You can sanity-check a 
 - [x] Download history
 - [x] Clipboard detection
 - [ ] Subtitle support
-- [ ] Multi-language support
+- [x] Multi-language support
 - [ ] macOS build
 - [ ] Linux build
 
@@ -171,9 +168,10 @@ Released under a **[Custom Non-Commercial License](LICENSE)**. Personal use and 
 
 ## More
 
-- [FAQ](FAQ.md)
-- [Troubleshooting](TROUBLESHOOTING.md)
-- [Disclaimer](DISCLAIMER.md)
-- [Privacy Policy](PRIVACY.md)
-- [Terms of Service](TERMS.md)
+- [Changelog](docs/CHANGELOG.md)
+- [FAQ](docs/FAQ.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Disclaimer](docs/DISCLAIMER.md)
+- [Privacy Policy](docs/PRIVACY.md)
+- [Terms of Service](docs/TERMS.md)
 - [Contact](https://www.seckinaktunc.com)
