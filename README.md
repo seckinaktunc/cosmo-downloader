@@ -53,11 +53,11 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 
 ## Screenshots
 
-> Screenshots coming soon.
-
-![Export](docs/screenshots/main.png)
-![Settings](docs/screenshots/settings.png)
-![Logs](docs/screenshots/logs.png)
+<p align="center">
+  <img src="docs/screenshots/main.png" alt="Export" width="32%" />
+  <img src="docs/screenshots/settings.png" alt="Settings" width="32%" />
+  <img src="docs/screenshots/logs.png" alt="Logs" width="32%" />
+</p>
 
 ## Installation
 
