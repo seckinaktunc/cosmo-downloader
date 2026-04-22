@@ -225,26 +225,27 @@ function moveFile(source, destination) {
   }
 }
 
-function windowsZipShellEscape(value) {
-  return value.replaceAll("'", "''")
-}
-
 /**
  * On Windows, some `tar` builds mis-parse paths like `C:\...` ("Cannot connect to C: resolve failed").
  * PowerShell's Expand-Archive is reliable for .zip without extra tools.
  */
 function extractZipWindows(archivePath, destDir) {
-  const literalArchive = windowsZipShellEscape(archivePath)
-  const literalDest = windowsZipShellEscape(destDir)
   return spawnSync(
     'powershell.exe',
     [
       '-NoProfile',
       '-NonInteractive',
       '-Command',
-      `Expand-Archive -LiteralPath '${literalArchive}' -DestinationPath '${literalDest}' -Force`
+      'Expand-Archive -LiteralPath $env:COSMO_ARCHIVE_PATH -DestinationPath $env:COSMO_DEST_DIR -Force'
     ],
-    { stdio: 'inherit' }
+    {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        COSMO_ARCHIVE_PATH: archivePath,
+        COSMO_DEST_DIR: destDir
+      }
+    }
   )
 }
 
