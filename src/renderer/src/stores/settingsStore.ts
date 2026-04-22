@@ -6,6 +6,7 @@ import type {
   OutputFormat,
   SettingsUpdate
 } from '../../../shared/types'
+import { changeInterfaceLanguage } from '../i18n'
 
 type SettingsState = {
   settings: AppSettings | null
@@ -41,6 +42,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       window.cosmo.app.getEnvironment()
     ])
 
+    if (settingsResult.ok) {
+      await changeInterfaceLanguage(settingsResult.data.interfaceLanguage)
+    }
+
     set({
       isLoading: false,
       settings: settingsResult.ok ? settingsResult.data : null,
@@ -64,6 +69,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     const initialHardwareAcceleration = get().initialHardwareAcceleration
+    if (update.interfaceLanguage != null) {
+      await changeInterfaceLanguage(result.data.interfaceLanguage)
+    }
+
     set({
       settings: result.data,
       restartRequired:
