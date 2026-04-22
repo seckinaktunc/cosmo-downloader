@@ -233,7 +233,7 @@ export class VideoMetadataService {
           ok: false,
           error: {
             code: 'UNSUPPORTED_URL',
-            message: 'yt-dlp could not resolve this as a supported single video.',
+            message: 'This URL is not supported.',
             details: result.stderr.trim()
           }
         }
