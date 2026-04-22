@@ -12,7 +12,7 @@ A high-performance video downloader for power users who value speed and aestheti
 
 </div>
 
-> **Currently Windows only.** macOS support is on the way - Linux is on the roadmap.
+> **Currently Windows only.** macOS support is on the way and Linux is on the roadmap.
 
 Cosmo Downloader wraps the raw power of **yt-dlp** and **FFmpeg** in a modern UI, giving you fine-grained control over codecs, bitrate, resolution, and more. No pay-walls, no ads, no shady bundled toolbars.
 
@@ -55,11 +55,9 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 
 > Screenshots coming soon.
 
-<!--
 ![Main view](docs/screenshots/main.png)
 ![Queue panel](docs/screenshots/queue.png)
 ![Settings](docs/screenshots/settings.png)
--->
 
 ## Installation
 
