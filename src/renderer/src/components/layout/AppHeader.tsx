@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Icon from '../miscellaneous/Icon'
+import { getMetadataAutoFetchKey } from '../../lib/metadataAutoFetch'
 import { cn } from '../../lib/utils'
 import { getValidClipboardUrl } from '../../lib/urlInput'
 import { useSettingsStore } from '../../stores/settingsStore'
@@ -27,6 +28,8 @@ export function AppHeader(): React.JSX.Element {
   const environment = useSettingsStore((state) => state.environment)
   const [clipboardUrl, setClipboardUrl] = useState<string | null>(null)
   const [contextMenuAnchor, setContextMenuAnchor] = useState<ActionMenuAnchor | null>(null)
+  const latestSettingsRef = useRef(settings)
+  const metadataAutoFetchKey = getMetadataAutoFetchKey(url, settings)
 
   const refreshClipboardUrl = useCallback(async (): Promise<string | null> => {
     if (url.trim().length > 0) {
@@ -41,16 +44,23 @@ export function AppHeader(): React.JSX.Element {
   }, [url])
 
   useEffect(() => {
-    if (!settings || url.trim().length === 0) {
+    latestSettingsRef.current = settings
+  }, [settings])
+
+  useEffect(() => {
+    if (!metadataAutoFetchKey) {
       return
     }
 
     const timer = window.setTimeout(() => {
-      void fetchMetadata(settings)
+      const latestSettings = latestSettingsRef.current
+      if (latestSettings) {
+        void fetchMetadata(latestSettings)
+      }
     }, 600)
 
     return () => window.clearTimeout(timer)
-  }, [fetchMetadata, settings, url])
+  }, [fetchMetadata, metadataAutoFetchKey])
 
   useEffect(() => {
     const refresh = (): void => {
