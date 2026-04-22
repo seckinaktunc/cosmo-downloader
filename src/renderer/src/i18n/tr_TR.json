@@ -1,0 +1,184 @@
+{
+  "app": {
+    "title": "Cosmo Downloader"
+  },
+  "search": {
+    "placeholder": "Bir video bağlantısı yapıştır",
+    "unsupported": "Yalnızca tek video bağlantıları desteklenir.",
+    "fetching": "Meta veriler alınıyor...",
+    "ready": "İndirmeye hazır",
+    "action": "Ara",
+    "contextMenu": "URL işlemleri"
+  },
+  "actions": {
+    "download": "Videoyu İndir",
+    "cancel": "İptal",
+    "clear": "Temizle",
+    "close": "Kapat",
+    "paste": "Yapıştır",
+    "queueDisabled": "Kuyruk bu sürümde kullanılamıyor",
+    "history": "Geçmiş",
+    "choose": "Seç",
+    "pin": "Her zaman üstte",
+    "deleteCount": "Sil ({{count}})",
+    "itemActions": "{{title}} için işlemler",
+    "scrollToBottom": "En alta kaydır"
+  },
+  "download": {
+    "idle": "Boşta",
+    "validating": "Doğrulanıyor",
+    "fetching_metadata": "Meta veriler alınıyor",
+    "ready": "Hazır",
+    "downloading": "İndiriliyor",
+    "processing": "İşleniyor",
+    "completed": "Tamamlandı",
+    "failed": "Başarısız",
+    "cancelled": "İptal edildi"
+  },
+  "preferences": {
+    "title": "Tercihler",
+    "loading": "Tercihler yükleniyor...",
+    "hardwareAcceleration": "Donanım hızlandırma",
+    "hardwareAccelerationDescription": "Daha iyi işleme performansı için GPU kullanır (önerilir).",
+    "automaticUpdates": "Güncellemeleri otomatik denetle",
+    "cookiesBrowser": "Çerezler için kullanılacak tarayıcı",
+    "cookiesBrowserDescription": "Korumalı içeriklere daha güvenilir erişmek için seçili tarayıcıdan çerezleri içe aktarır (önerilir).",
+    "alwaysAsk": "İndirme konumunu her zaman sor",
+    "createFolderPerDownload": "Her indirme için klasör oluştur",
+    "createFolderPerDownloadDescription": "Her indirmeyi çıkış dosyasının adıyla oluşturulan bir klasöre kaydet.",
+    "downloadLocation": "Varsayılan indirme konumu",
+    "language": "Arayüz dili",
+    "restartRequired": "Donanım hızlandırma değişiklikleri için yeniden başlatma gerekir."
+  },
+  "updates": {
+    "checkNow": "Güncellemeleri denetle",
+    "download": "İndir",
+    "restartNow": "Şimdi yeniden başlat",
+    "later": "Sonra",
+    "availableTitle": "Güncelleme mevcut",
+    "availableMessage": "{{version}} sürümü mevcut.",
+    "downloadedTitle": "Güncelleme hazır",
+    "downloadedMessage": "{{version}} sürümü indirildi.",
+    "status": {
+      "idle": "Güncellemeler denetlenmeye hazır.",
+      "checking": "Güncellemeler denetleniyor...",
+      "available": "{{version}} sürümü mevcut.",
+      "not_available": "Cosmo Downloader güncel.",
+      "downloading": "Güncelleme indiriliyor {{percent}}%",
+      "downloaded": "Güncelleme indirildi. Hazır olduğunuzda yeniden başlatın.",
+      "error": "Güncelleme denetimi başarısız.",
+      "unavailable": "Güncellemeler kullanılamıyor."
+    }
+  },
+  "layout": {
+    "resizeMediaOverview": "Medya özetini yeniden boyutlandır"
+  },
+  "exportSettings": {
+    "title": "Çıktı Ayarları",
+    "resolution": "Çözünürlük",
+    "audioBitrate": "Ses bit hızı",
+    "videoBitrate": "Video bit hızı",
+    "frameRate": "Kare hızı",
+    "trim": "Kırp",
+    "trimStart": "Başlangıç",
+    "trimEnd": "Bitiş",
+    "trimFull": "Videonun tamamı",
+    "trimInvalid": "Geçerli bir zaman kodu girin.",
+    "trimUnavailable": "Kırpma için bilinen video süresi gerekir.",
+    "format": "Çıkış biçimi",
+    "videoCodec": "Video kodeği",
+    "audioCodec": "Ses kodeği",
+    "savePath": "İndirme konumu",
+    "noSavePath": "Bu videonun nereye kaydedileceğini seçin",
+    "auto": "Auto"
+  },
+  "logs": {
+    "title": "Günlükler",
+    "empty": "Günlük yok",
+    "emptyDetail": "Yeni denemeler başladığında indirme günlükleri burada görünür.",
+    "emptyLog": "Günlük dosyası boş.",
+    "unknownDownload": "Bilinmeyen indirme",
+    "noSelection": "Günlük seçilmedi",
+    "noSelectionDetail": "Günlüğü olan bir kuyruk veya geçmiş öğesi seçin.",
+    "loading": "Günlük yükleniyor...",
+    "truncated": "En son 256 KB gösteriliyor. Kopyalama işlemleri yalnızca görünen günlük metnini içerir.",
+    "sources": {
+      "history": "Geçmiş",
+      "queue": "Kuyruk"
+    },
+    "actions": {
+      "openFolder": "Klasörü Aç",
+      "copyLogs": "Günlükleri Kopyala"
+    }
+  },
+  "metadata": {
+    "fetching": "Yükleniyor...",
+    "emptyTitle": "Bir video linki yapıştır",
+    "emptySubtitle": "Ya da geçmişten veya kuyruktan seç",
+    "unknownUploader": "Bilinmeyen yükleyici"
+  },
+  "thumbnail": {
+    "download": "Küçük resmi indir",
+    "copyImage": "Görüntüyü kopyala",
+    "openBrowser": "Küçük resmi tarayıcıda aç",
+    "copied": "Kopyalandı!",
+    "saved": "Kaydedildi!",
+    "opened": "Açıldı",
+    "removed": "Kaldırıldı",
+    "done": "Tamamlandı",
+    "failed": "Başarısız"
+  },
+  "bottom": {
+    "startDownload": "İndirmeyi Başlat",
+    "startQueue": "Kuyruğu Başlat ({{count}})",
+    "newVideo": "Yeni Video",
+    "noVideo": "Seçili bir video yok",
+    "pasteToBegin": "Bir video bağlantısı yapıştır",
+    "queueProgress": "Kuyruk {{index}} / {{total}} ({{percent}})"
+  },
+  "common": {
+    "noDetails": "Ayrıntı yok"
+  },
+  "queue": {
+    "title": "Kuyruk",
+    "empty": "Kuyrukta indirme yok",
+    "itemCount": "Kuyruktaki öğe sayısı: {{count}}",
+    "add": "Kuyruğa Ekle",
+    "addDuplicate": "Kopyasını Ekle",
+    "duplicateTitle": "Kopya eklensin mi?",
+    "duplicateMessage": "Bu video zaten kuyrukta. Geçerli ayarlarla başka bir kopya eklensin mi?",
+    "itemActions": "Kuyruk öğesi işlemleri",
+    "actions": {
+      "retry": "Yeniden dene",
+      "remove": "Kaldır"
+    },
+    "status": {
+      "active": "Etkin",
+      "activePercent": "Etkin {{percent}}",
+      "pending": "Bekliyor",
+      "paused": "Duraklatıldı",
+      "completed": "Tamamlandı",
+      "failed": "Başarısız",
+      "cancelled": "İptal edildi"
+    }
+  },
+  "history": {
+    "title": "İndirme Geçmişi",
+    "empty": "İndirme yok",
+    "itemCount": "İndirilen öğe sayısı: {{count}}",
+    "itemActions": "Geçmiş öğesi işlemleri",
+    "actions": {
+      "open": "Aç",
+      "openMedia": "Medyayı Aç",
+      "openFolder": "Klasörü Aç",
+      "requeue": "Yeniden Kuyruğa Al",
+      "copyUrl": "URL'yi Kopyala"
+    },
+    "status": {
+      "started": "Başladı",
+      "completed": "Tamamlandı",
+      "failed": "Başarısız",
+      "cancelled": "İptal edildi"
+    }
+  }
+}

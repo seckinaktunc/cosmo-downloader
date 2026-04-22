@@ -1,0 +1,184 @@
+{
+  "app": {
+    "title": "Cosmo Downloader"
+  },
+  "search": {
+    "placeholder": "粘贴视频链接",
+    "unsupported": "仅支持单个视频链接。",
+    "fetching": "正在获取元数据...",
+    "ready": "已准备好下载",
+    "action": "搜索",
+    "contextMenu": "URL 操作"
+  },
+  "actions": {
+    "download": "下载视频",
+    "cancel": "取消",
+    "clear": "清除",
+    "close": "关闭",
+    "paste": "粘贴",
+    "queueDisabled": "此版本不支持队列",
+    "history": "历史记录",
+    "choose": "选择",
+    "pin": "始终置顶",
+    "deleteCount": "删除 ({{count}})",
+    "itemActions": "{{title}} 的操作",
+    "scrollToBottom": "滚动到底部"
+  },
+  "download": {
+    "idle": "空闲",
+    "validating": "正在验证",
+    "fetching_metadata": "正在获取元数据",
+    "ready": "就绪",
+    "downloading": "正在下载",
+    "processing": "正在处理",
+    "completed": "已完成",
+    "failed": "失败",
+    "cancelled": "已取消"
+  },
+  "preferences": {
+    "title": "偏好设置",
+    "loading": "正在加载偏好设置...",
+    "hardwareAcceleration": "硬件加速",
+    "hardwareAccelerationDescription": "使用 GPU 提升处理性能（推荐）。",
+    "automaticUpdates": "自动检查更新",
+    "cookiesBrowser": "用于读取 Cookie 的浏览器",
+    "cookiesBrowserDescription": "从所选浏览器导入 Cookie，以更可靠地访问受保护内容（推荐）。",
+    "alwaysAsk": "始终询问下载位置",
+    "createFolderPerDownload": "每次下载创建一个文件夹",
+    "createFolderPerDownloadDescription": "将每次下载保存到以输出文件命名的文件夹中。",
+    "downloadLocation": "默认下载位置",
+    "language": "界面语言",
+    "restartRequired": "硬件加速更改需要重启。"
+  },
+  "updates": {
+    "checkNow": "检查更新",
+    "download": "下载",
+    "restartNow": "立即重启",
+    "later": "稍后",
+    "availableTitle": "有可用更新",
+    "availableMessage": "{{version}} 版本可用。",
+    "downloadedTitle": "更新已准备好",
+    "downloadedMessage": "{{version}} 版本已下载。",
+    "status": {
+      "idle": "可以检查更新。",
+      "checking": "正在检查更新...",
+      "available": "{{version}} 版本可用。",
+      "not_available": "Cosmo Downloader 已是最新版本。",
+      "downloading": "正在下载更新 {{percent}}%",
+      "downloaded": "更新已下载。准备好后重启。",
+      "error": "更新检查失败。",
+      "unavailable": "更新不可用。"
+    }
+  },
+  "layout": {
+    "resizeMediaOverview": "调整媒体概览大小"
+  },
+  "exportSettings": {
+    "title": "导出设置",
+    "resolution": "分辨率",
+    "audioBitrate": "音频码率",
+    "videoBitrate": "视频码率",
+    "frameRate": "帧率",
+    "trim": "裁剪",
+    "trimStart": "开始",
+    "trimEnd": "结束",
+    "trimFull": "完整时长",
+    "trimInvalid": "请输入有效的时间码。",
+    "trimUnavailable": "裁剪需要已知的视频时长。",
+    "format": "输出格式",
+    "videoCodec": "视频编码器",
+    "audioCodec": "音频编码器",
+    "savePath": "下载位置",
+    "noSavePath": "选择此视频的保存位置",
+    "auto": "自动"
+  },
+  "logs": {
+    "title": "日志",
+    "empty": "没有日志",
+    "emptyDetail": "新的下载尝试开始后，下载日志会显示在这里。",
+    "emptyLog": "日志文件为空。",
+    "unknownDownload": "未知下载",
+    "noSelection": "未选择日志",
+    "noSelectionDetail": "选择带有日志的队列或历史记录项目。",
+    "loading": "正在加载日志...",
+    "truncated": "正在显示最近 256 KB。复制操作仅包含可见的日志文本。",
+    "sources": {
+      "history": "历史记录",
+      "queue": "队列"
+    },
+    "actions": {
+      "openFolder": "打开文件夹",
+      "copyLogs": "复制日志"
+    }
+  },
+  "metadata": {
+    "fetching": "正在获取元数据",
+    "emptyTitle": "粘贴视频链接",
+    "emptySubtitle": "或从历史记录或队列中选择一个",
+    "unknownUploader": "未知上传者"
+  },
+  "thumbnail": {
+    "download": "下载缩略图",
+    "copyImage": "复制图片",
+    "openBrowser": "在浏览器中打开缩略图",
+    "copied": "已复制！",
+    "saved": "已保存！",
+    "opened": "已打开",
+    "removed": "已移除",
+    "done": "完成",
+    "failed": "失败"
+  },
+  "bottom": {
+    "startDownload": "开始下载",
+    "startQueue": "开始队列 ({{count}})",
+    "newVideo": "新视频",
+    "noVideo": "未选择视频",
+    "pasteToBegin": "粘贴视频链接以开始",
+    "queueProgress": "队列 {{index}} / {{total}} ({{percent}})"
+  },
+  "common": {
+    "noDetails": "没有详细信息"
+  },
+  "queue": {
+    "title": "队列",
+    "empty": "没有排队的下载",
+    "itemCount": "{{count}} 个队列项目",
+    "add": "添加到队列",
+    "addDuplicate": "添加副本",
+    "duplicateTitle": "添加副本？",
+    "duplicateMessage": "此视频已在队列中。是否使用当前设置再添加一个副本？",
+    "itemActions": "队列项目操作",
+    "actions": {
+      "retry": "重试",
+      "remove": "移除"
+    },
+    "status": {
+      "active": "活动",
+      "activePercent": "活动 {{percent}}",
+      "pending": "待处理",
+      "paused": "已暂停",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消"
+    }
+  },
+  "history": {
+    "title": "下载历史",
+    "empty": "没有下载",
+    "itemCount": "{{count}} 个已下载项目",
+    "itemActions": "历史记录项目操作",
+    "actions": {
+      "open": "打开",
+      "openMedia": "打开媒体",
+      "openFolder": "打开文件夹",
+      "requeue": "重新加入队列",
+      "copyUrl": "复制 URL"
+    },
+    "status": {
+      "started": "已开始",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消"
+    }
+  }
+}

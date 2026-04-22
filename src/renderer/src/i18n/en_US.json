@@ -18,12 +18,11 @@
     "paste": "Paste",
     "queueDisabled": "Queue is not available in this version",
     "history": "History",
-    "exportSettings": "Export settings",
-    "settings": "Settings",
     "choose": "Choose",
     "pin": "Always on top",
     "deleteCount": "Delete ({{count}})",
-    "itemActions": "Actions for {{title}}"
+    "itemActions": "Actions for {{title}}",
+    "scrollToBottom": "Scroll to bottom"
   },
   "download": {
     "idle": "Idle",
@@ -36,10 +35,9 @@
     "failed": "Failed",
     "cancelled": "Cancelled"
   },
-  "settings": {
-    "title": "Settings",
-    "loading": "Loading settings...",
-    "englishUs": "English (US)",
+  "preferences": {
+    "title": "Preferences",
+    "loading": "Loading preferences...",
     "hardwareAcceleration": "Hardware acceleration",
     "hardwareAccelerationDescription": "Uses GPU for better processing performance (recommended).",
     "automaticUpdates": "Check for updates automatically",
@@ -75,8 +73,8 @@
   "layout": {
     "resizeMediaOverview": "Resize media overview"
   },
-  "export": {
-    "title": "Export",
+  "exportSettings": {
+    "title": "Export Settings",
     "resolution": "Resolution",
     "audioBitrate": "Audio bitrate",
     "videoBitrate": "Video bitrate",
@@ -114,9 +112,9 @@
     }
   },
   "metadata": {
-    "fetching": "Fetching metadata",
+    "fetching": "Fetching...",
     "emptyTitle": "Paste a video link",
-    "emptyDescription": "Or drag and drop here",
+    "emptySubtitle": "Or select one from history or queue",
     "unknownUploader": "Unknown uploader"
   },
   "thumbnail": {
