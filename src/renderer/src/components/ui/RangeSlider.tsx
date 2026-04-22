@@ -123,7 +123,7 @@ export function RangeSlider({
         </label>
         <span className="text-sm font-bold text-white">
           {normalized.startSeconds === 0 && normalized.endSeconds === max
-            ? t('export.trimFull')
+            ? t('exportSettings.trimFull')
             : `${formatTimecode(normalized.startSeconds)} - ${formatTimecode(normalized.endSeconds)}`}
         </span>
       </div>
