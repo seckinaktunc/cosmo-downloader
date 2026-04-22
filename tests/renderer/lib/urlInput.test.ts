@@ -1,34 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  extractDroppedSingleVideoUrl,
-  getValidClipboardUrl,
-  getValidLookingSingleVideoUrl
-} from '@renderer/lib/urlInput'
-
-function dataTransfer({
-  files = [],
-  uriList = '',
-  text = ''
-}: {
-  files?: unknown[]
-  uriList?: string
-  text?: string
-}): DataTransfer {
-  return {
-    files,
-    getData: (format: string) => {
-      if (format === 'text/uri-list') {
-        return uriList
-      }
-
-      if (format === 'text/plain') {
-        return text
-      }
-
-      return ''
-    }
-  } as DataTransfer
-}
+import { getValidClipboardUrl, getValidLookingSingleVideoUrl } from '@renderer/lib/urlInput'
 
 describe('urlInput helpers', () => {
   it('extracts a valid URL from clipboard text', () => {
@@ -55,31 +26,5 @@ describe('urlInput helpers', () => {
     expect(getValidLookingSingleVideoUrl('https://youtube.com/playlist?list=abc')).toBeNull()
     expect(getValidLookingSingleVideoUrl('https://youtube.com/@cosmo')).toBeNull()
     expect(getValidLookingSingleVideoUrl('file:///C:/video.mp4')).toBeNull()
-  })
-
-  it('extracts single-video URLs from dropped URI lists or text', () => {
-    expect(
-      extractDroppedSingleVideoUrl(
-        dataTransfer({ uriList: '# comment\nhttps://youtube.com/watch?v=dQw4w9WgXcQ' })
-      )
-    ).toBe('https://youtube.com/watch?v=dQw4w9WgXcQ')
-    expect(
-      extractDroppedSingleVideoUrl(dataTransfer({ text: 'youtube.com/watch?v=dQw4w9WgXcQ' }))
-    ).toBe('https://youtube.com/watch?v=dQw4w9WgXcQ')
-  })
-
-  it('rejects dropped files, invalid text, playlists, and channels', () => {
-    expect(
-      extractDroppedSingleVideoUrl(
-        dataTransfer({ files: [{}], text: 'youtube.com/watch?v=dQw4w9WgXcQ' })
-      )
-    ).toBeNull()
-    expect(extractDroppedSingleVideoUrl(dataTransfer({ text: 'not a url' }))).toBeNull()
-    expect(
-      extractDroppedSingleVideoUrl(dataTransfer({ text: 'https://youtube.com/playlist?list=abc' }))
-    ).toBeNull()
-    expect(
-      extractDroppedSingleVideoUrl(dataTransfer({ text: 'https://youtube.com/@cosmo' }))
-    ).toBeNull()
   })
 })

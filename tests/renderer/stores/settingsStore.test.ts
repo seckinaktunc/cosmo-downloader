@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AppEnvironment, AppSettings, CookieBrowserOption, IpcResult } from '@shared/types'
+import i18next from '@renderer/i18n'
 import { useSettingsStore } from '@renderer/stores/settingsStore'
 
 const baseSettings: AppSettings = {
@@ -66,8 +67,9 @@ function installCosmoMock(initialSettings = baseSettings): {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.unstubAllGlobals()
+  await i18next.changeLanguage('en_US')
   useSettingsStore.setState({
     settings: null,
     environment: null,
@@ -76,6 +78,38 @@ beforeEach(() => {
     initialHardwareAcceleration: null,
     isLoading: false,
     error: undefined
+  })
+})
+
+describe('useSettingsStore interface language', () => {
+  it('applies a saved Turkish language on load', async () => {
+    installCosmoMock({ ...baseSettings, interfaceLanguage: 'tr_TR' })
+
+    await useSettingsStore.getState().load()
+
+    expect(i18next.language).toBe('tr_TR')
+    expect(i18next.t('preferences.title')).toBe('Tercihler')
+  })
+
+  it('applies a saved Simplified Chinese language on load', async () => {
+    installCosmoMock({ ...baseSettings, interfaceLanguage: 'zh_CN' })
+
+    await useSettingsStore.getState().load()
+
+    expect(i18next.language).toBe('zh_CN')
+    expect(i18next.t('preferences.title')).toBe('偏好设置')
+  })
+
+  it('persists and applies language updates immediately', async () => {
+    const { updateMock } = installCosmoMock()
+    await useSettingsStore.getState().load()
+
+    await useSettingsStore.getState().update({ interfaceLanguage: 'zh_CN' })
+
+    expect(updateMock).toHaveBeenCalledWith({ interfaceLanguage: 'zh_CN' })
+    expect(useSettingsStore.getState().settings?.interfaceLanguage).toBe('zh_CN')
+    expect(i18next.language).toBe('zh_CN')
+    expect(i18next.t('preferences.title')).toBe('偏好设置')
   })
 })
 

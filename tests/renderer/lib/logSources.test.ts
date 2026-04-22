@@ -115,7 +115,7 @@ describe('getContentAfterItemActivation', () => {
   })
 
   it('opens export content for row selection from other content', () => {
-    expect(getContentAfterItemActivation('settings')).toBe('export')
-    expect(getContentAfterItemActivation(null)).toBe('export')
+    expect(getContentAfterItemActivation('preferences')).toBe('exportSettings')
+    expect(getContentAfterItemActivation(null)).toBe('exportSettings')
   })
 })
