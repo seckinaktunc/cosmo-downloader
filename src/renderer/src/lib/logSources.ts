@@ -117,5 +117,5 @@ export function resolveDisplayedLogSource({
 }
 
 export function getContentAfterItemActivation(activeContent: Content): Content {
-  return activeContent === 'logs' ? 'logs' : 'export'
+  return activeContent === 'logs' ? 'logs' : 'exportSettings'
 }
