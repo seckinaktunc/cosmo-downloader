@@ -46,6 +46,12 @@ describe('createDownloadPlan', () => {
     expect(createDownloadPlan(metadata, baseSettings).strategy).toBe('direct')
   })
 
+  it('uses remux for MOV when the source codecs are MOV-compatible', () => {
+    expect(createDownloadPlan(metadata, { ...baseSettings, outputFormat: 'mov' }).strategy).toBe(
+      'remux'
+    )
+  })
+
   it('uses remux when only the container differs', () => {
     expect(createDownloadPlan(metadata, { ...baseSettings, outputFormat: 'mkv' }).strategy).toBe(
       'remux'
@@ -62,6 +68,44 @@ describe('createDownloadPlan', () => {
     expect(createDownloadPlan(metadata, { ...baseSettings, resolution: 'auto' }).strategy).toBe(
       'transcode'
     )
+  })
+
+  it('uses transcode when automatic MOV output would otherwise use incompatible codecs', () => {
+    expect(
+      createDownloadPlan(metadata, {
+        ...baseSettings,
+        outputFormat: 'mov',
+        resolution: 'auto'
+      }).strategy
+    ).toBe('transcode')
+  })
+
+  it('uses direct output for ProRes MOV when the matching format is available', () => {
+    expect(
+      createDownloadPlan(
+        {
+          ...metadata,
+          containers: ['mov'],
+          videoCodecs: ['apch'],
+          audioCodecs: ['aac'],
+          fpsOptions: [30],
+          formats: [
+            {
+              id: 'mov-prores',
+              extension: 'mov',
+              height: 1080,
+              videoCodec: 'apch',
+              audioCodec: 'aac'
+            }
+          ]
+        },
+        {
+          ...baseSettings,
+          outputFormat: 'mov',
+          videoCodec: 'prores'
+        }
+      ).strategy
+    ).toBe('direct')
   })
 
   it('uses transcode for audio-only output', () => {

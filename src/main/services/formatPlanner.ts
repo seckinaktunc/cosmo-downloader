@@ -12,8 +12,10 @@ export type DownloadPlan = {
   selectedHeight?: number
 }
 
+const PRORES_CODEC_MARKERS = ['prores', 'apch', 'apcn', 'apcs', 'apco', 'ap4h', 'ap4x'] as const
+
 function normalizeCodec(codec?: string): string {
-  return (codec ?? '').toLowerCase()
+  return (codec ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
 function codecMatches(codec: string | undefined, requested: string): boolean {
@@ -21,7 +23,9 @@ function codecMatches(codec: string | undefined, requested: string): boolean {
   if (requested === 'h264') return normalized.includes('h264') || normalized.includes('avc')
   if (requested === 'h265') return normalized.includes('h265') || normalized.includes('hevc')
   if (requested === 'av1') return normalized.includes('av01') || normalized.includes('av1')
-  if (requested === 'vp9') return normalized.includes('vp9')
+  if (requested === 'vp9') return normalized.includes('vp9') || normalized.includes('vp09')
+  if (requested === 'prores')
+    return PRORES_CODEC_MARKERS.some((marker) => normalized.includes(marker))
   if (requested === 'aac' || requested === 'm4a')
     return normalized.includes('aac') || normalized.includes('mp4a')
   if (requested === 'opus') return normalized.includes('opus')
@@ -75,6 +79,28 @@ function compatibleWithMp4(format: VideoFormat): boolean {
   return videoOk && audioOk
 }
 
+function compatibleWithMov(format: VideoFormat): boolean {
+  const videoCodec = normalizeCodec(format.videoCodec)
+  const audioCodec = normalizeCodec(format.audioCodec)
+  const videoOk =
+    !videoCodec ||
+    videoCodec === 'none' ||
+    videoCodec.includes('h264') ||
+    videoCodec.includes('avc') ||
+    videoCodec.includes('h265') ||
+    videoCodec.includes('hevc') ||
+    PRORES_CODEC_MARKERS.some((marker) => videoCodec.includes(marker))
+  const audioOk =
+    !audioCodec ||
+    audioCodec === 'none' ||
+    audioCodec.includes('aac') ||
+    audioCodec.includes('mp4a') ||
+    audioCodec.includes('alac') ||
+    audioCodec.includes('pcm') ||
+    audioCodec.includes('mp3')
+  return videoOk && audioOk
+}
+
 function findBestFormat(
   metadata: VideoMetadata,
   settings: ExportSettings
@@ -124,6 +150,8 @@ export function createDownloadPlan(
     settings.outputFormat === 'webm' && bestFormat != null && !compatibleWithWebm(bestFormat)
   const mp4CodecMismatch =
     settings.outputFormat === 'mp4' && bestFormat != null && !compatibleWithMp4(bestFormat)
+  const movCodecMismatch =
+    settings.outputFormat === 'mov' && bestFormat != null && !compatibleWithMov(bestFormat)
 
   if (
     audioOnly ||
@@ -131,7 +159,8 @@ export function createDownloadPlan(
     frameRateConversion ||
     bitrateConversion ||
     webmCodecMismatch ||
-    mp4CodecMismatch
+    mp4CodecMismatch ||
+    movCodecMismatch
   ) {
     return {
       strategy: 'transcode',

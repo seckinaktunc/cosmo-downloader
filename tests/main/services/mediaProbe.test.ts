@@ -40,6 +40,16 @@ describe('codec verification', () => {
     expect(videoCodecMatches(stream('video', 'h265'), 'h265')).toBe(true)
   })
 
+  it('matches ProRes family identifiers as ProRes', () => {
+    expect(videoCodecMatches(stream('video', 'prores'), 'prores')).toBe(true)
+    expect(videoCodecMatches({ codec_type: 'video', codec_tag_string: 'apch' }, 'prores')).toBe(
+      true
+    )
+    expect(
+      videoCodecMatches({ codec_type: 'video', codec_long_name: 'Apple ProRes 422 HQ' }, 'prores')
+    ).toBe(true)
+  })
+
   it('matches mp4a and aac as AAC/M4A', () => {
     expect(audioCodecMatches(stream('audio', 'aac'), 'aac')).toBe(true)
     expect(audioCodecMatches({ codec_type: 'audio', codec_tag_string: 'mp4a' }, 'm4a')).toBe(true)
@@ -80,6 +90,17 @@ describe('codec verification', () => {
   it('accepts selected H.264/AAC when the probe matches', () => {
     expect(
       verifySelectedCodecs(settings({ videoCodec: 'h264', audioCodec: 'aac' }), h264AacProbe)
+    ).toEqual({ ok: true })
+  })
+
+  it('accepts selected ProRes when the probe matches a ProRes stream', () => {
+    expect(
+      verifySelectedCodecs(settings({ videoCodec: 'prores', audioCodec: 'aac' }), {
+        streams: [
+          { codec_type: 'video', codec_tag_string: 'apch' },
+          { codec_type: 'audio', codec_name: 'aac' }
+        ]
+      })
     ).toEqual({ ok: true })
   })
 })

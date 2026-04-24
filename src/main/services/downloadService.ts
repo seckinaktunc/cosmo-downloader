@@ -75,8 +75,10 @@ function getAudioEncoder(codec: AudioCodec, outputFormat: OutputFormat): string 
 }
 
 function getVideoEncoder(codec: VideoCodec, outputFormat: OutputFormat): string {
+  if (outputFormat === 'webm') return 'libvpx-vp9'
+  if (codec === 'prores') return 'prores_ks'
   if (codec === 'av1') return 'libaom-av1'
-  if (codec === 'vp9' || outputFormat === 'webm') return 'libvpx-vp9'
+  if (codec === 'vp9') return 'libvpx-vp9'
   if (codec === 'h265') return 'libx265'
   return 'libx264'
 }

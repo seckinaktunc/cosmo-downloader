@@ -28,8 +28,8 @@ export type DownloadStage =
   | 'failed'
   | 'cancelled'
 
-export type OutputFormat = 'mp4' | 'mkv' | 'webm' | 'mp3' | 'wav'
-export type VideoCodec = 'auto' | 'av1' | 'vp9' | 'h265' | 'h264'
+export type OutputFormat = 'mp4' | 'mkv' | 'mov' | 'webm' | 'mp3' | 'wav'
+export type VideoCodec = 'auto' | 'av1' | 'vp9' | 'prores' | 'h265' | 'h264'
 export type AudioCodec = 'auto' | 'opus' | 'vorbis' | 'aac' | 'm4a' | 'mp3'
 export type CookieBrowser =
   | 'none'

@@ -129,6 +129,16 @@ describe('buildFfmpegTranscodeArgs', () => {
     expect(args).not.toContain('-ss')
     expect(args).not.toContain('-t')
   })
+
+  it('uses the ProRes encoder for explicit ProRes MOV output', () => {
+    const args = buildFfmpegTranscodeArgs(
+      request({ outputFormat: 'mov', videoCodec: 'prores' }),
+      'input.mkv',
+      'output.mov'
+    )
+
+    expect(args).toEqual(expect.arrayContaining(['-c:v', 'prores_ks']))
+  })
 })
 
 describe('buildFfmpegStreamCopyTrimArgs', () => {

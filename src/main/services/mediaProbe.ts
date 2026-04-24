@@ -2,6 +2,8 @@ import { isAudioOnlyFormat } from '../../shared/formatOptions'
 import type { AudioCodec, ExportSettings, VideoCodec } from '../../shared/types'
 import { captureProcess } from '../utils/process'
 
+const PRORES_CODEC_MARKERS = ['prores', 'apch', 'apcn', 'apcs', 'apco', 'ap4h', 'ap4x'] as const
+
 export type MediaProbeStream = {
   codec_type?: string
   codec_name?: string
@@ -43,6 +45,8 @@ export function videoCodecMatches(stream: MediaProbeStream, requested: VideoCode
   if (requested === 'h265') return codecText.includes('h265') || codecText.includes('hevc')
   if (requested === 'av1') return codecText.includes('av1') || codecText.includes('av01')
   if (requested === 'vp9') return codecText.includes('vp9') || codecText.includes('vp09')
+  if (requested === 'prores')
+    return PRORES_CODEC_MARKERS.some((marker) => codecText.includes(marker))
   return false
 }
 
