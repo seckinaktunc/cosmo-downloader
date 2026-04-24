@@ -35,10 +35,10 @@ function getWindowChromeOptions(): Pick<
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1100,
-    height: 768,
+    width: 1180,
+    height: 828,
     minWidth: 1100,
-    minHeight: 768,
+    minHeight: 827,
     title: APP_NAME,
     show: false,
     alwaysOnTop: readStartupAlwaysOnTop(),
