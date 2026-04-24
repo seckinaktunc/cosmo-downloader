@@ -181,150 +181,158 @@ export function ExportSettingsPanel(): React.JSX.Element {
   }
 
   return (
-    <section className="relative h-full min-h-0 text-white">
-      <div ref={scrollRef} className="h-full min-h-0 overflow-y-auto" onScroll={handleScroll}>
-        <div className="grid divide-y divide-white/10 border-b border-white/10">
-          <div className="p-2">
-            <RadioBoxes<OutputFormat>
-              value={exportSettings.outputFormat}
-              options={OUTPUT_FORMATS.map((format) => ({ value: format, label: format }))}
-              disabled={controlsDisabled}
-              onChange={(outputFormat) => void updateExportSettings({ outputFormat })}
-            />
-          </div>
-
-          <div className="p-4">
-            <RangeSlider
-              label={t('exportSettings.trim')}
-              startLabel={t('exportSettings.trimStart')}
-              endLabel={t('exportSettings.trimEnd')}
-              value={trimRange}
-              max={durationSeconds}
-              disabled={controlsDisabled}
-              invalidLabel={t('exportSettings.trimInvalid')}
-              onChange={({ startSeconds, endSeconds }) =>
-                void updateExportSettings({
-                  trimStartSeconds: startSeconds,
-                  trimEndSeconds: endSeconds
-                })
-              }
-            />
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-white/10">
-            <div className="p-4">
-              <SnapSlider
-                label={t('exportSettings.resolution')}
-                value={exportSettings.resolution}
-                options={resolutionOptions}
-                disabled={controlsDisabled || audioOnly}
-                formatLabel={(value) => (value === 'auto' ? t('exportSettings.auto') : `${value}p`)}
-                onChange={(resolution) => void updateExportSettings({ resolution })}
-              />
-            </div>
-
-            <div className="p-4">
-              <SnapSlider
-                label={t('exportSettings.frameRate')}
-                value={exportSettings.frameRate}
-                options={frameRateOptions}
-                disabled={controlsDisabled || audioOnly}
-                formatLabel={(value) =>
-                  value === 'auto' ? t('exportSettings.auto') : `${value} fps`
-                }
-                onChange={(frameRate) => void updateExportSettings({ frameRate })}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-white/10">
-            <div className="p-4">
-              <SnapSlider
-                label={t('exportSettings.videoBitrate')}
-                value={exportSettings.videoBitrate}
-                options={VIDEO_BITRATE_OPTIONS}
-                disabled={controlsDisabled || audioOnly}
-                formatLabel={(value) =>
-                  value === 'auto' ? t('exportSettings.auto') : `${value} Mbps`
-                }
-                onChange={(videoBitrate) => void updateExportSettings({ videoBitrate })}
-              />
-            </div>
-            <div className="p-4">
-              <SnapSlider
-                label={t('exportSettings.audioBitrate')}
-                value={exportSettings.audioBitrate}
-                options={AUDIO_BITRATE_OPTIONS}
-                disabled={controlsDisabled}
-                formatLabel={(value) =>
-                  value === 'auto' ? t('exportSettings.auto') : `${value} kbps`
-                }
-                onChange={(audioBitrate) => void updateExportSettings({ audioBitrate })}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 divide-x divide-white/10">
-            <div className="p-4">
-              <RadioBoxes<VideoCodec>
-                label={t('exportSettings.videoCodec')}
-                value={exportSettings.videoCodec}
-                options={VIDEO_CODECS.map((codec) => ({
-                  value: codec,
-                  label: codec.toUpperCase(),
-                  icon: 'video',
-                  disabled: controlsDisabled || audioOnly
-                }))}
-                disabled={controlsDisabled || audioOnly}
-                onChange={(videoCodec) => void updateExportSettings({ videoCodec })}
-                className="grid-cols-3"
-              />
-            </div>
-            <div className="p-4">
-              <RadioBoxes<AudioCodec>
-                label={t('exportSettings.audioCodec')}
-                value={exportSettings.audioCodec}
-                options={AUDIO_CODECS.map((codec) => ({
-                  value: codec,
-                  label: codec.toUpperCase(),
-                  icon: 'music',
-                  disabled: controlsDisabled
+    <section className="flex h-full min-h-0 flex-col text-white">
+      <div className="relative min-h-0 flex-1">
+        <div ref={scrollRef} className="h-full min-h-0 overflow-y-auto" onScroll={handleScroll}>
+          <div className="grid divide-y divide-white/10 border-b border-white/10">
+            <div className="p-2">
+              <RadioBoxes<OutputFormat>
+                value={exportSettings.outputFormat}
+                options={OUTPUT_FORMATS.map((format) => ({
+                  value: format,
+                  label: format,
+                  icon: format === 'mp3' || format === 'wav' ? 'music' : 'video'
                 }))}
                 disabled={controlsDisabled}
-                onChange={(audioCodec) => void updateExportSettings({ audioCodec })}
-                className="grid-cols-3"
+                onChange={(outputFormat) => void updateExportSettings({ outputFormat })}
               />
             </div>
-          </div>
 
-          {showSavePath ? (
-            <div className="p-4 min-w-0">
-              <LocationSelector
-                mode="file"
-                layout="stacked"
-                label={t('exportSettings.savePath')}
-                value={displaySavePath}
-                placeholder={t('exportSettings.noSavePath')}
-                chooseLabel={t('actions.choose')}
+            <div className="p-4 py-3.5">
+              <RangeSlider
+                label={t('exportSettings.trim')}
+                startLabel={t('exportSettings.trimStart')}
+                endLabel={t('exportSettings.trimEnd')}
+                value={trimRange}
+                max={durationSeconds}
                 disabled={controlsDisabled}
-                onChoose={() => void chooseSavePath()}
-                onOpen={openSavePath}
+                invalidLabel={t('exportSettings.trimInvalid')}
+                onChange={({ startSeconds, endSeconds }) =>
+                  void updateExportSettings({
+                    trimStartSeconds: startSeconds,
+                    trimEndSeconds: endSeconds
+                  })
+                }
               />
             </div>
-          ) : null}
+            <div className="grid grid-cols-2 divide-x divide-white/10">
+              <div className="p-4">
+                <SnapSlider
+                  label={t('exportSettings.resolution')}
+                  value={exportSettings.resolution}
+                  options={resolutionOptions}
+                  disabled={controlsDisabled || audioOnly}
+                  formatLabel={(value) =>
+                    value === 'auto' ? t('exportSettings.auto') : `${value}p`
+                  }
+                  onChange={(resolution) => void updateExportSettings({ resolution })}
+                />
+              </div>
+
+              <div className="p-4">
+                <SnapSlider
+                  label={t('exportSettings.frameRate')}
+                  value={exportSettings.frameRate}
+                  options={frameRateOptions}
+                  disabled={controlsDisabled || audioOnly}
+                  formatLabel={(value) =>
+                    value === 'auto' ? t('exportSettings.auto') : `${value} fps`
+                  }
+                  onChange={(frameRate) => void updateExportSettings({ frameRate })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-white/10">
+              <div className="p-4">
+                <SnapSlider
+                  label={t('exportSettings.videoBitrate')}
+                  value={exportSettings.videoBitrate}
+                  options={VIDEO_BITRATE_OPTIONS}
+                  disabled={controlsDisabled || audioOnly}
+                  formatLabel={(value) =>
+                    value === 'auto' ? t('exportSettings.auto') : `${value} Mbps`
+                  }
+                  onChange={(videoBitrate) => void updateExportSettings({ videoBitrate })}
+                />
+              </div>
+              <div className="p-4">
+                <SnapSlider
+                  label={t('exportSettings.audioBitrate')}
+                  value={exportSettings.audioBitrate}
+                  options={AUDIO_BITRATE_OPTIONS}
+                  disabled={controlsDisabled}
+                  formatLabel={(value) =>
+                    value === 'auto' ? t('exportSettings.auto') : `${value} kbps`
+                  }
+                  onChange={(audioBitrate) => void updateExportSettings({ audioBitrate })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 divide-x divide-white/10">
+              <div className="p-4 pt-3">
+                <RadioBoxes<VideoCodec>
+                  label={t('exportSettings.videoCodec')}
+                  value={exportSettings.videoCodec}
+                  options={VIDEO_CODECS.map((codec) => ({
+                    value: codec,
+                    label: codec.toUpperCase(),
+                    icon: 'video',
+                    disabled: controlsDisabled || audioOnly
+                  }))}
+                  disabled={controlsDisabled || audioOnly}
+                  onChange={(videoCodec) => void updateExportSettings({ videoCodec })}
+                  className="grid-cols-3"
+                />
+              </div>
+              <div className="p-4 pt-3">
+                <RadioBoxes<AudioCodec>
+                  label={t('exportSettings.audioCodec')}
+                  value={exportSettings.audioCodec}
+                  options={AUDIO_CODECS.map((codec) => ({
+                    value: codec,
+                    label: codec.toUpperCase(),
+                    icon: 'music',
+                    disabled: controlsDisabled
+                  }))}
+                  disabled={controlsDisabled}
+                  onChange={(audioCodec) => void updateExportSettings({ audioCodec })}
+                  className="grid-cols-3"
+                />
+              </div>
+            </div>
+
+            {showSavePath ? (
+              <div className="min-w-0 shrink-0 p-4">
+                <LocationSelector
+                  mode="file"
+                  label={t('exportSettings.savePath')}
+                  value={displaySavePath}
+                  labelClassName="text-sm font-medium"
+                  placeholder={t('exportSettings.noSavePath')}
+                  chooseLabel={t('actions.choose')}
+                  disabled={controlsDisabled}
+                  onChoose={() => void chooseSavePath()}
+                  onOpen={openSavePath}
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
+
+        {showScrollToBottom ? (
+          <div className="absolute flex items-end justify-center bottom-0 -left-3 w-full h-32 pl-3 bg-linear-to-b from-transparent to-gray to-95% pointer-events-none">
+            <Button
+              icon="chevronsDown"
+              label={t('actions.scrollToBottom')}
+              className="w-full rounded-none border-none pointer-events-auto"
+              onClick={scrollToBottom}
+              onlyIcon
+              ghost
+            />
+          </div>
+        ) : null}
       </div>
-
-      {showScrollToBottom ? (
-        <div className="absolute flex items-end justify-center bottom-0 -left-3 w-full h-32 pl-3 bg-linear-to-b from-transparent to-gray to-95% pointer-events-none">
-          <Button
-            icon="chevronsDown"
-            label={t('actions.scrollToBottom')}
-            className="w-full rounded-none border-none pointer-events-auto"
-            onClick={scrollToBottom}
-            onlyIcon
-            ghost
-          />
-        </div>
-      ) : null}
     </section>
   )
 }

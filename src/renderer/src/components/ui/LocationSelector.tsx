@@ -6,7 +6,7 @@ type LocationSelectorMode = 'directory' | 'file'
 
 type LocationSelectorProps = {
   mode: LocationSelectorMode
-  label: string
+  label?: string
   value?: string
   placeholder: string
   chooseLabel: string
@@ -16,7 +16,7 @@ type LocationSelectorProps = {
   labelClassName?: string
   pathClassName?: string
   layout?: 'inline' | 'stacked'
-  buttonSize?: 'xs' | 'sm'
+  buttonSize?: 'xs' | 'sm' | 'lg'
   onChoose: () => void
   onOpen: () => void
 }
@@ -55,6 +55,7 @@ export function LocationSelector({
     <Button
       type="button"
       size={buttonSize}
+      icon="folder"
       label={chooseLabel}
       className="rounded-none border-none"
       active={false}
@@ -66,7 +67,7 @@ export function LocationSelector({
   if (layout === 'stacked') {
     return (
       <div className={cn('flex flex-col gap-1', className, disabled && 'opacity-40')}>
-        <span className={cn('text-sm text-white/50', labelClassName)}>{label}</span>
+        {label && <legend className={cn('text-sm text-white/50', labelClassName)}>{label}</legend>}
         <div className="flex border border-white/10 divide-x divide-white/10">
           {pathButton}
           {chooseButton}
@@ -76,8 +77,14 @@ export function LocationSelector({
   }
 
   return (
-    <div className={cn('flex items-center justify-between gap-16 min-w-0', className)}>
-      <div className={cn('text-white/50 text-nowrap', labelClassName)}>{label}</div>
+    <div
+      className={cn(
+        'flex items-center justify-between gap-16 min-w-0',
+        className,
+        disabled && 'opacity-40'
+      )}
+    >
+      {label && <legend className={cn('text-sm text-white/50', labelClassName)}>{label}</legend>}
       <div className="flex min-w-0 flex-1 items-center border border-white/10 divide-x divide-white/10">
         {pathButton}
         {chooseButton}

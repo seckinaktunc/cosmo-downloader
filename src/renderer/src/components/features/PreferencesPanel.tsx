@@ -102,6 +102,7 @@ export function PreferencesPanel(): React.JSX.Element {
           mode="directory"
           className="p-4"
           label={t('preferences.downloadLocation')}
+          labelClassName="text-base"
           value={settings.defaultDownloadLocation}
           placeholder={t('preferences.downloadLocation')}
           chooseLabel={t('actions.choose')}

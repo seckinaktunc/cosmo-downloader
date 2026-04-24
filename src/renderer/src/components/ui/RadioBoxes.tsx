@@ -20,8 +20,8 @@ export function RadioBoxes<T extends string>({
 }: RadioBoxesProps<T>): React.JSX.Element {
   return (
     <fieldset className={cn('space-y-2', disabled && 'opacity-40')} disabled={disabled}>
-      {label && <legend className="text-sm font-medium text-white/60">{label}</legend>}
-      <div className={cn('grid grid-cols-5 h-auto gap-2', className)}>
+      {label && <legend className="text-sm font-medium text-white/50">{label}</legend>}
+      <div className={cn('grid grid-cols-6 h-auto gap-2', className)}>
         {options.map((option) => {
           const optionDisabled = disabled || option.disabled
 

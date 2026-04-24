@@ -74,11 +74,15 @@ select {
 
 *::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgb(var(--white) / 0.35);
+  background: rgb(var(--white) / 0.1);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--white) / 0.6);
+  background: rgb(var(--white) / 0.5);
+}
+
+::selection {
+  background: rgb(var(--white) / 0.1);
 }
 
 .drag-region {

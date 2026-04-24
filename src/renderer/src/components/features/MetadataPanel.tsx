@@ -137,7 +137,7 @@ export function MetadataPanel(): React.JSX.Element {
           )}
         </div>
 
-        <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 text-sm leading-relaxed text-white/70 wrap-break-word">
+        <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 text-sm leading-relaxed text-white/70 wrap-break-word select-text">
           {metadata.description && renderFormattedDescription(metadata.description)}
         </div>
 
