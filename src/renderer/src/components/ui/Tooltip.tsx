@@ -8,6 +8,7 @@ import {
   type FloatingTailSide
 } from '../../lib/floatingPosition'
 import type { CSSProperties, ReactNode } from 'react'
+import { cn } from '@renderer/lib/utils'
 
 const TAIL_SIZE_PX = 12
 const TAIL_PROTRUSION_PX = TAIL_SIZE_PX / Math.SQRT2
@@ -131,6 +132,7 @@ function getTailBridgeStyle(side: FloatingTailSide, offset: number): CSSProperti
 type TooltipProps = {
   label: string
   type?: 'default' | 'error'
+  className?: string
   children: ReactNode
   placement?: FloatingPlacement
 }
@@ -138,6 +140,7 @@ type TooltipProps = {
 export function Tooltip({
   label,
   type = 'default',
+  className,
   children,
   placement = 'top'
 }: TooltipProps): React.JSX.Element {
@@ -205,7 +208,7 @@ export function Tooltip({
   return (
     <span
       ref={anchorRef}
-      className="inline-flex"
+      className={cn("inline-flex", className)}
       aria-describedby={visible ? tooltipId : undefined}
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}

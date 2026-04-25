@@ -11,6 +11,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: ButtonSize
   active?: boolean
   tooltip?: string
+  tooltipClassName?: string
   onlyLabel?: boolean
   onlyIcon?: boolean
   ghost?: boolean
@@ -31,6 +32,7 @@ export function Button({
   size = 'md',
   active = false,
   tooltip,
+  tooltipClassName,
   onlyLabel = false,
   onlyIcon = false,
   ghost = false,
@@ -75,5 +77,11 @@ export function Button({
     </button>
   )
 
-  return tooltip ? <Tooltip label={tooltip}>{button}</Tooltip> : button
+  return tooltip ? (
+    <Tooltip label={tooltip} className={tooltipClassName}>
+      {button}
+    </Tooltip>
+  ) : (
+    button
+  )
 }
