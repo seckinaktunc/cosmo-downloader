@@ -129,7 +129,6 @@
     "unknownDownload": "Bilinmeyen indirme",
     "noSelection": "Günlük seçilmedi",
     "noSelectionDetail": "Günlüğü olan bir kuyruk veya geçmiş öğesi seçin.",
-    "loading": "Günlük yükleniyor...",
     "truncated": "En son 256 KB gösteriliyor. Kopyalama işlemleri yalnızca görünen günlük metnini içerir.",
     "sources": {
       "history": "Geçmiş",

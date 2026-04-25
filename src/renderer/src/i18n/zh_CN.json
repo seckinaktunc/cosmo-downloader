@@ -129,7 +129,6 @@
     "unknownDownload": "未知下载",
     "noSelection": "未选择日志",
     "noSelectionDetail": "选择带有日志的队列或历史记录项目。",
-    "loading": "正在加载日志...",
     "truncated": "正在显示最近 256 KB。复制操作仅包含可见的日志文本。",
     "sources": {
       "history": "历史记录",
