@@ -7,7 +7,7 @@
 A high-performance video downloader for power users who value speed and aesthetics.
 
 [![Latest release](https://img.shields.io/github/v/release/seckinaktunc/cosmo-downloader?style=flat-square)](https://github.com/seckinaktunc/cosmo-downloader/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows-blue?style=flat-square)](#installation)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue?style=flat-square)](#installation)
 [![License](https://img.shields.io/badge/license-Non--Commercial-orange?style=flat-square)](LICENSE)
 
 <p align="center">
@@ -17,7 +17,7 @@ A high-performance video downloader for power users who value speed and aestheti
 </p>
 </div>
 
-> **Currently Windows only.** macOS support is on the way and Linux is on the roadmap.
+> **Available on Windows and Linux x64.** macOS support is still on the way.
 
 Cosmo Downloader wraps the raw power of **yt-dlp** and **FFmpeg** in a modern UI, giving you fine-grained control over codecs, bitrate, resolution, and more. No pay-walls, no ads, no shady bundled toolbars.
 
@@ -35,12 +35,14 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 ## Features
 
 ### Downloading
+
 - Paste any URL supported by yt-dlp (YouTube, TikTok, Instagram, Twitch, and [hundreds more](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md))
 - Video + audio or audio-only extraction
 - Thumbnail download / copy
 - Trim / clip with in and out timecodes
 
 ### Format & control
+
 - **Currently supported formats:** `mp4`, `mkv`, `webm`, `mp3`, `wav`
 - **Video codecs:** `av1`, `vp9`, `h265`, `h264`, or `auto`
 - **Audio codecs:** `opus`, `vorbis`, `aac`, `mp3`, `wav`, or `auto`
@@ -48,6 +50,7 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 - Hardware acceleration (if your system supports it)
 
 ### UX
+
 - Sequential and fully editable download queue
 - Persistent download history with re-queue option
 - Live per-download log viewer
@@ -58,11 +61,19 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 
 ## Installation
 
+### Windows
+
 1. Grab the latest `cosmo-downloader-<version>-setup.exe` from the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page.
 2. Run the installer.
 3. Launch **Cosmo Downloader** from the Start Menu or your desktop.
 
-The app self-updates on launch when a new release is available (can be disabled in Preferences).
+### Linux (x64)
+
+1. Grab the latest `cosmo-downloader-<version>.AppImage` from the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page.
+2. Mark it executable if needed: `chmod +x cosmo-downloader-<version>.AppImage`
+3. Run the AppImage.
+
+Windows installer builds and Linux AppImage builds self-update on launch when a new release is available (can be disabled in Preferences).
 
 ## Usage
 
@@ -121,6 +132,16 @@ Runs the full pipeline: fetch binaries -> typecheck -> bundle -> preflight symli
 
 > `build:win` (no `:local`) skips the preflight and binary-fetch steps - it's used by the CI workflow where those are handled separately. Use `build:win:local` for local builds.
 
+### Build a Linux AppImage
+
+```bash
+npm run build:linux:local
+```
+
+Runs the full Linux packaging flow: fetch binaries -> typecheck -> bundle -> `electron-builder` AppImage x64 packaging.
+
+> `build:linux` (no `:local`) is the CI-oriented packaging command. Use `build:linux:local` for local Linux release builds.
+
 ### Code signing (optional)
 
 For a signed installer, set these before building:
@@ -132,12 +153,12 @@ If either is missing, an unsigned installer is produced. You can sanity-check a 
 
 ### Other scripts
 
-| Script | What it does |
-|---|---|
-| `npm run lint` | ESLint over the project |
-| `npm run format` | Prettier write |
-| `npm run typecheck` | Node + web TS projects |
-| `npm run test` | Vitest (one-shot) |
+| Script                 | What it does                                       |
+| ---------------------- | -------------------------------------------------- |
+| `npm run lint`         | ESLint over the project                            |
+| `npm run format`       | Prettier write                                     |
+| `npm run typecheck`    | Node + web TS projects                             |
+| `npm run test`         | Vitest (one-shot)                                  |
 | `npm run build:unpack` | Unpacked build for local inspection (no installer) |
 
 ## Roadmap
@@ -156,7 +177,7 @@ If either is missing, an unsigned installer is produced. You can sanity-check a 
 - [ ] Subtitle support
 - [x] Multi-language support
 - [ ] macOS build
-- [ ] Linux build
+- [x] Linux build
 
 ## Contributing
 

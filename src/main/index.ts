@@ -5,6 +5,9 @@ import { APP_ICON, APP_ID, APP_NAME } from './appIdentity'
 import { registerIpcHandlers } from './ipc/registerIpc'
 import { readStartupAlwaysOnTop, readStartupHardwareAcceleration } from './services/settingsService'
 
+const SMOKE_TEST_EXIT_DELAY_MS = 250
+const isSmokeTest = process.env.COSMO_SMOKE_TEST === '1'
+
 app.setName(APP_NAME)
 
 if (!readStartupHardwareAcceleration()) {
@@ -53,9 +56,29 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+  if (isSmokeTest) {
+    const failSmokeTest = (reason: string): void => {
+      console.error(`[smoke-test] ${reason}`)
+      app.exit(1)
+    }
+
+    mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription) => {
+      failSmokeTest(`renderer failed to load (${errorCode}): ${errorDescription}`)
+    })
+    mainWindow.webContents.on('render-process-gone', (_, details) => {
+      failSmokeTest(`renderer process exited: ${details.reason}`)
+    })
+    mainWindow.on('unresponsive', () => {
+      failSmokeTest('main window became unresponsive')
+    })
+    mainWindow.on('ready-to-show', () => {
+      setTimeout(() => app.exit(0), SMOKE_TEST_EXIT_DELAY_MS)
+    })
+  } else {
+    mainWindow.on('ready-to-show', () => {
+      mainWindow.show()
+    })
+  }
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)

@@ -26,12 +26,19 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match package version $PACKAGE_VERSION"
             exit 1
           fi
+      - name: Generate release notes
+        shell: bash
+        run: node scripts/extract-release-notes.mjs "$GITHUB_REF_NAME" > release-notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
 
-  release-windows:
+  build-windows:
     needs: validate-version
     runs-on: windows-latest
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
       WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
     steps:
@@ -49,12 +56,69 @@ jobs:
       - run: npx electron-builder --win --publish never
       - if: env.WIN_CSC_LINK != ''
         run: npm run verify:win-signing
-      - name: Generate release notes
-        shell: bash
-        run: node scripts/extract-release-notes.mjs "$GITHUB_REF_NAME" > release-notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-assets
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
+          if-no-files-found: error
+
+  build-linux:
+    needs: validate-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Linux smoke test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+      - run: npm ci
+      - run: npm run download:binaries:current
+      - run: npm run build:linux
+      - run: npm run verify:linux:package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-release-assets
+          path: |
+            dist/*.AppImage
+            dist/latest-linux.yml
+          if-no-files-found: error
+
+  publish-release:
+    needs:
+      - build-windows
+      - build-linux
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+          path: release-context
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release-assets
+          path: release-assets/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-release-assets
+          path: release-assets/linux
       - name: Publish release artifacts
         shell: bash
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
-          gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
-          gh release upload "$GITHUB_REF_NAME" dist/*.exe dist/*.blockmap dist/latest.yml --clobber
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-context/release-notes.md
+          gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-context/release-notes.md
+          gh release upload "$GITHUB_REF_NAME" \
+            release-assets/windows/*.exe \
+            release-assets/windows/*.blockmap \
+            release-assets/windows/latest.yml \
+            release-assets/linux/*.AppImage \
+            release-assets/linux/latest-linux.yml \
+            --clobber

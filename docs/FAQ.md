@@ -38,7 +38,7 @@ Subtitle support is on the [roadmap](README.md#roadmap) but not yet implemented.
 
 ## Is there a macOS or Linux version?
 
-A macOS build is being prepared. Linux is on the roadmap but further out. Follow the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page for updates.
+Linux x64 builds are available on the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page as AppImages. A macOS build is still being prepared.
 
 ## Does it work offline?
 
