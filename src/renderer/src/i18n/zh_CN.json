@@ -90,7 +90,36 @@
     "audioCodec": "音频编码器",
     "savePath": "下载位置",
     "noSavePath": "选择此视频的保存位置",
-    "auto": "自动"
+    "auto": "自动",
+    "formatDescriptions": {
+      "mp4": "兼容大多数设备和应用的常用视频格式。",
+      "mkv": "支持多种编解码器的灵活容器。",
+      "mov": "常见于 Apple 和专业剪辑流程的容器。",
+      "webm": "为现代浏览器和网页场景优化的格式。",
+      "mp3": "兼容性很好的压缩音频格式。",
+      "wav": "保留最高音质的未压缩音频格式。"
+    },
+    "videoCodecDescriptions": {
+      "auto": "自动选择最合适的视频编解码器。",
+      "av1": "更现代、更省空间，但编码速度更慢。",
+      "vp9": "常用于 WebM 的高效网页视频编解码器。",
+      "prores": "面向剪辑流程、文件更大的帧内编解码器。",
+      "h265": "比 H.264 压缩更高，但设备兼容性更少。",
+      "h264": "最适合播放和分享的高兼容视频编解码器。"
+    },
+    "audioCodecDescriptions": {
+      "auto": "自动选择最合适的音频编解码器。",
+      "opus": "为网页和流媒体优化的高效音频编解码器。",
+      "vorbis": "常用于 WebM 的开放有损音频编解码器。",
+      "aac": "设备兼容性很好的常用有损音频编解码器。",
+      "m4a": "封装在 MPEG-4 音频容器中的 AAC 音频。",
+      "mp3": "几乎所有设备都支持的经典有损音频编解码器。"
+    },
+    "compatibilityReasons": {
+      "notAvailableWithFormat": "无法与 {{format}} 一起使用。",
+      "videoDisabledForAudioOnly": "音频格式不使用视频编解码器。",
+      "audioCodecLockedByFormat": "{{format}} 会自动决定音频编解码器。"
+    }
   },
   "logs": {
     "title": "日志",
@@ -109,6 +138,10 @@
     "actions": {
       "openFolder": "打开文件夹",
       "copyLogs": "复制日志"
+    },
+    "feedback": {
+      "copied": "已复制！",
+      "copyFailed": "失败"
     }
   },
   "metadata": {

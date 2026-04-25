@@ -10,6 +10,10 @@ import {
   VIDEO_CODECS,
   isAudioOnlyFormat
 } from '../../../../shared/formatOptions'
+import {
+  coerceExportSettingsForFormat,
+  getDisabledCodecOptions
+} from '../../../../shared/exportCompatibility'
 import { normalizeTrimRange } from '../../../../shared/trim'
 import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types'
 import { useActiveExportSettings } from '../../hooks/useActiveExportSettings'
@@ -41,6 +45,9 @@ export function ExportSettingsPanel(): React.JSX.Element {
     exportSettings.outputFormat,
     Boolean(settings?.createFolderPerDownload)
   )
+  const disabledCodecs = getDisabledCodecOptions({ outputFormat: exportSettings.outputFormat })
+  const disabledVideoCodecs = new Set(disabledCodecs.video)
+  const disabledAudioCodecs = new Set(disabledCodecs.audio)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
 
@@ -102,13 +109,11 @@ export function ExportSettingsPanel(): React.JSX.Element {
       audioOnly &&
       (exportSettings.resolution !== 'auto' ||
         exportSettings.videoBitrate !== 'auto' ||
-        exportSettings.videoCodec !== 'auto' ||
         exportSettings.frameRate !== 'auto')
     ) {
       void updateExportSettings({
         resolution: 'auto',
         videoBitrate: 'auto',
-        videoCodec: 'auto',
         frameRate: 'auto'
       })
     }
@@ -118,7 +123,6 @@ export function ExportSettingsPanel(): React.JSX.Element {
     exportSettings.frameRate,
     exportSettings.resolution,
     exportSettings.videoBitrate,
-    exportSettings.videoCodec,
     updateExportSettings
   ])
 
@@ -138,6 +142,23 @@ export function ExportSettingsPanel(): React.JSX.Element {
     showSavePath,
     updateExportSettings
   ])
+
+  useEffect(() => {
+    if (controlsDisabled) {
+      return
+    }
+
+    const nextSettings = coerceExportSettingsForFormat(exportSettings)
+    if (
+      nextSettings.videoCodec !== exportSettings.videoCodec ||
+      nextSettings.audioCodec !== exportSettings.audioCodec
+    ) {
+      void updateExportSettings({
+        videoCodec: nextSettings.videoCodec,
+        audioCodec: nextSettings.audioCodec
+      })
+    }
+  }, [controlsDisabled, exportSettings, updateExportSettings])
 
   useEffect(() => {
     const frame = requestAnimationFrame(updateScrollState)
@@ -180,6 +201,83 @@ export function ExportSettingsPanel(): React.JSX.Element {
     setShowScrollToBottom(false)
   }
 
+  const handleOutputFormatChange = (outputFormat: OutputFormat): void => {
+    const nextSettings = coerceExportSettingsForFormat(exportSettings, outputFormat)
+    if (
+      nextSettings.outputFormat === exportSettings.outputFormat &&
+      nextSettings.videoCodec === exportSettings.videoCodec &&
+      nextSettings.audioCodec === exportSettings.audioCodec
+    ) {
+      return
+    }
+
+    void updateExportSettings({
+      outputFormat: nextSettings.outputFormat,
+      videoCodec: nextSettings.videoCodec,
+      audioCodec: nextSettings.audioCodec
+    })
+  }
+
+  const formatOptions = OUTPUT_FORMATS.map((format) => ({
+    value: format,
+    label: format,
+    icon: (format === 'mp3' || format === 'wav' ? 'music' : 'video') as 'music' | 'video',
+    tooltip: t(`exportSettings.formatDescriptions.${format}`)
+  }))
+
+  const incompatibleWithFormatReason = t(
+    'exportSettings.compatibilityReasons.notAvailableWithFormat',
+    {
+      format: exportSettings.outputFormat.toUpperCase()
+    }
+  )
+  const videoDisabledForAudioOnlyReason = t(
+    'exportSettings.compatibilityReasons.videoDisabledForAudioOnly'
+  )
+  const audioCodecLockedByFormatReason = t(
+    'exportSettings.compatibilityReasons.audioCodecLockedByFormat',
+    {
+      format: exportSettings.outputFormat.toUpperCase()
+    }
+  )
+
+  const videoCodecOptions = VIDEO_CODECS.map((codec) => {
+    const description = t(`exportSettings.videoCodecDescriptions.${codec}`)
+    const disabledReason = audioOnly
+      ? videoDisabledForAudioOnlyReason
+      : disabledVideoCodecs.has(codec)
+        ? incompatibleWithFormatReason
+        : undefined
+
+    return {
+      value: codec,
+      label: codec === 'auto' ? t('exportSettings.auto') : codec.toUpperCase(),
+      icon: 'video' as const,
+      disabled: audioOnly || disabledVideoCodecs.has(codec),
+      tooltip: description,
+      disabledReason
+    }
+  })
+
+  const audioCodecOptions = AUDIO_CODECS.map((codec) => {
+    const description = t(`exportSettings.audioCodecDescriptions.${codec}`)
+    const disabledReason =
+      audioOnly && codec !== 'auto'
+        ? audioCodecLockedByFormatReason
+        : disabledAudioCodecs.has(codec)
+          ? incompatibleWithFormatReason
+          : undefined
+
+    return {
+      value: codec,
+      label: codec === 'auto' ? t('exportSettings.auto') : codec.toUpperCase(),
+      icon: 'music' as const,
+      disabled: disabledAudioCodecs.has(codec),
+      tooltip: description,
+      disabledReason
+    }
+  })
+
   return (
     <section className="flex h-full min-h-0 flex-col text-white">
       <div className="relative min-h-0 flex-1">
@@ -188,13 +286,9 @@ export function ExportSettingsPanel(): React.JSX.Element {
             <div className="p-2">
               <RadioBoxes<OutputFormat>
                 value={exportSettings.outputFormat}
-                options={OUTPUT_FORMATS.map((format) => ({
-                  value: format,
-                  label: format,
-                  icon: format === 'mp3' || format === 'wav' ? 'music' : 'video'
-                }))}
+                options={formatOptions}
                 disabled={controlsDisabled}
-                onChange={(outputFormat) => void updateExportSettings({ outputFormat })}
+                onChange={handleOutputFormatChange}
               />
             </div>
 
@@ -274,13 +368,8 @@ export function ExportSettingsPanel(): React.JSX.Element {
                 <RadioBoxes<VideoCodec>
                   label={t('exportSettings.videoCodec')}
                   value={exportSettings.videoCodec}
-                  options={VIDEO_CODECS.map((codec) => ({
-                    value: codec,
-                    label: codec.toUpperCase(),
-                    icon: 'video',
-                    disabled: controlsDisabled || audioOnly
-                  }))}
-                  disabled={controlsDisabled || audioOnly}
+                  options={videoCodecOptions}
+                  disabled={controlsDisabled}
                   onChange={(videoCodec) => void updateExportSettings({ videoCodec })}
                   className="grid-cols-3"
                 />
@@ -289,12 +378,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
                 <RadioBoxes<AudioCodec>
                   label={t('exportSettings.audioCodec')}
                   value={exportSettings.audioCodec}
-                  options={AUDIO_CODECS.map((codec) => ({
-                    value: codec,
-                    label: codec.toUpperCase(),
-                    icon: 'music',
-                    disabled: controlsDisabled
-                  }))}
+                  options={audioCodecOptions}
                   disabled={controlsDisabled}
                   onChange={(audioCodec) => void updateExportSettings({ audioCodec })}
                   className="grid-cols-3"

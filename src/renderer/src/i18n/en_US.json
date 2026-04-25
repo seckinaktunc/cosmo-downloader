@@ -90,7 +90,36 @@
     "audioCodec": "Audio codec",
     "savePath": "Download location",
     "noSavePath": "Choose where this video will be saved",
-    "auto": "Auto"
+    "auto": "Auto",
+    "formatDescriptions": {
+      "mp4": "Widely compatible video format for most devices and apps.",
+      "mkv": "Flexible container with broad codec support.",
+      "mov": "Editing-friendly container common in Apple and pro workflows.",
+      "webm": "Web-focused format optimized for modern browsers.",
+      "mp3": "Compressed audio-only format with broad support.",
+      "wav": "Uncompressed audio-only format for maximum fidelity."
+    },
+    "videoCodecDescriptions": {
+      "auto": "Automatically choose the best available video codec.",
+      "av1": "Modern high-efficiency codec with smaller files but slower encoding.",
+      "vp9": "Efficient web video codec commonly used with WebM.",
+      "prores": "Editing-focused intraframe codec with large files and smooth playback.",
+      "h265": "Better compression than H.264 with less device support.",
+      "h264": "Most compatible video codec for playback and sharing."
+    },
+    "audioCodecDescriptions": {
+      "auto": "Automatically choose the best available audio codec.",
+      "opus": "High-efficiency audio codec optimized for web and streaming.",
+      "vorbis": "Open compressed audio codec commonly used with WebM.",
+      "aac": "Common lossy audio codec with broad device support.",
+      "m4a": "AAC audio stored in an MPEG-4 audio container.",
+      "mp3": "Classic lossy audio codec with near-universal support."
+    },
+    "compatibilityReasons": {
+      "notAvailableWithFormat": "Not available with {{format}}.",
+      "videoDisabledForAudioOnly": "Video codecs are not used for audio-only formats.",
+      "audioCodecLockedByFormat": "{{format}} chooses the audio codec automatically."
+    }
   },
   "logs": {
     "title": "Logs",
@@ -109,6 +138,10 @@
     "actions": {
       "openFolder": "Open Folder",
       "copyLogs": "Copy Logs"
+    },
+    "feedback": {
+      "copied": "Copied!",
+      "copyFailed": "Failed"
     }
   },
   "metadata": {

@@ -90,7 +90,36 @@
     "audioCodec": "Ses kodeği",
     "savePath": "İndirme konumu",
     "noSavePath": "Bu videonun nereye kaydedileceğini seçin",
-    "auto": "Auto"
+    "auto": "Auto",
+    "formatDescriptions": {
+      "mp4": "Çoğu cihaz ve uygulamayla uyumlu, yaygın bir video biçimi.",
+      "mkv": "Geniş kodek desteğine sahip esnek bir kapsayıcı.",
+      "mov": "Apple ve profesyonel kurgu iş akışlarında yaygın bir kapsayıcı.",
+      "webm": "Modern tarayıcılar ve web kullanımı için optimize edilmiş bir biçim.",
+      "mp3": "Geniş destekli, sıkıştırılmış ses biçimi.",
+      "wav": "Maksimum kalite için sıkıştırılmamış ses biçimi."
+    },
+    "videoCodecDescriptions": {
+      "auto": "En uygun video kodeğini otomatik seçer.",
+      "av1": "Daha küçük dosyalar sunan modern bir kodektir, ancak kodlaması daha yavaştır.",
+      "vp9": "WebM ile yaygın kullanılan verimli bir web video kodeğidir.",
+      "prores": "Büyük dosyalarla kurgu için akıcı oynatma sunan bir ara kare kodeğidir.",
+      "h265": "H.264'ten daha iyi sıkıştırma sunar, ancak cihaz desteği daha düşüktür.",
+      "h264": "Oynatma ve paylaşım için en uyumlu video kodeğidir."
+    },
+    "audioCodecDescriptions": {
+      "auto": "En uygun ses kodeğini otomatik seçer.",
+      "opus": "Web ve akış için optimize edilmiş verimli bir ses kodeğidir.",
+      "vorbis": "WebM ile yaygın kullanılan açık bir sıkıştırılmış ses kodeğidir.",
+      "aac": "Geniş cihaz desteğine sahip yaygın bir kayıplı ses kodeğidir.",
+      "m4a": "MPEG-4 ses kapsayıcısında saklanan AAC sestir.",
+      "mp3": "Neredeyse her yerde desteklenen klasik kayıplı ses kodeğidir."
+    },
+    "compatibilityReasons": {
+      "notAvailableWithFormat": "{{format}} ile kullanılamaz.",
+      "videoDisabledForAudioOnly": "Ses odaklı biçimlerde video kodeği kullanılmaz.",
+      "audioCodecLockedByFormat": "{{format}} ses kodeğini otomatik belirler."
+    }
   },
   "logs": {
     "title": "Günlükler",
@@ -109,6 +138,10 @@
     "actions": {
       "openFolder": "Klasörü Aç",
       "copyLogs": "Günlükleri Kopyala"
+    },
+    "feedback": {
+      "copied": "Kopyalandı!",
+      "copyFailed": "Başarısız"
     }
   },
   "metadata": {
