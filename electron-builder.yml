@@ -10,8 +10,7 @@ files:
   - '!docs/**/*'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-asarUnpack:
-  - resources/**
+  - '!resources/bin/**/*'
 extraResources:
   - from: resources/bin
     to: bin
