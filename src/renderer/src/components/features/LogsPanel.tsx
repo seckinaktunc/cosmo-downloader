@@ -20,6 +20,7 @@ export function LogsPanel(): React.JSX.Element {
   const [error, setError] = useState<{ logPath: string; message: string } | null>(null)
   const [autoFollow, setAutoFollow] = useState(true)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
   const selectedSource = useMemo(
     () =>
@@ -50,7 +51,17 @@ export function LogsPanel(): React.JSX.Element {
   useEffect(() => {
     setAutoFollow(true)
     setShowScrollToBottom(false)
+    setCopyFeedback(null)
   }, [selectedLogPath])
+
+  useEffect(() => {
+    if (!copyFeedback) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => setCopyFeedback(null), 1500)
+    return () => window.clearTimeout(timer)
+  }, [copyFeedback])
 
   useEffect(() => {
     if (!selectedLogPath) {
@@ -142,9 +153,23 @@ export function LogsPanel(): React.JSX.Element {
   }
 
   const copyText = async (text: string): Promise<void> => {
-    const result = await window.cosmo.clipboard.writeText(text)
-    if (!result.ok) {
+    setCopyFeedback(null)
+
+    try {
+      const result = await window.cosmo.clipboard.writeText(text)
+      if (result.ok) {
+        setCopyFeedback(t('logs.feedback.copied'))
+        return
+      }
+
       setError({ logPath: selectedLogPath ?? '', message: result.error.message })
+      setCopyFeedback(t('logs.feedback.copyFailed'))
+    } catch (copyError) {
+      setError({
+        logPath: selectedLogPath ?? '',
+        message: copyError instanceof Error ? copyError.message : String(copyError)
+      })
+      setCopyFeedback(t('logs.feedback.copyFailed'))
     }
   }
 
@@ -220,6 +245,7 @@ export function LogsPanel(): React.JSX.Element {
           <Button
             icon="copy"
             label={t('logs.actions.copyLogs')}
+            tooltip={copyFeedback ?? t('logs.actions.copyLogs')}
             size="lg"
             className="w-full rounded-none border-none"
             disabled={!selectedLogResult?.content}

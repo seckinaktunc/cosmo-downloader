@@ -25,7 +25,7 @@ function getWindowChromeOptions(): Pick<
   return {
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#000000',
+      color: '#00000000',
       symbolColor: '#ffffff',
       height: 64
     }

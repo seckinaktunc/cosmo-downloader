@@ -44,17 +44,22 @@ export type FloatingViewport = {
   height: number
 }
 
+export type FloatingTailSide = 'top' | 'bottom' | 'left' | 'right'
+
 export type FloatingPosition = {
   left: number
   top: number
   placement: FloatingPlacement
+  tailSide: FloatingTailSide
+  tailOffset: number
 }
 
-type BasePlacement = 'top' | 'bottom' | 'left' | 'right'
+type BasePlacement = FloatingTailSide
 type Alignment = 'center' | 'start' | 'end'
 
-const DEFAULT_PADDING = 8
-const DEFAULT_OFFSET = 8
+export const DEFAULT_FLOATING_PADDING = 8
+export const DEFAULT_FLOATING_OFFSET = 8
+const TAIL_SAFE_INSET_PX = 12
 
 function getBasePlacement(placement: FloatingPlacement): BasePlacement {
   return placement.split('-')[0] as BasePlacement
@@ -148,13 +153,39 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
+function getTailSide(placement: FloatingPlacement): FloatingTailSide {
+  const base = getBasePlacement(placement)
+
+  if (base === 'top') return 'bottom'
+  if (base === 'bottom') return 'top'
+  if (base === 'left') return 'right'
+  return 'left'
+}
+
+function calculateTailOffset(
+  rect: FloatingRect,
+  size: FloatingSize,
+  position: Pick<FloatingPosition, 'left' | 'top'>,
+  placement: FloatingPlacement
+): number {
+  const base = getBasePlacement(placement)
+  const anchorCenterX = rect.left + rect.width / 2
+  const anchorCenterY = rect.top + rect.height / 2
+
+  if (base === 'top' || base === 'bottom') {
+    return clamp(anchorCenterX - position.left, TAIL_SAFE_INSET_PX, size.width - TAIL_SAFE_INSET_PX)
+  }
+
+  return clamp(anchorCenterY - position.top, TAIL_SAFE_INSET_PX, size.height - TAIL_SAFE_INSET_PX)
+}
+
 export function computeFloatingPosition({
   anchor,
   size,
   viewport,
   placement = 'bottom-start',
-  offset = DEFAULT_OFFSET,
-  padding = DEFAULT_PADDING
+  offset = DEFAULT_FLOATING_OFFSET,
+  padding = DEFAULT_FLOATING_PADDING
 }: {
   anchor: FloatingAnchor
   size: FloatingSize
@@ -176,9 +207,16 @@ export function computeFloatingPosition({
     }
   }
 
-  return {
+  const clampedPosition = {
     left: clamp(position.left, padding, viewport.width - size.width - padding),
-    top: clamp(position.top, padding, viewport.height - size.height - padding),
-    placement: resolvedPlacement
+    top: clamp(position.top, padding, viewport.height - size.height - padding)
+  }
+
+  return {
+    left: clampedPosition.left,
+    top: clampedPosition.top,
+    placement: resolvedPlacement,
+    tailSide: getTailSide(resolvedPlacement),
+    tailOffset: calculateTailOffset(rect, size, clampedPosition, resolvedPlacement)
   }
 }
