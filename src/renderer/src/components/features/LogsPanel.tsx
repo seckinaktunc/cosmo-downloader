@@ -8,6 +8,7 @@ import { useHistoryStore } from '../../stores/historyStore'
 import { useQueueStore } from '../../stores/queueStore'
 import { useUiStore } from '../../stores/uiStore'
 import { Button } from '../ui/Button'
+import Icon from '../miscellaneous/Icon'
 
 export function LogsPanel(): React.JSX.Element {
   const { t } = useTranslation()
@@ -190,14 +191,20 @@ export function LogsPanel(): React.JSX.Element {
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[1fr_auto] divide-y divide-white/10 text-white">
-      <div className="relative min-h-0 bg-dark">
+      <div className="relative min-h-0">
         <div
           ref={scrollRef}
           className="h-full overflow-y-auto min-w-0 selection:bg-white selection:text-black"
           onScroll={handleScroll}
         >
-          {loading ? (
-            <div className="p-4 text-sm text-white/50">{t('logs.loading')}</div>
+          {!selectedLogPath ? (
+            <span className="flex items-center justify-center w-full h-full text-white/25">
+              {t('logs.emptyLog')}
+            </span>
+          ) : loading ? (
+            <div className="flex items-center justify-center w-full h-full">
+              <Icon name="spinner" size={32} className="opacity-50" />
+            </div>
           ) : errorMessage ? (
             <div className="p-4 text-sm text-primary">{errorMessage}</div>
           ) : selectedLogResult ? (
@@ -248,6 +255,7 @@ export function LogsPanel(): React.JSX.Element {
             tooltip={copyFeedback ?? t('logs.actions.copyLogs')}
             size="lg"
             className="w-full rounded-none border-none"
+            tooltipClassName="w-full"
             disabled={!selectedLogResult?.content}
             onClick={() => void copyText(selectedLogResult?.content ?? '')}
           />
