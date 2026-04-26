@@ -124,15 +124,16 @@
   "logs": {
     "title": "日志",
     "empty": "没有日志",
-    "emptyDetail": "新的下载尝试开始后，下载日志会显示在这里。",
+    "emptyDetail": "新的获取或下载尝试开始后，日志会显示在这里。",
     "emptyLog": "日志文件为空。",
-    "unknownDownload": "未知下载",
+    "unknownDownload": "未知媒体",
     "noSelection": "未选择日志",
-    "noSelectionDetail": "选择带有日志的队列或历史记录项目。",
+    "noSelectionDetail": "选择带有日志的队列或历史记录项目，或开始新的获取。",
     "truncated": "正在显示最近 256 KB。复制操作仅包含可见的日志文本。",
     "sources": {
       "history": "历史记录",
-      "queue": "队列"
+      "queue": "队列",
+      "preview": "预览"
     },
     "actions": {
       "openFolder": "打开文件夹",
@@ -187,26 +188,32 @@
     "status": {
       "active": "活动",
       "activePercent": "活动 {{percent}}",
+      "started": "已开始",
       "pending": "待处理",
       "paused": "已暂停",
       "completed": "已完成",
       "failed": "失败",
-      "cancelled": "已取消"
+      "cancelled": "已取消",
+      "fetched": "已获取",
+      "fetch_failed": "获取失败"
     }
   },
   "history": {
-    "title": "下载历史",
-    "empty": "没有下载",
-    "itemCount": "{{count}} 个已下载项目",
+    "title": "历史记录",
+    "empty": "还没有历史记录",
+    "itemCount": "{{count}} 个历史项目",
     "itemActions": "历史记录项目操作",
     "actions": {
       "open": "打开",
       "openMedia": "打开媒体",
       "openFolder": "打开文件夹",
+      "download": "下载",
       "requeue": "重新加入队列",
       "copyUrl": "复制 URL"
     },
     "status": {
+      "fetched": "已获取",
+      "fetch_failed": "获取失败",
       "started": "已开始",
       "completed": "已完成",
       "failed": "失败",

@@ -25,7 +25,8 @@ export const IPC_CHANNELS = {
   },
   video: {
     fetchMetadata: 'video:fetch-metadata',
-    cancelMetadata: 'video:cancel-metadata'
+    cancelMetadata: 'video:cancel-metadata',
+    fetchLifecycle: 'video:fetch-lifecycle'
   },
   download: {
     start: 'download:start',
@@ -59,6 +60,7 @@ export const IPC_CHANNELS = {
     remove: 'history:remove',
     removeMany: 'history:remove-many',
     clear: 'history:clear',
+    recordFetch: 'history:record-fetch',
     requeue: 'history:requeue',
     openOutput: 'history:open-output',
     openMedia: 'history:open-media',
@@ -77,4 +79,4 @@ export const IPC_CHANNELS = {
     action: 'window:action',
     setAlwaysOnTop: 'window:set-always-on-top'
   }
-} as const
+} as const;

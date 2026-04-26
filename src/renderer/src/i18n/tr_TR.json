@@ -124,15 +124,16 @@
   "logs": {
     "title": "Günlükler",
     "empty": "Günlük yok",
-    "emptyDetail": "Yeni denemeler başladığında indirme günlükleri burada görünür.",
+    "emptyDetail": "Yeni denemeler başladığında getirme ve indirme günlükleri burada görünür.",
     "emptyLog": "Günlük dosyası boş.",
-    "unknownDownload": "Bilinmeyen indirme",
+    "unknownDownload": "Bilinmeyen medya",
     "noSelection": "Günlük seçilmedi",
-    "noSelectionDetail": "Günlüğü olan bir kuyruk veya geçmiş öğesi seçin.",
+    "noSelectionDetail": "Günlüğü olan bir kuyruk veya geçmiş öğesi seçin ya da yeni bir getirme başlatın.",
     "truncated": "En son 256 KB gösteriliyor. Kopyalama işlemleri yalnızca görünen günlük metnini içerir.",
     "sources": {
       "history": "Geçmiş",
-      "queue": "Kuyruk"
+      "queue": "Kuyruk",
+      "preview": "Önizleme"
     },
     "actions": {
       "openFolder": "Klasörü Aç",
@@ -187,26 +188,32 @@
     "status": {
       "active": "Etkin",
       "activePercent": "Etkin {{percent}}",
+      "started": "Başladı",
       "pending": "Bekliyor",
       "paused": "Duraklatıldı",
       "completed": "Tamamlandı",
       "failed": "Başarısız",
-      "cancelled": "İptal edildi"
+      "cancelled": "İptal edildi",
+      "fetched": "Getirildi",
+      "fetch_failed": "Getirme başarısız"
     }
   },
   "history": {
-    "title": "İndirme Geçmişi",
-    "empty": "İndirme yok",
-    "itemCount": "İndirilen öğe sayısı: {{count}}",
+    "title": "Geçmiş",
+    "empty": "Henüz geçmiş yok",
+    "itemCount": "Geçmiş öğesi sayısı: {{count}}",
     "itemActions": "Geçmiş öğesi işlemleri",
     "actions": {
       "open": "Aç",
       "openMedia": "Medyayı Aç",
       "openFolder": "Klasörü Aç",
+      "download": "İndir",
       "requeue": "Yeniden Kuyruğa Al",
       "copyUrl": "URL'yi Kopyala"
     },
     "status": {
+      "fetched": "Getirildi",
+      "fetch_failed": "Getirme başarısız",
       "started": "Başladı",
       "completed": "Tamamlandı",
       "failed": "Başarısız",

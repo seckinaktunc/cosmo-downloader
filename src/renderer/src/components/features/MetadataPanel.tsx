@@ -1,33 +1,42 @@
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useDisplayMetadata } from '../../hooks/useDisplayMetadata'
-import { renderFormattedDescription } from '../../lib/descriptionFormatter'
-import { useHistoryStore } from '../../stores/historyStore'
-import { useQueueStore } from '../../stores/queueStore'
-import { useSettingsStore } from '../../stores/settingsStore'
-import { useUiStore } from '../../stores/uiStore'
-import { useVideoStore } from '../../stores/videoStore'
-import Icon from '../miscellaneous/Icon'
-import { Button } from '../ui/Button'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
-import { Thumbnail } from '../ui/Thumbnail'
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDisplayMetadata } from '../../hooks/useDisplayMetadata';
+import { renderFormattedDescription } from '../../lib/descriptionFormatter';
+import { getHistoryQueueAction } from '../../lib/historyEntryActions';
+import { useHistoryStore } from '../../stores/historyStore';
+import { useQueueStore } from '../../stores/queueStore';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { useUiStore } from '../../stores/uiStore';
+import { useVideoStore } from '../../stores/videoStore';
+import Icon from '../miscellaneous/Icon';
+import { Button } from '../ui/Button';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { Thumbnail } from '../ui/Thumbnail';
 
 export function MetadataPanel(): React.JSX.Element {
-  const { t } = useTranslation()
-  const previewMetadata = useVideoStore((state) => state.metadata)
-  const metadata = useDisplayMetadata()
-  const stage = useVideoStore((state) => state.stage)
-  const error = useVideoStore((state) => state.error)
-  const [confirmDuplicate, setConfirmDuplicate] = useState(false)
-  const settings = useSettingsStore((state) => state.settings)
-  const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath)
-  const previewExportSettings = useUiStore((state) => state.previewExportSettings)
-  const updatePreviewExportSettings = useUiStore((state) => state.updatePreviewExportSettings)
-  const activeExportTarget = useUiStore((state) => state.activeExportTarget)
-  const queueItems = useQueueStore((state) => state.items)
-  const addToQueue = useQueueStore((state) => state.add)
-  const requeue = useHistoryStore((state) => state.requeue)
-  const openMediaPanel = useUiStore((state) => state.openMediaPanel)
+  const { t } = useTranslation();
+  const previewMetadata = useVideoStore((state) => state.metadata);
+  const metadata = useDisplayMetadata();
+  const stage = useVideoStore((state) => state.stage);
+  const error = useVideoStore((state) => state.error);
+  const [confirmDuplicate, setConfirmDuplicate] = useState(false);
+  const settings = useSettingsStore((state) => state.settings);
+  const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath);
+  const previewExportSettings = useUiStore((state) => state.previewExportSettings);
+  const updatePreviewExportSettings = useUiStore((state) => state.updatePreviewExportSettings);
+  const activeExportTarget = useUiStore((state) => state.activeExportTarget);
+  const historyEntries = useHistoryStore((state) => state.entries);
+  const queueItems = useQueueStore((state) => state.items);
+  const addToQueue = useQueueStore((state) => state.add);
+  const requeue = useHistoryStore((state) => state.requeue);
+  const openMediaPanel = useUiStore((state) => state.openMediaPanel);
+  const activeHistoryEntry =
+    activeExportTarget?.type === 'history'
+      ? historyEntries.find((entry) => entry.id === activeExportTarget.entryId)
+      : undefined;
+  const activeHistoryQueueAction = activeHistoryEntry
+    ? getHistoryQueueAction(activeHistoryEntry.status)
+    : null;
 
   if (!metadata) {
     return (
@@ -51,50 +60,50 @@ export function MetadataPanel(): React.JSX.Element {
           )}
         </div>
       </section>
-    )
+    );
   }
 
-  const sourceUrl = metadata.webpageUrl ?? metadata.url
+  const sourceUrl = metadata.webpageUrl ?? metadata.url;
   const isDuplicate = queueItems.some(
     (item) => (item.metadata.webpageUrl ?? item.metadata.url) === sourceUrl
-  )
+  );
   const addCurrentToQueue = async (): Promise<void> => {
     if (!settings) {
-      return
+      return;
     }
 
     if (!previewMetadata) {
-      return
+      return;
     }
 
-    let exportSettings = previewExportSettings
+    let exportSettings = previewExportSettings;
     if (settings.alwaysAskDownloadLocation && !exportSettings.savePath) {
       const savePath = await chooseOutputPath({
         title: previewMetadata.title,
         outputFormat: exportSettings.outputFormat
-      })
+      });
 
       if (!savePath) {
-        return
+        return;
       }
 
-      exportSettings = updatePreviewExportSettings({ savePath })
+      exportSettings = updatePreviewExportSettings({ savePath });
     }
 
-    const added = await addToQueue(previewMetadata, exportSettings, settings)
+    const added = await addToQueue(previewMetadata, exportSettings, settings);
     if (added) {
-      openMediaPanel('queue')
+      openMediaPanel('queue');
     }
-  }
+  };
 
   const requestAddToQueue = (): void => {
     if (isDuplicate) {
-      setConfirmDuplicate(true)
-      return
+      setConfirmDuplicate(true);
+      return;
     }
 
-    void addCurrentToQueue()
-  }
+    void addCurrentToQueue();
+  };
 
   return (
     <section className="flex flex-col h-full text-white divide-y divide-white/10">
@@ -141,16 +150,22 @@ export function MetadataPanel(): React.JSX.Element {
           {metadata.description && renderFormattedDescription(metadata.description)}
         </div>
 
-        {activeExportTarget?.type === 'history' ? (
-          <div className="shrink-0">
-            <Button
-              icon="add"
-              label={t('history.actions.requeue')}
-              size="lg"
-              className="w-full rounded-none border-none"
-              onClick={() => void requeue(activeExportTarget.entryId)}
-            />
-          </div>
+        {activeHistoryEntry ? (
+          activeHistoryQueueAction ? (
+            <div className="shrink-0">
+              <Button
+                icon="add"
+                label={
+                  activeHistoryQueueAction === 'download'
+                    ? t('history.actions.download')
+                    : t('history.actions.requeue')
+                }
+                size="lg"
+                className="w-full rounded-none border-none"
+                onClick={() => void requeue(activeHistoryEntry.id)}
+              />
+            </div>
+          ) : null
         ) : activeExportTarget?.type === 'queue' ? null : previewMetadata ? (
           <div className="shrink-0">
             <Button
@@ -173,11 +188,11 @@ export function MetadataPanel(): React.JSX.Element {
           cancelLabel={t('actions.cancel')}
           onCancel={() => setConfirmDuplicate(false)}
           onConfirm={() => {
-            setConfirmDuplicate(false)
-            void addCurrentToQueue()
+            setConfirmDuplicate(false);
+            void addCurrentToQueue();
           }}
         />
       ) : null}
     </section>
-  )
+  );
 }

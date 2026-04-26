@@ -1,64 +1,76 @@
-import { useUiStore } from '@renderer/stores/uiStore'
-import { useTranslation } from 'react-i18next'
-import type { DownloadHistoryEntry } from '../../../../shared/types'
-import { formatDuration } from '../../lib/formatters'
-import { getContentAfterItemActivation } from '../../lib/logSources'
-import { useHistoryStore } from '../../stores/historyStore'
-import type { ActionMenuItem } from '../ui/ActionMenu'
-import { InteractiveItemPanel } from '../ui/InteractiveItemPanel'
-import type { ThumbnailAction } from '../ui/Thumbnail'
+import { useUiStore } from '@renderer/stores/uiStore';
+import { useTranslation } from 'react-i18next';
+import type { DownloadHistoryEntry } from '../../../../shared/types';
+import { formatDuration } from '../../lib/formatters';
+import { getHistoryQueueAction } from '../../lib/historyEntryActions';
+import { getContentAfterItemActivation } from '../../lib/logSources';
+import { useHistoryStore } from '../../stores/historyStore';
+import type { ActionMenuItem } from '../ui/ActionMenu';
+import { InteractiveItemPanel } from '../ui/InteractiveItemPanel';
+import type { ThumbnailAction } from '../ui/Thumbnail';
 
 export function HistoryPanel(): React.JSX.Element {
-  const { t } = useTranslation()
-  const entries = useHistoryStore((state) => state.entries)
-  const remove = useHistoryStore((state) => state.remove)
-  const removeMany = useHistoryStore((state) => state.removeMany)
-  const clear = useHistoryStore((state) => state.clear)
-  const requeue = useHistoryStore((state) => state.requeue)
-  const openMedia = useHistoryStore((state) => state.openMedia)
-  const openFolder = useHistoryStore((state) => state.openFolder)
-  const copySource = useHistoryStore((state) => state.copySource)
-  const activeExportTarget = useUiStore((state) => state.activeExportTarget)
-  const activeContent = useUiStore((state) => state.activeContent)
-  const setActiveExportTarget = useUiStore((state) => state.setActiveExportTarget)
-  const setActiveContent = useUiStore((state) => state.setActiveContent)
-  const closeMediaPanel = useUiStore((state) => state.closeMediaPanel)
+  const { t } = useTranslation();
+  const entries = useHistoryStore((state) => state.entries);
+  const remove = useHistoryStore((state) => state.remove);
+  const removeMany = useHistoryStore((state) => state.removeMany);
+  const clear = useHistoryStore((state) => state.clear);
+  const requeue = useHistoryStore((state) => state.requeue);
+  const openMedia = useHistoryStore((state) => state.openMedia);
+  const openFolder = useHistoryStore((state) => state.openFolder);
+  const copySource = useHistoryStore((state) => state.copySource);
+  const activeExportTarget = useUiStore((state) => state.activeExportTarget);
+  const activeContent = useUiStore((state) => state.activeContent);
+  const setActiveExportTarget = useUiStore((state) => state.setActiveExportTarget);
+  const setActiveContent = useUiStore((state) => state.setActiveContent);
+  const closeMediaPanel = useUiStore((state) => state.closeMediaPanel);
 
-  const getActions = (entry: DownloadHistoryEntry): ActionMenuItem[] => [
-    {
-      id: 'open',
-      label: t('history.actions.openMedia'),
-      icon: 'video',
-      disabled: !entry.outputPath,
-      onSelect: () => void openMedia(entry.id)
-    },
-    {
-      id: 'open-folder',
-      label: t('history.actions.openFolder'),
-      icon: 'folderOpen',
-      disabled: !entry.outputPath,
-      onSelect: () => void openFolder(entry.id)
-    },
-    {
-      id: 'requeue',
-      label: t('history.actions.requeue'),
-      icon: 'add',
-      onSelect: () => void requeue(entry.id)
-    },
-    {
-      id: 'copy-source',
-      label: t('history.actions.copyUrl'),
-      icon: 'copy',
-      onSelect: () => void copySource(entry.id)
-    },
-    {
-      id: 'remove',
-      label: t('queue.actions.remove'),
-      icon: 'trash',
-      danger: true,
-      onSelect: () => void remove(entry.id)
-    }
-  ]
+  const getActions = (entry: DownloadHistoryEntry): ActionMenuItem[] => {
+    const queueAction = getHistoryQueueAction(entry.status);
+
+    return [
+      {
+        id: 'open',
+        label: t('history.actions.openMedia'),
+        icon: 'video',
+        disabled: !entry.outputPath,
+        onSelect: () => void openMedia(entry.id)
+      },
+      {
+        id: 'open-folder',
+        label: t('history.actions.openFolder'),
+        icon: 'folderOpen',
+        disabled: !entry.outputPath,
+        onSelect: () => void openFolder(entry.id)
+      },
+      ...(queueAction
+        ? [
+            {
+              id: queueAction,
+              label:
+                queueAction === 'download'
+                  ? t('history.actions.download')
+                  : t('history.actions.requeue'),
+              icon: 'add',
+              onSelect: () => void requeue(entry.id)
+            } satisfies ActionMenuItem
+          ]
+        : []),
+      {
+        id: 'copy-source',
+        label: t('history.actions.copyUrl'),
+        icon: 'copy',
+        onSelect: () => void copySource(entry.id)
+      },
+      {
+        id: 'remove',
+        label: t('queue.actions.remove'),
+        icon: 'trash',
+        danger: true,
+        onSelect: () => void remove(entry.id)
+      }
+    ];
+  };
 
   const getThumbnailActions = (entry: DownloadHistoryEntry): ThumbnailAction[] => [
     {
@@ -83,11 +95,11 @@ export function HistoryPanel(): React.JSX.Element {
       icon: 'trash',
       feedbackLabel: t('thumbnail.removed'),
       onSelect: async () => {
-        await remove(entry.id)
-        return true
+        await remove(entry.id);
+        return true;
       }
     }
-  ]
+  ];
 
   return (
     <InteractiveItemPanel
@@ -110,13 +122,13 @@ export function HistoryPanel(): React.JSX.Element {
       getActions={getActions}
       activeItemId={activeExportTarget?.type === 'history' ? activeExportTarget.entryId : undefined}
       onActivateItem={(entry) => {
-        setActiveExportTarget({ type: 'history', entryId: entry.id })
-        setActiveContent(getContentAfterItemActivation(activeContent))
+        setActiveExportTarget({ type: 'history', entryId: entry.id });
+        setActiveContent(getContentAfterItemActivation(activeContent));
       }}
       onDeleteSelected={(entryIds) => void removeMany(entryIds)}
       onClearSelection={() => {
         if (activeExportTarget?.type === 'history') {
-          setActiveExportTarget(null)
+          setActiveExportTarget(null);
         }
       }}
       onClear={() => void clear()}
@@ -128,5 +140,5 @@ export function HistoryPanel(): React.JSX.Element {
       actionsLabel={(title) => t('actions.itemActions', { title })}
       menuLabel={t('history.itemActions')}
     />
-  )
+  );
 }

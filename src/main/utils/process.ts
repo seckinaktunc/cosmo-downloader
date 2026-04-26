@@ -1,18 +1,18 @@
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 
 export type SpawnCaptureResult = {
-  stdout: string
-  stderr: string
-  exitCode: number | null
-}
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+};
 
 export function spawnProcess(
   command: string,
   args: string[],
   options?: {
-    cwd?: string
-    env?: NodeJS.ProcessEnv
-    detached?: boolean
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    detached?: boolean;
   }
 ): ChildProcessWithoutNullStreams {
   return spawn(command, args, {
@@ -20,13 +20,13 @@ export function spawnProcess(
     env: { ...process.env, ...options?.env },
     detached: options?.detached,
     windowsHide: true
-  })
+  });
 }
 
 export type ProcessTreeKillCommand = {
-  command: string
-  args: string[]
-}
+  command: string;
+  args: string[];
+};
 
 export function getProcessTreeKillCommand(
   platform: NodeJS.Platform,
@@ -36,37 +36,37 @@ export function getProcessTreeKillCommand(
     return {
       command: 'taskkill',
       args: ['/pid', String(pid), '/t', '/f']
-    }
+    };
   }
 
-  return null
+  return null;
 }
 
 export function killProcessTree(child: ChildProcessWithoutNullStreams): void {
-  const pid = child.pid
+  const pid = child.pid;
   if (pid == null) {
-    child.kill('SIGTERM')
-    return
+    child.kill('SIGTERM');
+    return;
   }
 
-  const command = getProcessTreeKillCommand(process.platform, pid)
+  const command = getProcessTreeKillCommand(process.platform, pid);
   if (command) {
-    const killer = spawn(command.command, command.args, { windowsHide: true })
+    const killer = spawn(command.command, command.args, { windowsHide: true });
     killer.on('error', () => {
-      child.kill('SIGTERM')
-    })
+      child.kill('SIGTERM');
+    });
     killer.on('close', (exitCode) => {
       if (exitCode !== 0) {
-        child.kill('SIGTERM')
+        child.kill('SIGTERM');
       }
-    })
-    return
+    });
+    return;
   }
 
   try {
-    process.kill(-pid, 'SIGTERM')
+    process.kill(-pid, 'SIGTERM');
   } catch {
-    child.kill('SIGTERM')
+    child.kill('SIGTERM');
   }
 }
 
@@ -74,9 +74,11 @@ export function captureProcess(
   command: string,
   args: string[],
   options?: {
-    cwd?: string
-    env?: NodeJS.ProcessEnv
-    signal?: AbortSignal
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    signal?: AbortSignal;
+    onStdout?: (chunk: string) => void;
+    onStderr?: (chunk: string) => void;
   }
 ): Promise<SpawnCaptureResult> {
   return new Promise((resolve, reject) => {
@@ -85,21 +87,23 @@ export function captureProcess(
       env: { ...process.env, ...options?.env },
       windowsHide: true,
       signal: options?.signal
-    })
-    let stdout = ''
-    let stderr = ''
+    });
+    let stdout = '';
+    let stderr = '';
 
-    child.stdout.setEncoding('utf8')
-    child.stderr.setEncoding('utf8')
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => {
-      stdout += chunk
-    })
+      stdout += chunk;
+      options?.onStdout?.(chunk);
+    });
     child.stderr.on('data', (chunk: string) => {
-      stderr += chunk
-    })
-    child.on('error', reject)
+      stderr += chunk;
+      options?.onStderr?.(chunk);
+    });
+    child.on('error', reject);
     child.on('close', (exitCode) => {
-      resolve({ stdout, stderr, exitCode })
-    })
-  })
+      resolve({ stdout, stderr, exitCode });
+    });
+  });
 }

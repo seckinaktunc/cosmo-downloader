@@ -124,15 +124,16 @@
   "logs": {
     "title": "Logs",
     "empty": "No logs",
-    "emptyDetail": "Download logs will appear here as new attempts start.",
+    "emptyDetail": "Fetch and download logs will appear here as new attempts start.",
     "emptyLog": "Log file is empty.",
-    "unknownDownload": "Unknown download",
+    "unknownDownload": "Unknown media",
     "noSelection": "No log selected",
-    "noSelectionDetail": "Select a queue or history item with a log.",
+    "noSelectionDetail": "Select a queue or history item with a log, or start a new fetch.",
     "truncated": "Showing the most recent 256 KB. Copy actions include only the visible log text.",
     "sources": {
       "history": "History",
-      "queue": "Queue"
+      "queue": "Queue",
+      "preview": "Preview"
     },
     "actions": {
       "openFolder": "Open Folder",
@@ -187,26 +188,32 @@
     "status": {
       "active": "Active",
       "activePercent": "Active {{percent}}",
+      "started": "Started",
       "pending": "Pending",
       "paused": "Paused",
       "completed": "Completed",
       "failed": "Failed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "fetched": "Fetched",
+      "fetch_failed": "Fetch Failed"
     }
   },
   "history": {
-    "title": "Download History",
-    "empty": "No downloads",
-    "itemCount": "{{count}} downloaded item(s)",
+    "title": "History",
+    "empty": "No history yet",
+    "itemCount": "{{count}} history item(s)",
     "itemActions": "History item actions",
     "actions": {
       "open": "Open",
       "openMedia": "Open Media",
       "openFolder": "Open Folder",
+      "download": "Download",
       "requeue": "Requeue",
       "copyUrl": "Copy URL"
     },
     "status": {
+      "fetched": "Fetched",
+      "fetch_failed": "Fetch Failed",
       "started": "Started",
       "completed": "Completed",
       "failed": "Failed",

@@ -1,5 +1,5 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_CHANNELS } from '../shared/ipc'
+import { contextBridge, ipcRenderer } from 'electron';
+import { IPC_CHANNELS } from '../shared/ipc';
 import type {
   AppEnvironment,
   AppSettings,
@@ -17,6 +17,7 @@ import type {
   HistoryBulkRequest,
   HistoryItemRequest,
   IpcResult,
+  MetadataFetchLifecycleEvent,
   OpenPathRequest,
   QueueAddRequest,
   QueueBulkRequest,
@@ -26,114 +27,117 @@ import type {
   QueueMoveRequest,
   QueueReorderRequest,
   QueueSnapshot,
+  RecordFetchHistoryRequest,
   SettingsUpdate,
   ThumbnailRequest,
   UpdateState,
   VideoMetadata,
   WindowAction
-} from '../shared/types'
+} from '../shared/types';
 
-type Unsubscribe = () => void
+type Unsubscribe = () => void;
 
 export type CosmoApi = {
   app: {
-    getEnvironment: () => Promise<IpcResult<AppEnvironment>>
-  }
+    getEnvironment: () => Promise<IpcResult<AppEnvironment>>;
+  };
   settings: {
-    get: () => Promise<IpcResult<AppSettings>>
-    update: (update: SettingsUpdate) => Promise<IpcResult<AppSettings>>
-    chooseDownloadDirectory: () => Promise<IpcResult<string | null>>
+    get: () => Promise<IpcResult<AppSettings>>;
+    update: (update: SettingsUpdate) => Promise<IpcResult<AppSettings>>;
+    chooseDownloadDirectory: () => Promise<IpcResult<string | null>>;
     chooseOutputPath: (
       request: ChooseOutputPathRequest
-    ) => Promise<IpcResult<ChooseOutputPathResult | null>>
-  }
+    ) => Promise<IpcResult<ChooseOutputPathResult | null>>;
+  };
   clipboard: {
-    readText: () => Promise<IpcResult<string>>
-    writeText: (text: string) => Promise<IpcResult<null>>
-  }
+    readText: () => Promise<IpcResult<string>>;
+    writeText: (text: string) => Promise<IpcResult<null>>;
+  };
   thumbnail: {
-    download: (request: ThumbnailRequest) => Promise<IpcResult<string | null>>
-    copyImage: (request: ThumbnailRequest) => Promise<IpcResult<null>>
-    openExternal: (request: ThumbnailRequest) => Promise<IpcResult<null>>
-  }
+    download: (request: ThumbnailRequest) => Promise<IpcResult<string | null>>;
+    copyImage: (request: ThumbnailRequest) => Promise<IpcResult<null>>;
+    openExternal: (request: ThumbnailRequest) => Promise<IpcResult<null>>;
+  };
   shell: {
-    openPath: (request: OpenPathRequest) => Promise<IpcResult<null>>
-  }
+    openPath: (request: OpenPathRequest) => Promise<IpcResult<null>>;
+  };
   system: {
-    detectCookieBrowsers: () => Promise<IpcResult<CookieBrowserOption[]>>
-  }
+    detectCookieBrowsers: () => Promise<IpcResult<CookieBrowserOption[]>>;
+  };
   video: {
-    fetchMetadata: (request: FetchMetadataRequest) => Promise<IpcResult<VideoMetadata>>
-    cancelMetadata: (request: CancelMetadataRequest) => Promise<IpcResult<null>>
-  }
+    fetchMetadata: (request: FetchMetadataRequest) => Promise<IpcResult<VideoMetadata>>;
+    cancelMetadata: (request: CancelMetadataRequest) => Promise<IpcResult<null>>;
+    onFetchLifecycle: (listener: (event: MetadataFetchLifecycleEvent) => void) => Unsubscribe;
+  };
   download: {
-    start: (request: DownloadStartRequest) => Promise<IpcResult<DownloadProgress>>
-    cancel: () => Promise<IpcResult<null>>
-    onProgress: (listener: (progress: DownloadProgress) => void) => Unsubscribe
-    onState: (listener: (progress: DownloadProgress) => void) => Unsubscribe
-  }
+    start: (request: DownloadStartRequest) => Promise<IpcResult<DownloadProgress>>;
+    cancel: () => Promise<IpcResult<null>>;
+    onProgress: (listener: (progress: DownloadProgress) => void) => Unsubscribe;
+    onState: (listener: (progress: DownloadProgress) => void) => Unsubscribe;
+  };
   logs: {
-    read: (request: DownloadLogReadRequest) => Promise<IpcResult<DownloadLogReadResult>>
-    onAppend: (listener: (append: DownloadLogAppend) => void) => Unsubscribe
-  }
+    read: (request: DownloadLogReadRequest) => Promise<IpcResult<DownloadLogReadResult>>;
+    onAppend: (listener: (append: DownloadLogAppend) => void) => Unsubscribe;
+  };
   queue: {
-    get: () => Promise<IpcResult<QueueSnapshot>>
-    add: (request: QueueAddRequest) => Promise<IpcResult<QueueSnapshot>>
-    start: () => Promise<IpcResult<QueueSnapshot>>
-    pause: () => Promise<IpcResult<QueueSnapshot>>
-    resume: () => Promise<IpcResult<QueueSnapshot>>
-    cancelActive: () => Promise<IpcResult<QueueSnapshot>>
-    remove: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>
-    removeMany: (request: QueueBulkRequest) => Promise<IpcResult<QueueSnapshot>>
-    reorder: (request: QueueReorderRequest) => Promise<IpcResult<QueueSnapshot>>
-    move: (request: QueueMoveRequest) => Promise<IpcResult<QueueSnapshot>>
-    moveMany: (request: QueueMoveManyRequest) => Promise<IpcResult<QueueSnapshot>>
+    get: () => Promise<IpcResult<QueueSnapshot>>;
+    add: (request: QueueAddRequest) => Promise<IpcResult<QueueSnapshot>>;
+    start: () => Promise<IpcResult<QueueSnapshot>>;
+    pause: () => Promise<IpcResult<QueueSnapshot>>;
+    resume: () => Promise<IpcResult<QueueSnapshot>>;
+    cancelActive: () => Promise<IpcResult<QueueSnapshot>>;
+    remove: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>;
+    removeMany: (request: QueueBulkRequest) => Promise<IpcResult<QueueSnapshot>>;
+    reorder: (request: QueueReorderRequest) => Promise<IpcResult<QueueSnapshot>>;
+    move: (request: QueueMoveRequest) => Promise<IpcResult<QueueSnapshot>>;
+    moveMany: (request: QueueMoveManyRequest) => Promise<IpcResult<QueueSnapshot>>;
     updateExportSettings: (
       request: QueueExportSettingsUpdateRequest
-    ) => Promise<IpcResult<QueueSnapshot>>
-    retry: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>
-    clear: () => Promise<IpcResult<QueueSnapshot>>
-    onSnapshot: (listener: (snapshot: QueueSnapshot) => void) => Unsubscribe
-  }
+    ) => Promise<IpcResult<QueueSnapshot>>;
+    retry: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>;
+    clear: () => Promise<IpcResult<QueueSnapshot>>;
+    onSnapshot: (listener: (snapshot: QueueSnapshot) => void) => Unsubscribe;
+  };
   history: {
-    get: () => Promise<IpcResult<DownloadHistoryEntry[]>>
-    remove: (request: HistoryItemRequest) => Promise<IpcResult<DownloadHistoryEntry[]>>
-    removeMany: (request: HistoryBulkRequest) => Promise<IpcResult<DownloadHistoryEntry[]>>
-    clear: () => Promise<IpcResult<DownloadHistoryEntry[]>>
-    requeue: (request: HistoryItemRequest) => Promise<IpcResult<QueueSnapshot>>
-    openOutput: (request: HistoryItemRequest) => Promise<IpcResult<null>>
-    openMedia: (request: HistoryItemRequest) => Promise<IpcResult<null>>
-    openFolder: (request: HistoryItemRequest) => Promise<IpcResult<null>>
-    copySource: (request: HistoryItemRequest) => Promise<IpcResult<null>>
-    onChanged: (listener: (entries: DownloadHistoryEntry[]) => void) => Unsubscribe
-  }
+    get: () => Promise<IpcResult<DownloadHistoryEntry[]>>;
+    remove: (request: HistoryItemRequest) => Promise<IpcResult<DownloadHistoryEntry[]>>;
+    removeMany: (request: HistoryBulkRequest) => Promise<IpcResult<DownloadHistoryEntry[]>>;
+    clear: () => Promise<IpcResult<DownloadHistoryEntry[]>>;
+    recordFetch: (request: RecordFetchHistoryRequest) => Promise<IpcResult<DownloadHistoryEntry>>;
+    requeue: (request: HistoryItemRequest) => Promise<IpcResult<QueueSnapshot>>;
+    openOutput: (request: HistoryItemRequest) => Promise<IpcResult<null>>;
+    openMedia: (request: HistoryItemRequest) => Promise<IpcResult<null>>;
+    openFolder: (request: HistoryItemRequest) => Promise<IpcResult<null>>;
+    copySource: (request: HistoryItemRequest) => Promise<IpcResult<null>>;
+    onChanged: (listener: (entries: DownloadHistoryEntry[]) => void) => Unsubscribe;
+  };
   updates: {
-    getState: () => Promise<IpcResult<UpdateState>>
-    checkNow: () => Promise<IpcResult<UpdateState>>
-    download: () => Promise<IpcResult<UpdateState>>
-    install: () => Promise<IpcResult<UpdateState>>
-    onState: (listener: (state: UpdateState) => void) => Unsubscribe
-  }
+    getState: () => Promise<IpcResult<UpdateState>>;
+    checkNow: () => Promise<IpcResult<UpdateState>>;
+    download: () => Promise<IpcResult<UpdateState>>;
+    install: () => Promise<IpcResult<UpdateState>>;
+    onState: (listener: (state: UpdateState) => void) => Unsubscribe;
+  };
   window: {
-    minimize: () => Promise<IpcResult<null>>
-    toggleMaximize: () => Promise<IpcResult<null>>
-    close: () => Promise<IpcResult<null>>
-    setAlwaysOnTop: (enabled: boolean) => Promise<IpcResult<null>>
-  }
-}
+    minimize: () => Promise<IpcResult<null>>;
+    toggleMaximize: () => Promise<IpcResult<null>>;
+    close: () => Promise<IpcResult<null>>;
+    setAlwaysOnTop: (enabled: boolean) => Promise<IpcResult<null>>;
+  };
+};
 
 function invoke<T>(channel: string, payload?: unknown): Promise<IpcResult<T>> {
-  return ipcRenderer.invoke(channel, payload) as Promise<IpcResult<T>>
+  return ipcRenderer.invoke(channel, payload) as Promise<IpcResult<T>>;
 }
 
 function subscribe<T>(channel: string, listener: (payload: T) => void): Unsubscribe {
-  const wrapped = (_event: Electron.IpcRendererEvent, payload: T): void => listener(payload)
-  ipcRenderer.on(channel, wrapped)
-  return () => ipcRenderer.removeListener(channel, wrapped)
+  const wrapped = (_event: Electron.IpcRendererEvent, payload: T): void => listener(payload);
+  ipcRenderer.on(channel, wrapped);
+  return () => ipcRenderer.removeListener(channel, wrapped);
 }
 
 function windowAction(action: WindowAction): Promise<IpcResult<null>> {
-  return invoke<null>(IPC_CHANNELS.window.action, action)
+  return invoke<null>(IPC_CHANNELS.window.action, action);
 }
 
 const api: CosmoApi = {
@@ -166,7 +170,9 @@ const api: CosmoApi = {
   },
   video: {
     fetchMetadata: (request) => invoke<VideoMetadata>(IPC_CHANNELS.video.fetchMetadata, request),
-    cancelMetadata: (request) => invoke<null>(IPC_CHANNELS.video.cancelMetadata, request)
+    cancelMetadata: (request) => invoke<null>(IPC_CHANNELS.video.cancelMetadata, request),
+    onFetchLifecycle: (listener) =>
+      subscribe<MetadataFetchLifecycleEvent>(IPC_CHANNELS.video.fetchLifecycle, listener)
   },
   download: {
     start: (request) => invoke<DownloadProgress>(IPC_CHANNELS.download.start, request),
@@ -202,6 +208,8 @@ const api: CosmoApi = {
     removeMany: (request) =>
       invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.removeMany, request),
     clear: () => invoke<DownloadHistoryEntry[]>(IPC_CHANNELS.history.clear),
+    recordFetch: (request) =>
+      invoke<DownloadHistoryEntry>(IPC_CHANNELS.history.recordFetch, request),
     requeue: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.history.requeue, request),
     openOutput: (request) => invoke<null>(IPC_CHANNELS.history.openOutput, request),
     openMedia: (request) => invoke<null>(IPC_CHANNELS.history.openMedia, request),
@@ -223,10 +231,10 @@ const api: CosmoApi = {
     close: () => windowAction('close'),
     setAlwaysOnTop: (enabled) => invoke<null>(IPC_CHANNELS.window.setAlwaysOnTop, enabled)
   }
-}
+};
 
 if (process.contextIsolated) {
-  contextBridge.exposeInMainWorld('cosmo', api)
+  contextBridge.exposeInMainWorld('cosmo', api);
 } else {
-  ;(window as Window & typeof globalThis & { cosmo: CosmoApi }).cosmo = api
+  (window as Window & typeof globalThis & { cosmo: CosmoApi }).cosmo = api;
 }

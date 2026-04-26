@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { parseMetadata } from '@main/services/videoMetadataService'
+import { describe, expect, it } from 'vitest';
+import { parseMetadata } from '@main/services/videoMetadataService';
 
 describe('parseMetadata', () => {
   it('prefers uploader URL metadata for owner profile links', () => {
@@ -9,10 +9,10 @@ describe('parseMetadata', () => {
       uploader_url: 'https://example.com/@owner',
       channel_url: 'https://example.com/channel/owner',
       formats: []
-    })
+    });
 
-    expect(metadata.uploaderUrl).toBe('https://example.com/@owner')
-  })
+    expect(metadata.uploaderUrl).toBe('https://example.com/@owner');
+  });
 
   it('falls back to channel URL when uploader URL is unavailable', () => {
     const metadata = parseMetadata('request', 'https://example.com/video', {
@@ -20,8 +20,8 @@ describe('parseMetadata', () => {
       channel: 'Channel',
       channel_url: 'https://example.com/channel/owner',
       formats: []
-    })
+    });
 
-    expect(metadata.uploaderUrl).toBe('https://example.com/channel/owner')
-  })
-})
+    expect(metadata.uploaderUrl).toBe('https://example.com/channel/owner');
+  });
+});

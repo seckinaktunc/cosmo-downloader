@@ -1,27 +1,29 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import type { DownloadLogReadResult } from '../../../../shared/types'
-import { getBottomScrollState } from '../../lib/bottomScroll'
-import { appendLiveLogLines, LOG_TAIL_BYTES } from '../../lib/logContent'
-import { resolveDisplayedLogSource } from '../../lib/logSources'
-import { useHistoryStore } from '../../stores/historyStore'
-import { useQueueStore } from '../../stores/queueStore'
-import { useUiStore } from '../../stores/uiStore'
-import { Button } from '../ui/Button'
-import Icon from '../miscellaneous/Icon'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { DownloadLogReadResult } from '../../../../shared/types';
+import { getBottomScrollState } from '../../lib/bottomScroll';
+import { appendLiveLogLines, LOG_TAIL_BYTES } from '../../lib/logContent';
+import { resolveDisplayedLogSource } from '../../lib/logSources';
+import { useHistoryStore } from '../../stores/historyStore';
+import { useQueueStore } from '../../stores/queueStore';
+import { useUiStore } from '../../stores/uiStore';
+import { useVideoStore } from '../../stores/videoStore';
+import { Button } from '../ui/Button';
+import Icon from '../miscellaneous/Icon';
 
 export function LogsPanel(): React.JSX.Element {
-  const { t } = useTranslation()
-  const queueItems = useQueueStore((state) => state.items)
-  const historyEntries = useHistoryStore((state) => state.entries)
-  const activeExportTarget = useUiStore((state) => state.activeExportTarget)
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  const [logResult, setLogResult] = useState<DownloadLogReadResult | null>(null)
-  const [loadingLogPath, setLoadingLogPath] = useState<string | null>(null)
-  const [error, setError] = useState<{ logPath: string; message: string } | null>(null)
-  const [autoFollow, setAutoFollow] = useState(true)
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
+  const { t } = useTranslation();
+  const queueItems = useQueueStore((state) => state.items);
+  const historyEntries = useHistoryStore((state) => state.entries);
+  const activeExportTarget = useUiStore((state) => state.activeExportTarget);
+  const previewFetchLog = useVideoStore((state) => state.activeFetchLog);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [logResult, setLogResult] = useState<DownloadLogReadResult | null>(null);
+  const [loadingLogPath, setLoadingLogPath] = useState<string | null>(null);
+  const [error, setError] = useState<{ logPath: string; message: string } | null>(null);
+  const [autoFollow, setAutoFollow] = useState(true);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
   const selectedSource = useMemo(
     () =>
@@ -29,165 +31,166 @@ export function LogsPanel(): React.JSX.Element {
         activeExportTarget,
         queueItems,
         historyEntries,
+        previewFetchLog,
         titleFallback: t('logs.unknownDownload')
       }),
-    [activeExportTarget, historyEntries, queueItems, t]
-  )
-  const selectedLogPath = selectedSource?.logPath ?? null
-  const selectedLogResult = logResult?.logPath === selectedLogPath ? logResult : null
-  const loading = loadingLogPath === selectedLogPath
-  const errorMessage = error?.logPath === selectedLogPath ? error.message : null
+    [activeExportTarget, historyEntries, previewFetchLog, queueItems, t]
+  );
+  const selectedLogPath = selectedSource?.logPath ?? null;
+  const selectedLogResult = logResult?.logPath === selectedLogPath ? logResult : null;
+  const loading = loadingLogPath === selectedLogPath;
+  const errorMessage = error?.logPath === selectedLogPath ? error.message : null;
 
   const updateScrollState = useCallback((): void => {
-    const element = scrollRef.current
+    const element = scrollRef.current;
     if (!element) {
-      return
+      return;
     }
 
-    const scrollState = getBottomScrollState(element)
-    setAutoFollow(scrollState.nearBottom)
-    setShowScrollToBottom(scrollState.showScrollToBottom)
-  }, [])
+    const scrollState = getBottomScrollState(element);
+    setAutoFollow(scrollState.nearBottom);
+    setShowScrollToBottom(scrollState.showScrollToBottom);
+  }, []);
 
   useEffect(() => {
-    setAutoFollow(true)
-    setShowScrollToBottom(false)
-    setCopyFeedback(null)
-  }, [selectedLogPath])
+    setAutoFollow(true);
+    setShowScrollToBottom(false);
+    setCopyFeedback(null);
+  }, [selectedLogPath]);
 
   useEffect(() => {
     if (!copyFeedback) {
-      return undefined
+      return undefined;
     }
 
-    const timer = window.setTimeout(() => setCopyFeedback(null), 1500)
-    return () => window.clearTimeout(timer)
-  }, [copyFeedback])
+    const timer = window.setTimeout(() => setCopyFeedback(null), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copyFeedback]);
 
   useEffect(() => {
     if (!selectedLogPath) {
-      setLogResult(null)
-      setLoadingLogPath(null)
-      setError(null)
-      return undefined
+      setLogResult(null);
+      setLoadingLogPath(null);
+      setError(null);
+      return undefined;
     }
 
-    let cancelled = false
+    let cancelled = false;
     const loadLog = async (): Promise<void> => {
-      setLoadingLogPath(selectedLogPath)
-      setError(null)
+      setLoadingLogPath(selectedLogPath);
+      setError(null);
 
       try {
         const result = await window.cosmo.logs.read({
           logPath: selectedLogPath,
           maxBytes: LOG_TAIL_BYTES
-        })
+        });
         if (cancelled) {
-          return
+          return;
         }
 
         if (result.ok) {
-          setLogResult(result.data)
+          setLogResult(result.data);
         } else {
-          setLogResult(null)
-          setError({ logPath: selectedLogPath, message: result.error.message })
+          setLogResult(null);
+          setError({ logPath: selectedLogPath, message: result.error.message });
         }
       } catch (readError) {
         if (cancelled) {
-          return
+          return;
         }
 
-        setLogResult(null)
+        setLogResult(null);
         setError({
           logPath: selectedLogPath,
           message: readError instanceof Error ? readError.message : String(readError)
-        })
+        });
       } finally {
         if (!cancelled) {
-          setLoadingLogPath((current) => (current === selectedLogPath ? null : current))
+          setLoadingLogPath((current) => (current === selectedLogPath ? null : current));
         }
       }
-    }
+    };
 
-    void loadLog()
+    void loadLog();
 
     return () => {
-      cancelled = true
-    }
-  }, [selectedLogPath])
+      cancelled = true;
+    };
+  }, [selectedLogPath]);
 
   useEffect(() => {
     return window.cosmo.logs.onAppend((append) => {
       if (append.logPath !== selectedLogPath) {
-        return
+        return;
       }
 
-      setLogResult((current) => appendLiveLogLines(current, append, selectedLogPath))
-    })
-  }, [selectedLogPath])
+      setLogResult((current) => appendLiveLogLines(current, append, selectedLogPath));
+    });
+  }, [selectedLogPath]);
 
   useEffect(() => {
-    const element = scrollRef.current
+    const element = scrollRef.current;
     if (!element) {
-      return
+      return;
     }
 
     const frame = requestAnimationFrame(() => {
       if (autoFollow) {
-        element.scrollTop = element.scrollHeight
+        element.scrollTop = element.scrollHeight;
       }
-      updateScrollState()
-    })
+      updateScrollState();
+    });
 
-    return () => cancelAnimationFrame(frame)
-  }, [autoFollow, loading, selectedLogResult?.content, updateScrollState])
+    return () => cancelAnimationFrame(frame);
+  }, [autoFollow, loading, selectedLogResult?.content, updateScrollState]);
 
   const revealLog = async (): Promise<void> => {
     if (!selectedLogPath) {
-      return
+      return;
     }
 
-    const result = await window.cosmo.shell.openPath({ path: selectedLogPath })
+    const result = await window.cosmo.shell.openPath({ path: selectedLogPath });
     if (!result.ok) {
-      setError({ logPath: selectedLogPath, message: result.error.message })
+      setError({ logPath: selectedLogPath, message: result.error.message });
     }
-  }
+  };
 
   const copyText = async (text: string): Promise<void> => {
-    setCopyFeedback(null)
+    setCopyFeedback(null);
 
     try {
-      const result = await window.cosmo.clipboard.writeText(text)
+      const result = await window.cosmo.clipboard.writeText(text);
       if (result.ok) {
-        setCopyFeedback(t('logs.feedback.copied'))
-        return
+        setCopyFeedback(t('logs.feedback.copied'));
+        return;
       }
 
-      setError({ logPath: selectedLogPath ?? '', message: result.error.message })
-      setCopyFeedback(t('logs.feedback.copyFailed'))
+      setError({ logPath: selectedLogPath ?? '', message: result.error.message });
+      setCopyFeedback(t('logs.feedback.copyFailed'));
     } catch (copyError) {
       setError({
         logPath: selectedLogPath ?? '',
         message: copyError instanceof Error ? copyError.message : String(copyError)
-      })
-      setCopyFeedback(t('logs.feedback.copyFailed'))
+      });
+      setCopyFeedback(t('logs.feedback.copyFailed'));
     }
-  }
+  };
 
   const handleScroll = (): void => {
-    updateScrollState()
-  }
+    updateScrollState();
+  };
 
   const scrollToBottom = (): void => {
-    const element = scrollRef.current
+    const element = scrollRef.current;
     if (!element) {
-      return
+      return;
     }
 
-    element.scrollTop = element.scrollHeight
-    setAutoFollow(true)
-    setShowScrollToBottom(false)
-  }
+    element.scrollTop = element.scrollHeight;
+    setAutoFollow(true);
+    setShowScrollToBottom(false);
+  };
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[1fr_auto] divide-y divide-white/10 text-white">
@@ -262,5 +265,5 @@ export function LogsPanel(): React.JSX.Element {
         </div>
       </div>
     </section>
-  )
+  );
 }
