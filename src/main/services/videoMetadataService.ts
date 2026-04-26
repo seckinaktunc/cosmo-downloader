@@ -297,10 +297,12 @@ export class VideoMetadataService {
       emitFetchLifecycle('started');
       const args = [
         '--ignore-config',
+        '--no-js-runtimes',
+        '--js-runtimes',
+        `deno:${binaries.deno}`,
         '--dump-single-json',
         '--skip-download',
-        '--no-playlist',
-        '--no-warnings'
+        '--no-playlist'
       ];
 
       if (settings.cookiesBrowser !== 'none') {

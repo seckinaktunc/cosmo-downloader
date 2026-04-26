@@ -130,6 +130,10 @@ function executableName(baseName: string): string {
   return process.platform === 'win32' ? `${baseName}.exe` : baseName;
 }
 
+function getYtDlpJsRuntimeArg(denoPath: string): string {
+  return `deno:${denoPath}`;
+}
+
 function requireFfprobePath(binaries: BinaryPaths): string {
   if (binaries.ffprobe) {
     return binaries.ffprobe;
@@ -297,16 +301,21 @@ export function buildFfmpegStreamCopyTrimArgs(
 export function buildYtDlpArgs({
   tempDir,
   ffmpegDirectory,
+  denoPath,
   request,
   plan
 }: {
   tempDir: string;
   ffmpegDirectory: string;
+  denoPath: string;
   request: DownloadStartRequest;
   plan: ReturnType<typeof createDownloadPlan>;
 }): string[] {
   const args = [
     '--ignore-config',
+    '--no-js-runtimes',
+    '--js-runtimes',
+    getYtDlpJsRuntimeArg(denoPath),
     '--no-playlist',
     '--newline',
     '--progress',
@@ -462,6 +471,7 @@ export class DownloadService {
         job,
         binaries.ytdlp,
         dirname(binaries.ffmpeg),
+        binaries.deno,
         request,
         plan
       );
@@ -614,12 +624,14 @@ export class DownloadService {
     job: ActiveJob,
     ytdlpPath: string,
     ffmpegDirectory: string,
+    denoPath: string,
     request: DownloadStartRequest,
     plan: ReturnType<typeof createDownloadPlan>
   ): Promise<string> {
     const args = buildYtDlpArgs({
       tempDir: job.tempDir,
       ffmpegDirectory,
+      denoPath,
       request,
       plan
     });

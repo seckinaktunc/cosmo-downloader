@@ -170,6 +170,7 @@ describe('buildYtDlpArgs', () => {
     const args = buildYtDlpArgs({
       tempDir: '/tmp/cosmo',
       ffmpegDirectory: '/bin',
+      denoPath: '/bin/deno',
       request: trimmedRequest,
       plan: createDownloadPlan(trimmedRequest.metadata, trimmedRequest.exportSettings)
     });
@@ -177,6 +178,9 @@ describe('buildYtDlpArgs', () => {
     expect(args).not.toContain('--download-sections');
     expect(args).not.toContain('*0:10-0:30');
     expect(args[0]).toBe('--ignore-config');
+    expect(args).toEqual(
+      expect.arrayContaining(['--no-js-runtimes', '--js-runtimes', 'deno:/bin/deno'])
+    );
   });
 
   it('omits download sections when trim covers the full duration', () => {
@@ -184,6 +188,7 @@ describe('buildYtDlpArgs', () => {
     const args = buildYtDlpArgs({
       tempDir: '/tmp/cosmo',
       ffmpegDirectory: '/bin',
+      denoPath: '/bin/deno',
       request: untrimmedRequest,
       plan: createDownloadPlan(untrimmedRequest.metadata, untrimmedRequest.exportSettings)
     });
@@ -195,6 +200,7 @@ describe('buildYtDlpArgs', () => {
     const args = buildYtDlpArgs({
       tempDir: '/tmp/cosmo',
       ffmpegDirectory: '/bin',
+      denoPath: '/bin/deno',
       request: {
         ...request({}),
         settings: {
@@ -208,6 +214,9 @@ describe('buildYtDlpArgs', () => {
     expect(args).toEqual(
       expect.arrayContaining([
         '--ignore-config',
+        '--no-js-runtimes',
+        '--js-runtimes',
+        'deno:/bin/deno',
         '--ffmpeg-location',
         '/bin',
         '-f',
@@ -227,6 +236,7 @@ describe('buildYtDlpArgs', () => {
     const args = buildYtDlpArgs({
       tempDir: '/tmp/cosmo',
       ffmpegDirectory: '/bin',
+      denoPath: '/bin/deno',
       request: trimmedRequest,
       plan: createDownloadPlan(trimmedRequest.metadata, trimmedRequest.exportSettings)
     });

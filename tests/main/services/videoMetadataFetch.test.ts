@@ -67,7 +67,7 @@ describe('VideoMetadataService fetch logging', () => {
 
     const service = new VideoMetadataService(
       {
-        getPaths: () => ({ ytdlp: '/bin/yt-dlp' })
+        getPaths: () => ({ ytdlp: '/bin/yt-dlp', deno: '/bin/deno' })
       } as never,
       directory
     );
@@ -79,10 +79,12 @@ describe('VideoMetadataService fetch logging', () => {
       '/bin/yt-dlp',
       [
         '--ignore-config',
+        '--no-js-runtimes',
+        '--js-runtimes',
+        'deno:/bin/deno',
         '--dump-single-json',
         '--skip-download',
         '--no-playlist',
-        '--no-warnings',
         'https://example.com/video'
       ],
       expect.objectContaining({
@@ -124,7 +126,7 @@ describe('VideoMetadataService fetch logging', () => {
 
     const service = new VideoMetadataService(
       {
-        getPaths: () => ({ ytdlp: '/bin/yt-dlp' })
+        getPaths: () => ({ ytdlp: '/bin/yt-dlp', deno: '/bin/deno' })
       } as never,
       directory
     );
@@ -158,7 +160,7 @@ describe('VideoMetadataService fetch logging', () => {
 
     const service = new VideoMetadataService(
       {
-        getPaths: () => ({ ytdlp: '/bin/yt-dlp' })
+        getPaths: () => ({ ytdlp: '/bin/yt-dlp', deno: '/bin/deno' })
       } as never,
       directory
     );
@@ -172,10 +174,12 @@ describe('VideoMetadataService fetch logging', () => {
       '/bin/yt-dlp',
       [
         '--ignore-config',
+        '--no-js-runtimes',
+        '--js-runtimes',
+        'deno:/bin/deno',
         '--dump-single-json',
         '--skip-download',
         '--no-playlist',
-        '--no-warnings',
         '--cookies-from-browser',
         'safari',
         'https://example.com/video'
