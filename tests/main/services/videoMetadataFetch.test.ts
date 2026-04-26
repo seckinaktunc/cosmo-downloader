@@ -75,6 +75,21 @@ describe('VideoMetadataService fetch logging', () => {
     const result = await service.fetch('request-1', 'https://example.com/video', settings);
 
     expect(result.ok).toBe(true);
+    expect(captureProcess).toHaveBeenCalledWith(
+      '/bin/yt-dlp',
+      [
+        '--ignore-config',
+        '--dump-single-json',
+        '--skip-download',
+        '--no-playlist',
+        '--no-warnings',
+        'https://example.com/video'
+      ],
+      expect.objectContaining({
+        onStdout: expect.any(Function),
+        onStderr: expect.any(Function)
+      })
+    );
     const logPath = join(directory, 'request-1.log');
     const logContent = readFileSync(logPath, 'utf8');
     expect(logContent).toContain('Fetch started');
@@ -129,6 +144,43 @@ describe('VideoMetadataService fetch logging', () => {
     expect(send).toHaveBeenCalledWith(
       IPC_CHANNELS.video.fetchLifecycle,
       expect.objectContaining({ requestId: 'request-2', state: 'failed', logPath })
+    );
+  });
+
+  it('still isolates fetches from external yt-dlp config when cookies are enabled', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-fetch-'));
+    tempDirs.push(directory);
+    vi.mocked(captureProcess).mockResolvedValueOnce({
+      stdout: '{"title":"Video","formats":[]}',
+      stderr: '',
+      exitCode: 0
+    });
+
+    const service = new VideoMetadataService(
+      {
+        getPaths: () => ({ ytdlp: '/bin/yt-dlp' })
+      } as never,
+      directory
+    );
+
+    await service.fetch('request-3', 'https://example.com/video', {
+      ...settings,
+      cookiesBrowser: 'safari'
+    });
+
+    expect(captureProcess).toHaveBeenCalledWith(
+      '/bin/yt-dlp',
+      [
+        '--ignore-config',
+        '--dump-single-json',
+        '--skip-download',
+        '--no-playlist',
+        '--no-warnings',
+        '--cookies-from-browser',
+        'safari',
+        'https://example.com/video'
+      ],
+      expect.any(Object)
     );
   });
 });

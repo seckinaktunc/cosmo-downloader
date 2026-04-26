@@ -295,7 +295,13 @@ export class VideoMetadataService {
         `[${now()}] Fetch started\nURL: ${normalizedUrl}\nLog: ${logPath}\n\n[${now()}] Stage: fetching_metadata\n[${now()}] Process: yt-dlp\n\n`
       );
       emitFetchLifecycle('started');
-      const args = ['--dump-single-json', '--skip-download', '--no-playlist', '--no-warnings'];
+      const args = [
+        '--ignore-config',
+        '--dump-single-json',
+        '--skip-download',
+        '--no-playlist',
+        '--no-warnings'
+      ];
 
       if (settings.cookiesBrowser !== 'none') {
         args.push('--cookies-from-browser', settings.cookiesBrowser);
