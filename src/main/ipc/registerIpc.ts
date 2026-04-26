@@ -192,6 +192,8 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.queue.cancelActive, () => queueService.cancelActive());
 
+  ipcMain.handle(IPC_CHANNELS.queue.skipActive, () => queueService.skipActive());
+
   ipcMain.handle(IPC_CHANNELS.queue.remove, (_event, request: QueueItemRequest) =>
     queueService.remove(request.itemId)
   );

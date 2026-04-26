@@ -1,70 +1,80 @@
-import { formatPercent } from '@renderer/lib/formatters'
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
-import { useTranslation } from 'react-i18next'
-import { DownloadHistoryStatus, QueueItem, QueueItemStatus } from '../../../../shared/types'
-import { cn } from '../../lib/utils'
-import Icon from '../miscellaneous/Icon'
-import { ActionMenu, type ActionMenuAnchor, type ActionMenuItem } from './ActionMenu'
-import { Button } from './Button'
-import { Thumbnail, type ThumbnailAction } from './Thumbnail'
+import { formatPercent } from '@renderer/lib/formatters';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DownloadHistoryStatus, QueueItem, QueueItemStatus } from '../../../../shared/types';
+import { cn } from '../../lib/utils';
+import Icon, { type IconName } from '../miscellaneous/Icon';
+import { ActionMenu, type ActionMenuAnchor, type ActionMenuItem } from './ActionMenu';
+import { Button } from './Button';
+import { Thumbnail, type ThumbnailAction } from './Thumbnail';
 
-const DRAG_THRESHOLD_PX = 6
-const AUTO_SCROLL_EDGE_PX = 48
-const AUTO_SCROLL_STEP_PX = 12
+const DRAG_THRESHOLD_PX = 6;
+const AUTO_SCROLL_EDGE_PX = 48;
+const AUTO_SCROLL_STEP_PX = 12;
 
 type DragState = {
-  itemId: string
-  itemIds: string[]
-  pointerId: number
-  startX: number
-  startY: number
-  originalIndex: number
-  targetIndex: number
-  dragging: boolean
-  cancelClick: boolean
-}
+  itemId: string;
+  itemIds: string[];
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originalIndex: number;
+  targetIndex: number;
+  dragging: boolean;
+  cancelClick: boolean;
+};
 
 type MenuState = {
-  itemId: string
-  anchor: ActionMenuAnchor
-}
+  itemId: string;
+  anchor: ActionMenuAnchor;
+};
 
-type ItemStatus = QueueItemStatus | DownloadHistoryStatus
+type ItemStatus = QueueItemStatus | DownloadHistoryStatus;
+
+type InteractiveItemTopRightAction = {
+  icon: IconName;
+  label: string;
+  onSelect: () => void | Promise<void>;
+};
 
 export type InteractiveItemPanelProps<TItem> = {
-  title: string
-  subtitle: string
-  items: TItem[]
-  getId: (item: TItem) => string
-  getStatus: (item: TItem) => ItemStatus
-  getTitle: (item: TItem) => string
-  getHint?: (item: TItem, index: number) => string | undefined
-  getThumbnail?: (item: TItem) => string | undefined
-  getThumbnailBadge?: (item: TItem) => string | undefined
-  getThumbnailActions?: (item: TItem) => ThumbnailAction[] | undefined
-  getThumbnailActionsEnabled?: (item: TItem) => boolean
-  getMetaLabel?: (item: TItem) => string | undefined
-  getDetail?: (item: TItem) => string | undefined
-  getActions?: (item: TItem) => ActionMenuItem[]
-  activeItemId?: string
-  onActivateItem?: (item: TItem) => void
-  isActivatable?: (item: TItem) => boolean
-  isBulkSelectable?: (item: TItem) => boolean
-  isDraggable?: (item: TItem) => boolean
-  getDragGroupIds?: (item: TItem, context: { items: TItem[]; selectedIds: Set<string> }) => string[]
-  previewMoveItems?: (items: TItem[], itemIds: string[], targetIndex: number) => TItem[] | null
-  moveItems?: (itemIds: string[], targetIndex: number) => void | Promise<void>
-  onDeleteSelected?: (itemIds: string[]) => void | Promise<void>
-  onClearSelection?: () => void
-  onClear?: () => void | Promise<void>
-  onClose?: () => void
-  emptyDetail?: string
-  clearLabel?: string
-  deleteLabel?: (count: number) => string
-  closeLabel?: string
-  actionsLabel?: (title: string) => string
-  menuLabel?: string
-}
+  title: string;
+  subtitle: string;
+  items: TItem[];
+  getId: (item: TItem) => string;
+  getStatus: (item: TItem) => ItemStatus;
+  getTitle: (item: TItem) => string;
+  getHint?: (item: TItem, index: number) => string | undefined;
+  getTopRightAction?: (item: TItem) => InteractiveItemTopRightAction | undefined;
+  getThumbnail?: (item: TItem) => string | undefined;
+  getThumbnailBadge?: (item: TItem) => string | undefined;
+  getThumbnailActions?: (item: TItem) => ThumbnailAction[] | undefined;
+  getThumbnailActionsEnabled?: (item: TItem) => boolean;
+  getMetaLabel?: (item: TItem) => string | undefined;
+  getDetail?: (item: TItem) => string | undefined;
+  getActions?: (item: TItem) => ActionMenuItem[];
+  activeItemId?: string;
+  onActivateItem?: (item: TItem) => void;
+  isActivatable?: (item: TItem) => boolean;
+  isBulkSelectable?: (item: TItem) => boolean;
+  isDraggable?: (item: TItem) => boolean;
+  getDragGroupIds?: (
+    item: TItem,
+    context: { items: TItem[]; selectedIds: Set<string> }
+  ) => string[];
+  previewMoveItems?: (items: TItem[], itemIds: string[], targetIndex: number) => TItem[] | null;
+  moveItems?: (itemIds: string[], targetIndex: number) => void | Promise<void>;
+  onDeleteSelected?: (itemIds: string[]) => void | Promise<void>;
+  onClearSelection?: () => void;
+  onClear?: () => void | Promise<void>;
+  onClose?: () => void;
+  emptyDetail?: string;
+  clearLabel?: string;
+  deleteLabel?: (count: number) => string;
+  closeLabel?: string;
+  actionsLabel?: (title: string) => string;
+  menuLabel?: string;
+};
 
 function getTargetIndex<TItem>(
   clientY: number,
@@ -72,30 +82,30 @@ function getTargetIndex<TItem>(
   listElement: HTMLElement,
   isDraggable: (item: TItem) => boolean
 ): number | null {
-  const rows = Array.from(listElement.querySelectorAll<HTMLElement>('[data-interactive-item-id]'))
+  const rows = Array.from(listElement.querySelectorAll<HTMLElement>('[data-interactive-item-id]'));
   if (rows.length === 0) {
-    return null
+    return null;
   }
 
   const rawIndex = rows.findIndex((row) => {
-    const rect = row.getBoundingClientRect()
-    return clientY < rect.top + rect.height / 2
-  })
-  const targetIndex = rawIndex < 0 ? rows.length - 1 : rawIndex
+    const rect = row.getBoundingClientRect();
+    return clientY < rect.top + rect.height / 2;
+  });
+  const targetIndex = rawIndex < 0 ? rows.length - 1 : rawIndex;
   if (items[targetIndex] && isDraggable(items[targetIndex])) {
-    return targetIndex
+    return targetIndex;
   }
 
   const draggableIndexes = items
     .map((item, index) => (isDraggable(item) ? index : -1))
-    .filter((index) => index >= 0)
+    .filter((index) => index >= 0);
   if (draggableIndexes.length === 0) {
-    return null
+    return null;
   }
 
   return draggableIndexes.reduce((closest, index) =>
     Math.abs(index - targetIndex) < Math.abs(closest - targetIndex) ? index : closest
-  )
+  );
 }
 
 function getStatusLabel(
@@ -103,11 +113,11 @@ function getStatusLabel(
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {
   if (item.status === 'active') {
-    const percent = formatPercent(item.progress?.percentage)
-    return percent ? percent : t('queue.status.active')
+    const percent = formatPercent(item.progress?.percentage);
+    return percent ? percent : t('queue.status.active');
   }
 
-  return t(`queue.status.${item.status}`)
+  return t(`queue.status.${item.status}`);
 }
 
 export function InteractiveItemPanel<TItem>({
@@ -118,6 +128,7 @@ export function InteractiveItemPanel<TItem>({
   getTitle,
   getStatus,
   getHint,
+  getTopRightAction,
   getThumbnail,
   getThumbnailBadge,
   getThumbnailActions,
@@ -142,128 +153,128 @@ export function InteractiveItemPanel<TItem>({
   actionsLabel = (title) => `Actions for ${title}`,
   menuLabel = `${title} item actions`
 }: InteractiveItemPanelProps<TItem>): React.JSX.Element {
-  const { t } = useTranslation()
-  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(() => new Set())
-  const [menuState, setMenuState] = useState<MenuState | null>(null)
-  const [dragItems, setDragItems] = useState<TItem[] | null>(null)
-  const [draggingItemIds, setDraggingItemIds] = useState<string[]>([])
-  const [autoScrollDirection, setAutoScrollDirection] = useState<-1 | 0 | 1>(0)
-  const listRef = useRef<HTMLDivElement | null>(null)
-  const dragStateRef = useRef<DragState | null>(null)
-  const displayItems = dragItems ?? items
+  const { t } = useTranslation();
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(() => new Set());
+  const [menuState, setMenuState] = useState<MenuState | null>(null);
+  const [dragItems, setDragItems] = useState<TItem[] | null>(null);
+  const [draggingItemIds, setDraggingItemIds] = useState<string[]>([]);
+  const [autoScrollDirection, setAutoScrollDirection] = useState<-1 | 0 | 1>(0);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const dragStateRef = useRef<DragState | null>(null);
+  const displayItems = dragItems ?? items;
 
   const bulkSelectableIds = useMemo(
     () => new Set(items.filter((item) => isBulkSelectable(item)).map((item) => getId(item))),
     [getId, isBulkSelectable, items]
-  )
+  );
   const visibleBulkSelectedIds = useMemo(
     () => Array.from(bulkSelectedIds).filter((id) => bulkSelectableIds.has(id)),
     [bulkSelectableIds, bulkSelectedIds]
-  )
-  const selectedCount = visibleBulkSelectedIds.length
+  );
+  const selectedCount = visibleBulkSelectedIds.length;
   const menuItem =
-    menuState == null ? undefined : displayItems.find((item) => getId(item) === menuState.itemId)
-  const menuItems = menuItem && getActions ? getActions(menuItem) : []
+    menuState == null ? undefined : displayItems.find((item) => getId(item) === menuState.itemId);
+  const menuItems = menuItem && getActions ? getActions(menuItem) : [];
 
   useEffect(() => {
     setBulkSelectedIds((current) => {
-      const next = new Set(Array.from(current).filter((id) => bulkSelectableIds.has(id)))
-      const changed = next.size !== current.size || Array.from(current).some((id) => !next.has(id))
-      return changed ? next : current
-    })
-  }, [bulkSelectableIds])
+      const next = new Set(Array.from(current).filter((id) => bulkSelectableIds.has(id)));
+      const changed = next.size !== current.size || Array.from(current).some((id) => !next.has(id));
+      return changed ? next : current;
+    });
+  }, [bulkSelectableIds]);
 
   useEffect(() => {
     if (draggingItemIds.length === 0 || autoScrollDirection === 0) {
-      return undefined
+      return undefined;
     }
 
     const timer = window.setInterval(() => {
       if (listRef.current) {
-        listRef.current.scrollTop += autoScrollDirection * AUTO_SCROLL_STEP_PX
+        listRef.current.scrollTop += autoScrollDirection * AUTO_SCROLL_STEP_PX;
       }
-    }, 16)
+    }, 16);
 
-    return () => window.clearInterval(timer)
-  }, [autoScrollDirection, draggingItemIds.length])
+    return () => window.clearInterval(timer);
+  }, [autoScrollDirection, draggingItemIds.length]);
 
   const activateItem = (item: TItem): void => {
     if (isActivatable(item)) {
-      onActivateItem?.(item)
+      onActivateItem?.(item);
     }
-  }
+  };
 
   const toggleBulkSelected = (item: TItem): void => {
     if (!isBulkSelectable(item)) {
-      return
+      return;
     }
 
-    const itemId = getId(item)
+    const itemId = getId(item);
     setBulkSelectedIds((current) => {
-      const next = new Set(current)
+      const next = new Set(current);
       if (next.has(itemId)) {
-        next.delete(itemId)
+        next.delete(itemId);
       } else {
-        next.add(itemId)
+        next.add(itemId);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
   const handleRowClick = (event: PointerEvent<HTMLElement>, item: TItem): void => {
-    const itemId = getId(item)
-    const modifierPressed = event.metaKey || event.ctrlKey
+    const itemId = getId(item);
+    const modifierPressed = event.metaKey || event.ctrlKey;
 
     if (modifierPressed) {
-      toggleBulkSelected(item)
+      toggleBulkSelected(item);
       if (activeItemId !== itemId) {
-        activateItem(item)
+        activateItem(item);
       }
-      return
+      return;
     }
 
-    setBulkSelectedIds(new Set())
-    activateItem(item)
-  }
+    setBulkSelectedIds(new Set());
+    activateItem(item);
+  };
 
   const deleteSelected = async (): Promise<void> => {
     if (!onDeleteSelected) {
-      return
+      return;
     }
 
-    await onDeleteSelected(visibleBulkSelectedIds)
-    setBulkSelectedIds(new Set())
-  }
+    await onDeleteSelected(visibleBulkSelectedIds);
+    setBulkSelectedIds(new Set());
+  };
 
   const getDefaultDragItemIds = (item: TItem): string[] => {
     if (!isDraggable(item)) {
-      return []
+      return [];
     }
 
-    const itemId = getId(item)
+    const itemId = getId(item);
     if (!bulkSelectedIds.has(itemId)) {
-      return [itemId]
+      return [itemId];
     }
 
     return items
       .filter((candidate) => isDraggable(candidate) && bulkSelectedIds.has(getId(candidate)))
-      .map((candidate) => getId(candidate))
-  }
+      .map((candidate) => getId(candidate));
+  };
 
   const getResolvedDragItemIds = (item: TItem): string[] => {
     return getDragGroupIds
       ? getDragGroupIds(item, { items, selectedIds: bulkSelectedIds })
-      : getDefaultDragItemIds(item)
-  }
+      : getDefaultDragItemIds(item);
+  };
 
   const clearSelectionFromBlankSpace = (event: PointerEvent<HTMLElement>): void => {
     if (dragStateRef.current || event.target !== event.currentTarget) {
-      return
+      return;
     }
 
-    setBulkSelectedIds(new Set())
-    onClearSelection?.()
-  }
+    setBulkSelectedIds(new Set());
+    onClearSelection?.();
+  };
 
   const beginPointerGesture = (
     event: PointerEvent<HTMLElement>,
@@ -271,10 +282,10 @@ export function InteractiveItemPanel<TItem>({
     index: number
   ): void => {
     if (event.button !== 0 || (!isActivatable(item) && !isBulkSelectable(item))) {
-      return
+      return;
     }
 
-    event.currentTarget.setPointerCapture(event.pointerId)
+    event.currentTarget.setPointerCapture(event.pointerId);
     dragStateRef.current = {
       itemId: getId(item),
       itemIds: getResolvedDragItemIds(item),
@@ -285,113 +296,113 @@ export function InteractiveItemPanel<TItem>({
       targetIndex: index,
       dragging: false,
       cancelClick: false
-    }
-  }
+    };
+  };
 
   const updateAutoScroll = (clientY: number): void => {
-    const listElement = listRef.current
+    const listElement = listRef.current;
     if (!listElement) {
-      setAutoScrollDirection(0)
-      return
+      setAutoScrollDirection(0);
+      return;
     }
 
-    const rect = listElement.getBoundingClientRect()
+    const rect = listElement.getBoundingClientRect();
     if (clientY < rect.top + AUTO_SCROLL_EDGE_PX) {
-      setAutoScrollDirection(-1)
+      setAutoScrollDirection(-1);
     } else if (clientY > rect.bottom - AUTO_SCROLL_EDGE_PX) {
-      setAutoScrollDirection(1)
+      setAutoScrollDirection(1);
     } else {
-      setAutoScrollDirection(0)
+      setAutoScrollDirection(0);
     }
-  }
+  };
 
   const handlePointerMove = (event: PointerEvent<HTMLElement>): void => {
-    const dragState = dragStateRef.current
-    const listElement = listRef.current
+    const dragState = dragStateRef.current;
+    const listElement = listRef.current;
     if (!dragState || !listElement || !previewMoveItems || !moveItems) {
-      return
+      return;
     }
 
-    const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY)
+    const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
     if (!dragState.dragging && distance > DRAG_THRESHOLD_PX) {
       if (dragState.itemIds.length === 0) {
-        dragState.cancelClick = true
-        return
+        dragState.cancelClick = true;
+        return;
       }
 
-      dragState.dragging = true
-      setMenuState(null)
-      setDraggingItemIds(dragState.itemIds)
-      setDragItems(items)
+      dragState.dragging = true;
+      setMenuState(null);
+      setDraggingItemIds(dragState.itemIds);
+      setDragItems(items);
     }
 
     if (!dragState.dragging) {
-      return
+      return;
     }
 
-    updateAutoScroll(event.clientY)
-    const targetIndex = getTargetIndex(event.clientY, displayItems, listElement, isDraggable)
+    updateAutoScroll(event.clientY);
+    const targetIndex = getTargetIndex(event.clientY, displayItems, listElement, isDraggable);
     if (targetIndex == null || targetIndex === dragState.targetIndex) {
-      return
+      return;
     }
 
-    const targetItem = displayItems[targetIndex]
+    const targetItem = displayItems[targetIndex];
     if (targetItem && dragState.itemIds.includes(getId(targetItem))) {
-      return
+      return;
     }
 
-    const movedItems = previewMoveItems(displayItems, dragState.itemIds, targetIndex)
+    const movedItems = previewMoveItems(displayItems, dragState.itemIds, targetIndex);
     if (movedItems) {
-      dragState.targetIndex = targetIndex
-      setDragItems(movedItems)
+      dragState.targetIndex = targetIndex;
+      setDragItems(movedItems);
     }
-  }
+  };
 
   const endPointerGesture = (event: PointerEvent<HTMLElement>, item: TItem): void => {
-    const dragState = dragStateRef.current
+    const dragState = dragStateRef.current;
     if (!dragState) {
-      return
+      return;
     }
 
     if (event.currentTarget.hasPointerCapture(dragState.pointerId)) {
-      event.currentTarget.releasePointerCapture(dragState.pointerId)
+      event.currentTarget.releasePointerCapture(dragState.pointerId);
     }
 
     if (dragState.dragging) {
-      const targetIndex = dragState.targetIndex
-      const originalIndex = dragState.originalIndex
-      const itemIds = dragState.itemIds
-      setDragItems(null)
-      setDraggingItemIds([])
-      setAutoScrollDirection(0)
-      dragStateRef.current = null
+      const targetIndex = dragState.targetIndex;
+      const originalIndex = dragState.originalIndex;
+      const itemIds = dragState.itemIds;
+      setDragItems(null);
+      setDraggingItemIds([]);
+      setAutoScrollDirection(0);
+      dragStateRef.current = null;
 
       if (targetIndex !== originalIndex && itemIds.length > 0 && moveItems) {
-        void moveItems(itemIds, targetIndex)
+        void moveItems(itemIds, targetIndex);
       }
-      return
+      return;
     }
 
-    dragStateRef.current = null
+    dragStateRef.current = null;
     if (!dragState.cancelClick) {
-      handleRowClick(event, item)
+      handleRowClick(event, item);
     }
-  }
+  };
 
   const cancelPointerGesture = (): void => {
-    dragStateRef.current = null
-    setDragItems(null)
-    setDraggingItemIds([])
-    setAutoScrollDirection(0)
-  }
+    dragStateRef.current = null;
+    setDragItems(null);
+    setDraggingItemIds([]);
+    setAutoScrollDirection(0);
+  };
 
   const openMenu = (item: TItem, anchor: ActionMenuAnchor): void => {
     if (!getActions || getActions(item).length === 0) {
-      return
+      return;
     }
 
-    setMenuState({ itemId: getId(item), anchor })
-  }
+    setMenuState({ itemId: getId(item), anchor });
+  };
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] text-white">
@@ -425,22 +436,25 @@ export function InteractiveItemPanel<TItem>({
           onPointerDown={clearSelectionFromBlankSpace}
         >
           {displayItems.map((item, index) => {
-            const itemId = getId(item)
-            const itemStatus: ItemStatus = getStatus(item)
-            const itemTitle = getTitle(item)
-            const itemHint = getHint ? getHint(item, index) : undefined
-            const isActiveItem = activeItemId === itemId
-            const isBulkSelected = visibleBulkSelectedIds.includes(itemId)
-            const isDragging = draggingItemIds.includes(itemId)
-            const activatable = isActivatable(item)
-            const bulkSelectable = isBulkSelectable(item)
-            const draggable = isDraggable(item)
-            const thumbnail = getThumbnail?.(item)
-            const thumbnailBadge = getThumbnailBadge?.(item)
-            const thumbnailActions = getThumbnailActions?.(item)
-            const thumbnailActionsEnabled = getThumbnailActionsEnabled?.(item) ?? true
-            const statusLabel = getStatusLabel(item as QueueItem, t)
-            const metaLabel = getMetaLabel?.(item)
+            const itemId = getId(item);
+            const itemStatus: ItemStatus = getStatus(item);
+            const itemTitle = getTitle(item);
+            const itemHint = getHint ? getHint(item, index) : undefined;
+            const topRightAction = getTopRightAction?.(item);
+            const isActiveItem = activeItemId === itemId;
+            const isBulkSelected = visibleBulkSelectedIds.includes(itemId);
+            const isDragging = draggingItemIds.includes(itemId);
+            const activatable = isActivatable(item);
+            const bulkSelectable = isBulkSelectable(item);
+            const draggable = isDraggable(item);
+            const showPersistentTopRightAction =
+              topRightAction != null && (isActiveItem || isBulkSelected);
+            const thumbnail = getThumbnail?.(item);
+            const thumbnailBadge = getThumbnailBadge?.(item);
+            const thumbnailActions = getThumbnailActions?.(item);
+            const thumbnailActionsEnabled = getThumbnailActionsEnabled?.(item) ?? true;
+            const statusLabel = getStatusLabel(item as QueueItem, t);
+            const metaLabel = getMetaLabel?.(item);
 
             return (
               <article
@@ -450,7 +464,7 @@ export function InteractiveItemPanel<TItem>({
                 tabIndex={activatable || bulkSelectable ? 0 : -1}
                 aria-selected={isActiveItem || isBulkSelected}
                 className={cn(
-                  'relative grid min-w-0 select-none grid-cols-[1.5rem_minmax(0,1fr)] items-center outline-none transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-white/70',
+                  'group relative grid min-w-0 select-none grid-cols-[1.5rem_minmax(0,1fr)] items-center outline-none transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-white/70',
                   (activatable || bulkSelectable) && 'cursor-pointer',
                   draggable && 'cursor-grab active:cursor-grabbing',
                   (isActiveItem || isBulkSelected) && 'bg-white/10 hover:bg-white/10',
@@ -461,24 +475,24 @@ export function InteractiveItemPanel<TItem>({
                 onPointerUp={(event) => endPointerGesture(event, item)}
                 onPointerCancel={cancelPointerGesture}
                 onContextMenu={(event) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  openMenu(item, { type: 'point', x: event.clientX, y: event.clientY })
+                  event.preventDefault();
+                  event.stopPropagation();
+                  openMenu(item, { type: 'point', x: event.clientX, y: event.clientY });
                 }}
                 onKeyDown={(event) => {
                   if (
                     (event.key === 'Enter' || event.key === ' ') &&
                     (activatable || bulkSelectable)
                   ) {
-                    event.preventDefault()
+                    event.preventDefault();
                     if (event.metaKey || event.ctrlKey) {
-                      toggleBulkSelected(item)
+                      toggleBulkSelected(item);
                       if (!isActiveItem) {
-                        activateItem(item)
+                        activateItem(item);
                       }
                     } else {
-                      setBulkSelectedIds(new Set())
-                      activateItem(item)
+                      setBulkSelectedIds(new Set());
+                      activateItem(item);
                     }
                   }
                 }}
@@ -505,8 +519,8 @@ export function InteractiveItemPanel<TItem>({
                   onPointerDown={(event) => event.stopPropagation()}
                   onMouseDown={(event) => event.stopPropagation()}
                   onClick={(event) => {
-                    event.stopPropagation()
-                    const currentTarget = event.currentTarget
+                    event.stopPropagation();
+                    const currentTarget = event.currentTarget;
                     setMenuState((current) =>
                       current?.itemId === itemId
                         ? null
@@ -514,7 +528,7 @@ export function InteractiveItemPanel<TItem>({
                             itemId,
                             anchor: { type: 'element', element: currentTarget }
                           }
-                    )
+                    );
                   }}
                   onKeyDown={(event) => event.stopPropagation()}
                 >
@@ -522,10 +536,44 @@ export function InteractiveItemPanel<TItem>({
                 </button>
 
                 <div className="flex min-w-0 gap-2 p-2 pl-0">
-                  {itemHint && (
-                    <span className="absolute right-2 z-10 text-xs font-bold text-white/50">
-                      {itemHint}
-                    </span>
+                  {(itemHint || topRightAction) && (
+                    <div className="absolute right-2 top-2 z-10 flex items-center">
+                      {itemHint ? (
+                        <span
+                          className={cn(
+                            'text-xs font-bold text-white/50',
+                            topRightAction && 'group-hover:opacity-0 group-focus-within:opacity-0',
+                            showPersistentTopRightAction && 'opacity-0'
+                          )}
+                        >
+                          {itemHint}
+                        </span>
+                      ) : null}
+                      {topRightAction ? (
+                        <Button
+                          icon={topRightAction.icon}
+                          label={topRightAction.label}
+                          tooltip={topRightAction.label}
+                          size="xs"
+                          onlyIcon
+                          ghost
+                          className={cn(
+                            'absolute -right-2 -top-2',
+                            showPersistentTopRightAction
+                              ? 'pointer-events-auto opacity-100'
+                              : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100'
+                          )}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onMouseDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void topRightAction.onSelect();
+                          }}
+                          onKeyDown={(event) => event.stopPropagation()}
+                          onContextMenu={(event) => event.stopPropagation()}
+                        />
+                      ) : null}
+                    </div>
                   )}
                   <Thumbnail
                     src={thumbnail}
@@ -558,7 +606,7 @@ export function InteractiveItemPanel<TItem>({
                   </div>
                 </div>
               </article>
-            )
+            );
           })}
         </div>
       </div>
@@ -594,5 +642,5 @@ export function InteractiveItemPanel<TItem>({
         onClose={() => setMenuState(null)}
       />
     </section>
-  )
+  );
 }

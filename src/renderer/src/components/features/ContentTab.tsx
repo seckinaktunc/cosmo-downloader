@@ -1,27 +1,27 @@
-import { Content, useUiStore } from '@renderer/stores/uiStore'
-import Icon, { IconName } from '../miscellaneous/Icon'
-import { cn } from '@renderer/lib/utils'
+import { Content, useUiStore } from '@renderer/stores/uiStore';
+import Icon, { IconName } from '../miscellaneous/Icon';
+import { cn } from '@renderer/lib/utils';
 
 interface ContentTabProps {
-  tabs: ContentTabItem[]
+  tabs: ContentTabItem[];
 }
 
 export interface ContentTabItem {
-  id: Content
-  title?: string
-  content: React.ReactNode
-  icon?: IconName
+  id: Content;
+  title?: string;
+  content: React.ReactNode;
+  icon?: IconName;
 }
 
 export default function ContentTab({ tabs }: ContentTabProps): React.JSX.Element {
-  const activeContent = useUiStore((state) => state.activeContent)
-  const setActiveContent = useUiStore((state) => state.setActiveContent)
+  const activeContent = useUiStore((state) => state.activeContent);
+  const setActiveContent = useUiStore((state) => state.setActiveContent);
 
   return (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-linear-to-b from-dark to-white/10">
       <div className="flex w-full divide-x divide-white/10">
         {tabs.map((tab) => {
-          const isActive = activeContent === tab.id
+          const isActive = activeContent === tab.id;
 
           return (
             <div
@@ -38,12 +38,12 @@ export default function ContentTab({ tabs }: ContentTabProps): React.JSX.Element
               {tab.icon && <Icon name={tab.icon} filled={isActive} />}
               {tab.title}
             </div>
-          )
+          );
         })}
       </div>
       <div className="min-h-0 flex-1 overflow-hidden">
         {tabs.find((tab) => tab.id === activeContent)?.content}
       </div>
     </div>
-  )
+  );
 }

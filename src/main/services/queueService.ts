@@ -67,6 +67,7 @@ export class QueueService {
   private running = false;
   private pauseRequested = false;
   private cancelRequested = false;
+  private skipRequested = false;
   private activeWebContents: WebContents | null = null;
 
   constructor(
@@ -158,6 +159,8 @@ export class QueueService {
     const active = this.getActiveItem();
     if (active) {
       this.pauseRequested = true;
+      this.cancelRequested = false;
+      this.skipRequested = false;
       this.downloadService.cancel();
     }
     this.writeAndBroadcast();
@@ -168,7 +171,21 @@ export class QueueService {
     this.paused = true;
     const active = this.getActiveItem();
     if (active) {
+      this.pauseRequested = false;
       this.cancelRequested = true;
+      this.skipRequested = false;
+      this.downloadService.cancel();
+    }
+    this.writeAndBroadcast();
+    return ok(this.getSnapshot());
+  }
+
+  skipActive(): IpcResult<QueueSnapshot> {
+    const active = this.getActiveItem();
+    if (active) {
+      this.pauseRequested = false;
+      this.cancelRequested = false;
+      this.skipRequested = true;
       this.downloadService.cancel();
     }
     this.writeAndBroadcast();
@@ -298,15 +315,16 @@ export class QueueService {
     this.running = true;
     this.pauseRequested = false;
     this.cancelRequested = false;
+    this.skipRequested = false;
     this.updateItem(item.id, { status: 'active', progress: undefined, error: undefined });
     const historyEntry = this.historyService.addStarted({ ...item, status: 'active' });
     this.updateItem(item.id, { historyEntryId: historyEntry.id });
 
-    if (this.pauseRequested || this.cancelRequested) {
+    if (this.pauseRequested || this.cancelRequested || this.skipRequested) {
       if (this.pauseRequested) {
         this.updateItem(item.id, { status: 'paused', progress: undefined, updatedAt: now() });
         this.historyService.update(historyEntry.id, 'cancelled', { error: 'Paused.' });
-      } else {
+      } else if (this.cancelRequested) {
         this.updateItem(
           item.id,
           { status: 'cancelled', progress: undefined, updatedAt: now() },
@@ -314,12 +332,19 @@ export class QueueService {
         );
         this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' });
         this.pruneTerminalItems();
+      } else {
+        this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' });
+        this.items = this.items.filter((candidate) => candidate.id !== item.id);
       }
 
       this.running = false;
       this.pauseRequested = false;
       this.cancelRequested = false;
+      this.skipRequested = false;
       this.writeAndBroadcast();
+      if (!this.paused) {
+        void this.startNext();
+      }
       return;
     }
 
@@ -375,6 +400,12 @@ export class QueueService {
         logPath: resultLogPath
       });
       this.pruneTerminalItems();
+    } else if (this.skipRequested) {
+      this.historyService.update(historyEntry.id, 'cancelled', {
+        error: 'Cancelled.',
+        logPath: resultLogPath
+      });
+      this.items = this.items.filter((candidate) => candidate.id !== item.id);
     } else if (result.ok) {
       this.updateItem(
         item.id,
@@ -415,6 +446,7 @@ export class QueueService {
     this.running = false;
     this.pauseRequested = false;
     this.cancelRequested = false;
+    this.skipRequested = false;
     this.writeAndBroadcast();
 
     if (!this.paused) {

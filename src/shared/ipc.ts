@@ -45,6 +45,7 @@ export const IPC_CHANNELS = {
     pause: 'queue:pause',
     resume: 'queue:resume',
     cancelActive: 'queue:cancel-active',
+    skipActive: 'queue:skip-active',
     remove: 'queue:remove',
     removeMany: 'queue:remove-many',
     reorder: 'queue:reorder',

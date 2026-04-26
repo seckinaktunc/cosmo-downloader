@@ -183,6 +183,7 @@
     "itemActions": "Kuyruk öğesi işlemleri",
     "actions": {
       "retry": "Yeniden dene",
+      "skip": "Atla",
       "remove": "Kaldır"
     },
     "status": {

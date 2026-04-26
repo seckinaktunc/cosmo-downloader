@@ -246,4 +246,254 @@ describe('QueueService export settings updates', () => {
       logPath: '/logs/video.log'
     });
   });
+
+  it('skips the active item, preserves cancelled history, and continues to the next item', async () => {
+    const completedProgress: DownloadProgress = {
+      stage: 'completed',
+      stageLabel: 'Completed',
+      percentage: 100,
+      outputPath: '/downloads/two.mp4',
+      logPath: '/logs/two.log'
+    };
+    let resolveFirstDownload:
+      | ((value: {
+          ok: false;
+          error: { code: 'CANCELLED'; message: string; details: string };
+        }) => void)
+      | undefined;
+    const downloadService = {
+      start: vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveFirstDownload = resolve;
+            })
+        )
+        .mockResolvedValueOnce({ ok: true, data: completedProgress }),
+      cancel: vi.fn()
+    } as unknown as DownloadService;
+    const historyService = {
+      addStarted: vi.fn((item: QueueItem) => ({
+        id: `${item.id}-history`,
+        queueItemId: item.id,
+        metadata: item.metadata,
+        exportSettings: item.exportSettings,
+        settings: item.settings,
+        status: 'started',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      update: vi.fn()
+    } as unknown as HistoryService;
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
+    tempDirs.push(directory);
+    const service = new QueueService(
+      downloadService,
+      historyService,
+      join(directory, 'queue.json')
+    );
+    const firstAddResult = await service.add({
+      metadata: metadata('one'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!firstAddResult.ok) throw new Error(firstAddResult.error.message);
+    const secondAddResult = await service.add({
+      metadata: metadata('two'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!secondAddResult.ok) throw new Error(secondAddResult.error.message);
+    const firstItemId = firstAddResult.data.items[0].id;
+    const secondItemId = secondAddResult.data.items[1].id;
+
+    service.start({ isDestroyed: () => false } as WebContents);
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().activeItemId).toBe(firstItemId);
+    });
+
+    const skipResult = service.skipActive();
+    expect(skipResult.ok).toBe(true);
+    expect(downloadService.cancel).toHaveBeenCalledTimes(1);
+
+    resolveFirstDownload?.({
+      ok: false,
+      error: {
+        code: 'CANCELLED',
+        message: 'Cancelled by user.',
+        details: '/logs/one.log'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(downloadService.start).toHaveBeenCalledTimes(2);
+    });
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().items).toEqual([]);
+    });
+    expect(historyService.update).toHaveBeenCalledWith(`${firstItemId}-history`, 'cancelled', {
+      error: 'Cancelled.',
+      logPath: '/logs/one.log'
+    });
+    expect(historyService.update).toHaveBeenCalledWith(`${secondItemId}-history`, 'completed', {
+      outputPath: '/downloads/two.mp4',
+      logPath: '/logs/two.log'
+    });
+  });
+
+  it('skips the only active item and leaves the queue empty', async () => {
+    let resolveDownload:
+      | ((value: {
+          ok: false;
+          error: { code: 'CANCELLED'; message: string; details: string };
+        }) => void)
+      | undefined;
+    const downloadService = {
+      start: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveDownload = resolve;
+          })
+      ),
+      cancel: vi.fn()
+    } as unknown as DownloadService;
+    const historyService = {
+      addStarted: vi.fn((item: QueueItem) => ({
+        id: `${item.id}-history`,
+        queueItemId: item.id,
+        metadata: item.metadata,
+        exportSettings: item.exportSettings,
+        settings: item.settings,
+        status: 'started',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      update: vi.fn()
+    } as unknown as HistoryService;
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
+    tempDirs.push(directory);
+    const service = new QueueService(
+      downloadService,
+      historyService,
+      join(directory, 'queue.json')
+    );
+    const addResult = await service.add({
+      metadata: metadata('one'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!addResult.ok) throw new Error(addResult.error.message);
+    const itemId = addResult.data.items[0].id;
+
+    service.start({ isDestroyed: () => false } as WebContents);
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().activeItemId).toBe(itemId);
+    });
+
+    service.skipActive();
+    expect(downloadService.cancel).toHaveBeenCalledTimes(1);
+
+    resolveDownload?.({
+      ok: false,
+      error: {
+        code: 'CANCELLED',
+        message: 'Cancelled by user.',
+        details: '/logs/one.log'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().items).toEqual([]);
+    });
+    expect(service.getSnapshot().paused).toBe(false);
+    expect(historyService.update).toHaveBeenCalledWith(`${itemId}-history`, 'cancelled', {
+      error: 'Cancelled.',
+      logPath: '/logs/one.log'
+    });
+  });
+
+  it('keeps remaining items pending when cancelActive is used', async () => {
+    let resolveFirstDownload:
+      | ((value: {
+          ok: false;
+          error: { code: 'CANCELLED'; message: string; details: string };
+        }) => void)
+      | undefined;
+    const downloadService = {
+      start: vi.fn().mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstDownload = resolve;
+          })
+      ),
+      cancel: vi.fn()
+    } as unknown as DownloadService;
+    const historyService = {
+      addStarted: vi.fn((item: QueueItem) => ({
+        id: `${item.id}-history`,
+        queueItemId: item.id,
+        metadata: item.metadata,
+        exportSettings: item.exportSettings,
+        settings: item.settings,
+        status: 'started',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      update: vi.fn()
+    } as unknown as HistoryService;
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
+    tempDirs.push(directory);
+    const service = new QueueService(
+      downloadService,
+      historyService,
+      join(directory, 'queue.json')
+    );
+    const firstAddResult = await service.add({
+      metadata: metadata('one'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!firstAddResult.ok) throw new Error(firstAddResult.error.message);
+    const secondAddResult = await service.add({
+      metadata: metadata('two'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!secondAddResult.ok) throw new Error(secondAddResult.error.message);
+    const firstItemId = firstAddResult.data.items[0].id;
+    const secondItemId = secondAddResult.data.items[1].id;
+
+    service.start({ isDestroyed: () => false } as WebContents);
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().activeItemId).toBe(firstItemId);
+    });
+
+    const cancelResult = service.cancelActive();
+    expect(cancelResult.ok).toBe(true);
+    expect(downloadService.cancel).toHaveBeenCalledTimes(1);
+
+    resolveFirstDownload?.({
+      ok: false,
+      error: {
+        code: 'CANCELLED',
+        message: 'Cancelled by user.',
+        details: '/logs/one.log'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().items.map((item) => item.id)).toEqual([secondItemId]);
+    });
+    expect(service.getSnapshot().items[0].status).toBe('pending');
+    expect(service.getSnapshot().paused).toBe(true);
+    expect(downloadService.start).toHaveBeenCalledTimes(1);
+    expect(historyService.update).toHaveBeenCalledWith(`${firstItemId}-history`, 'cancelled', {
+      error: 'Cancelled.',
+      logPath: '/logs/one.log'
+    });
+  });
 });

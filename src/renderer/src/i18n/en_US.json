@@ -183,6 +183,7 @@
     "itemActions": "Queue item actions",
     "actions": {
       "retry": "Retry",
+      "skip": "Skip",
       "remove": "Remove"
     },
     "status": {

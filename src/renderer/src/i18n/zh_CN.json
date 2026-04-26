@@ -183,6 +183,7 @@
     "itemActions": "队列项目操作",
     "actions": {
       "retry": "重试",
+      "skip": "跳过",
       "remove": "移除"
     },
     "status": {

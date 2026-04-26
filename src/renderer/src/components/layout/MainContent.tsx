@@ -1,22 +1,22 @@
-import { useRef } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   MEDIA_OVERVIEW_MAX_WIDTH,
   MEDIA_OVERVIEW_MIN_WIDTH,
   useUiStore
-} from '../../stores/uiStore'
-import { ExportSettingsPanel } from '../features/ExportSettingsPanel'
-import { MediaOverview } from '../features/MediaOverview'
-import { PreferencesPanel } from '../features/PreferencesPanel'
-import { ResizeHandle } from '../ui/ResizeHandle'
-import ContentTab, { ContentTabItem } from '../features/ContentTab'
-import { LogsPanel } from '../features/LogsPanel'
+} from '../../stores/uiStore';
+import { ExportSettingsPanel } from '../features/ExportSettingsPanel';
+import { MediaOverview } from '../features/MediaOverview';
+import { PreferencesPanel } from '../features/PreferencesPanel';
+import { ResizeHandle } from '../ui/ResizeHandle';
+import ContentTab, { ContentTabItem } from '../features/ContentTab';
+import { LogsPanel } from '../features/LogsPanel';
 
 export function MainContent(): React.JSX.Element {
-  const { t } = useTranslation()
-  const containerRef = useRef<HTMLElement | null>(null)
-  const mediaOverviewWidthPercent = useUiStore((state) => state.mediaOverviewWidthPercent)
-  const setMediaOverviewWidthPercent = useUiStore((state) => state.setMediaOverviewWidthPercent)
+  const { t } = useTranslation();
+  const containerRef = useRef<HTMLElement | null>(null);
+  const mediaOverviewWidthPercent = useUiStore((state) => state.mediaOverviewWidthPercent);
+  const setMediaOverviewWidthPercent = useUiStore((state) => state.setMediaOverviewWidthPercent);
 
   const tabs: ContentTabItem[] = [
     {
@@ -32,7 +32,7 @@ export function MainContent(): React.JSX.Element {
       content: <PreferencesPanel />
     },
     { id: 'logs', icon: 'logs', content: <LogsPanel /> }
-  ]
+  ];
 
   return (
     <main
@@ -55,5 +55,5 @@ export function MainContent(): React.JSX.Element {
       />
       <ContentTab tabs={tabs} />
     </main>
-  )
+  );
 }
