@@ -1,22 +1,22 @@
-import { cn } from '../../lib/utils'
-import Icon, { type IconName } from '../miscellaneous/Icon'
-import { Tooltip } from './Tooltip'
+import { cn } from '../../lib/utils';
+import Icon, { type IconName } from '../miscellaneous/Icon';
+import { Tooltip } from './Tooltip';
 
 type RadioBoxesProps<T extends string> = {
-  label?: string
-  value: T
+  label?: string;
+  value: T;
   options: Array<{
-    value: T
-    label: string
-    icon?: IconName
-    disabled?: boolean
-    tooltip?: string
-    disabledReason?: string
-  }>
-  className?: string
-  disabled?: boolean
-  onChange: (value: T) => void
-}
+    value: T;
+    label: string;
+    icon?: IconName;
+    disabled?: boolean;
+    tooltip?: string;
+    disabledReason?: string;
+  }>;
+  className?: string;
+  disabled?: boolean;
+  onChange: (value: T) => void;
+};
 
 export function RadioBoxes<T extends string>({
   label,
@@ -35,12 +35,11 @@ export function RadioBoxes<T extends string>({
       )}
       <div className={cn('grid grid-cols-6 h-auto gap-2', className)}>
         {options.map((option) => {
-          const optionDisabled = disabled || option.disabled
-          const tooltipLabel = option.disabledReason
-            ? option.tooltip
-              ? `${option.tooltip} ${option.disabledReason}`
-              : option.disabledReason
-            : option.tooltip
+          const optionDisabled = disabled || option.disabled;
+          const tooltipLabel =
+            (option.disabled || option.disabledReason) && !disabled
+              ? option.disabledReason
+              : option.tooltip;
 
           const optionNode = (
             <label
@@ -63,7 +62,7 @@ export function RadioBoxes<T extends string>({
               {option.icon ? <Icon name={option.icon} size={16} /> : null}
               {option.label}
             </label>
-          )
+          );
 
           return tooltipLabel ? (
             <Tooltip key={option.value} label={tooltipLabel}>
@@ -71,9 +70,9 @@ export function RadioBoxes<T extends string>({
             </Tooltip>
           ) : (
             optionNode
-          )
+          );
         })}
       </div>
     </fieldset>
-  )
+  );
 }

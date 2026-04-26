@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  coerceExportSettingsForFormat,
+  getDisabledCodecOptions
+} from '../../../../shared/exportCompatibility';
 import {
   AUDIO_BITRATE_OPTIONS,
   AUDIO_CODECS,
@@ -9,77 +13,61 @@ import {
   VIDEO_BITRATE_OPTIONS,
   VIDEO_CODECS,
   isAudioOnlyFormat
-} from '../../../../shared/formatOptions'
-import {
-  coerceExportSettingsForFormat,
-  getDisabledCodecOptions
-} from '../../../../shared/exportCompatibility'
-import { normalizeTrimRange } from '../../../../shared/trim'
-import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types'
-import { useActiveExportSettings } from '../../hooks/useActiveExportSettings'
-import { getBottomScrollState } from '../../lib/bottomScroll'
-import { getEffectiveSavePath, replaceOutputExtension } from '../../lib/outputPath'
-import { useSettingsStore } from '../../stores/settingsStore'
-import { Button } from '../ui/Button'
-import { LocationSelector } from '../ui/LocationSelector'
-import { RangeSlider } from '../ui/RangeSlider'
-import { RadioBoxes } from '../ui/RadioBoxes'
-import { SnapSlider } from '../ui/SnapSlider'
+} from '../../../../shared/formatOptions';
+import { normalizeTrimRange } from '../../../../shared/trim';
+import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types';
+import { useActiveExportSettings } from '../../hooks/useActiveExportSettings';
+import { getEffectiveSavePath, replaceOutputExtension } from '../../lib/outputPath';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { LocationSelector } from '../ui/LocationSelector';
+import { RadioBoxes } from '../ui/RadioBoxes';
+import { RangeSlider } from '../ui/RangeSlider';
+import { SnapSlider } from '../ui/SnapSlider';
 
 export function ExportSettingsPanel(): React.JSX.Element {
-  const { t } = useTranslation()
-  const { metadata, exportSettings, readOnly, updateExportSettings } = useActiveExportSettings()
-  const settings = useSettingsStore((state) => state.settings)
-  const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath)
-  const audioOnly = isAudioOnlyFormat(exportSettings.outputFormat)
-  const controlsDisabled = readOnly || metadata == null
-  const showSavePath = Boolean(settings?.alwaysAskDownloadLocation)
-  const durationSeconds = metadata?.duration ? Math.floor(metadata.duration) : 0
+  const { t } = useTranslation();
+  const { metadata, exportSettings, readOnly, updateExportSettings } = useActiveExportSettings();
+  const settings = useSettingsStore((state) => state.settings);
+  const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath);
+  const audioOnly = isAudioOnlyFormat(exportSettings.outputFormat);
+  const controlsDisabled = readOnly || metadata == null;
+  const showSavePath = Boolean(settings?.alwaysAskDownloadLocation);
+  const durationSeconds = metadata?.duration ? Math.floor(metadata.duration) : 0;
   const trimRange = normalizeTrimRange(
     exportSettings.trimStartSeconds,
     exportSettings.trimEndSeconds,
     durationSeconds
-  )
+  );
   const displaySavePath = getEffectiveSavePath(
     exportSettings.savePath,
     exportSettings.outputFormat,
     Boolean(settings?.createFolderPerDownload)
-  )
-  const disabledCodecs = getDisabledCodecOptions({ outputFormat: exportSettings.outputFormat })
-  const disabledVideoCodecs = new Set(disabledCodecs.video)
-  const disabledAudioCodecs = new Set(disabledCodecs.audio)
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
-
-  const updateScrollState = useCallback((): void => {
-    const element = scrollRef.current
-    if (!element) {
-      return
-    }
-
-    setShowScrollToBottom(getBottomScrollState(element).showScrollToBottom)
-  }, [])
+  );
+  const disabledCodecs = getDisabledCodecOptions({ outputFormat: exportSettings.outputFormat });
+  const disabledVideoCodecs = new Set(disabledCodecs.video);
+  const disabledAudioCodecs = new Set(disabledCodecs.audio);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const resolutionOptions = useMemo(() => {
-    const maxResolution = metadata?.maxResolution ?? 2160
-    const visible = RESOLUTION_OPTIONS.filter((resolution) => resolution <= maxResolution)
-    return ['auto', ...visible] as Array<'auto' | number>
-  }, [metadata?.maxResolution])
+    const maxResolution = metadata?.maxResolution ?? 2160;
+    const visible = RESOLUTION_OPTIONS.filter((resolution) => resolution <= maxResolution);
+    return ['auto', ...visible] as Array<'auto' | number>;
+  }, [metadata?.maxResolution]);
 
   const frameRateOptions = useMemo(() => {
     if (!metadata || metadata.fpsOptions.length === 0) {
-      return FRAME_RATE_OPTIONS
+      return FRAME_RATE_OPTIONS;
     }
 
-    const maxFps = Math.max(...metadata.fpsOptions)
-    return FRAME_RATE_OPTIONS.filter((option) => option === 'auto' || option <= maxFps)
-  }, [metadata])
+    const maxFps = Math.max(...metadata.fpsOptions);
+    return FRAME_RATE_OPTIONS.filter((option) => option === 'auto' || option <= maxFps);
+  }, [metadata]);
 
   useEffect(() => {
     if (!controlsDisabled && !resolutionOptions.includes(exportSettings.resolution)) {
-      void updateExportSettings({ resolution: resolutionOptions[resolutionOptions.length - 1] })
+      void updateExportSettings({ resolution: resolutionOptions[resolutionOptions.length - 1] });
     }
-  }, [controlsDisabled, exportSettings.resolution, resolutionOptions, updateExportSettings])
+  }, [controlsDisabled, exportSettings.resolution, resolutionOptions, updateExportSettings]);
 
   useEffect(() => {
     if (
@@ -91,7 +79,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
       void updateExportSettings({
         trimStartSeconds: trimRange.startSeconds,
         trimEndSeconds: trimRange.endSeconds
-      })
+      });
     }
   }, [
     controlsDisabled,
@@ -101,7 +89,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
     trimRange.endSeconds,
     trimRange.startSeconds,
     updateExportSettings
-  ])
+  ]);
 
   useEffect(() => {
     if (
@@ -115,7 +103,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
         resolution: 'auto',
         videoBitrate: 'auto',
         frameRate: 'auto'
-      })
+      });
     }
   }, [
     audioOnly,
@@ -124,16 +112,16 @@ export function ExportSettingsPanel(): React.JSX.Element {
     exportSettings.resolution,
     exportSettings.videoBitrate,
     updateExportSettings
-  ])
+  ]);
 
   useEffect(() => {
     if (!showSavePath || controlsDisabled || !exportSettings.savePath) {
-      return
+      return;
     }
 
-    const nextPath = replaceOutputExtension(exportSettings.savePath, exportSettings.outputFormat)
+    const nextPath = replaceOutputExtension(exportSettings.savePath, exportSettings.outputFormat);
     if (nextPath !== exportSettings.savePath) {
-      void updateExportSettings({ savePath: nextPath })
+      void updateExportSettings({ savePath: nextPath });
     }
   }, [
     controlsDisabled,
@@ -141,14 +129,14 @@ export function ExportSettingsPanel(): React.JSX.Element {
     exportSettings.savePath,
     showSavePath,
     updateExportSettings
-  ])
+  ]);
 
   useEffect(() => {
     if (controlsDisabled) {
-      return
+      return;
     }
 
-    const nextSettings = coerceExportSettingsForFormat(exportSettings)
+    const nextSettings = coerceExportSettingsForFormat(exportSettings);
     if (
       nextSettings.videoCodec !== exportSettings.videoCodec ||
       nextSettings.audioCodec !== exportSettings.audioCodec
@@ -156,98 +144,79 @@ export function ExportSettingsPanel(): React.JSX.Element {
       void updateExportSettings({
         videoCodec: nextSettings.videoCodec,
         audioCodec: nextSettings.audioCodec
-      })
+      });
     }
-  }, [controlsDisabled, exportSettings, updateExportSettings])
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(updateScrollState)
-    return () => cancelAnimationFrame(frame)
-  }, [audioOnly, controlsDisabled, metadata, showSavePath, updateScrollState])
+  }, [controlsDisabled, exportSettings, updateExportSettings]);
 
   const chooseSavePath = async (): Promise<void> => {
     if (!metadata || controlsDisabled) {
-      return
+      return;
     }
 
     const filePath = await chooseOutputPath({
       title: metadata.title,
       outputFormat: exportSettings.outputFormat,
       currentPath: exportSettings.savePath
-    })
+    });
 
     if (filePath) {
-      await updateExportSettings({ savePath: filePath })
+      await updateExportSettings({ savePath: filePath });
     }
-  }
+  };
 
   const openSavePath = (): void => {
     if (exportSettings.savePath) {
-      void window.cosmo.shell.openPath({ path: exportSettings.savePath })
+      void window.cosmo.shell.openPath({ path: exportSettings.savePath });
     }
-  }
-
-  const handleScroll = (): void => {
-    updateScrollState()
-  }
-
-  const scrollToBottom = (): void => {
-    const element = scrollRef.current
-    if (!element) {
-      return
-    }
-
-    element.scrollTop = element.scrollHeight
-    setShowScrollToBottom(false)
-  }
+  };
 
   const handleOutputFormatChange = (outputFormat: OutputFormat): void => {
-    const nextSettings = coerceExportSettingsForFormat(exportSettings, outputFormat)
+    const nextSettings = coerceExportSettingsForFormat(exportSettings, outputFormat);
     if (
       nextSettings.outputFormat === exportSettings.outputFormat &&
       nextSettings.videoCodec === exportSettings.videoCodec &&
       nextSettings.audioCodec === exportSettings.audioCodec
     ) {
-      return
+      return;
     }
 
     void updateExportSettings({
       outputFormat: nextSettings.outputFormat,
       videoCodec: nextSettings.videoCodec,
       audioCodec: nextSettings.audioCodec
-    })
-  }
+    });
+  };
 
   const formatOptions = OUTPUT_FORMATS.map((format) => ({
     value: format,
     label: format,
     icon: (format === 'mp3' || format === 'wav' ? 'music' : 'video') as 'music' | 'video',
     tooltip: t(`exportSettings.formatDescriptions.${format}`)
-  }))
+  }));
 
   const incompatibleWithFormatReason = t(
     'exportSettings.compatibilityReasons.notAvailableWithFormat',
     {
       format: exportSettings.outputFormat.toUpperCase()
     }
-  )
+  );
   const videoDisabledForAudioOnlyReason = t(
     'exportSettings.compatibilityReasons.videoDisabledForAudioOnly'
-  )
+  );
   const audioCodecLockedByFormatReason = t(
     'exportSettings.compatibilityReasons.audioCodecLockedByFormat',
     {
       format: exportSettings.outputFormat.toUpperCase()
     }
-  )
+  );
 
   const videoCodecOptions = VIDEO_CODECS.map((codec) => {
-    const description = t(`exportSettings.videoCodecDescriptions.${codec}`)
+    const description = t(`exportSettings.videoCodecDescriptions.${codec}`);
     const disabledReason = audioOnly
       ? videoDisabledForAudioOnlyReason
       : disabledVideoCodecs.has(codec)
         ? incompatibleWithFormatReason
-        : undefined
+        : undefined;
 
     return {
       value: codec,
@@ -256,17 +225,17 @@ export function ExportSettingsPanel(): React.JSX.Element {
       disabled: audioOnly || disabledVideoCodecs.has(codec),
       tooltip: description,
       disabledReason
-    }
-  })
+    };
+  });
 
   const audioCodecOptions = AUDIO_CODECS.map((codec) => {
-    const description = t(`exportSettings.audioCodecDescriptions.${codec}`)
+    const description = t(`exportSettings.audioCodecDescriptions.${codec}`);
     const disabledReason =
       audioOnly && codec !== 'auto'
         ? audioCodecLockedByFormatReason
         : disabledAudioCodecs.has(codec)
           ? incompatibleWithFormatReason
-          : undefined
+          : undefined;
 
     return {
       value: codec,
@@ -275,13 +244,13 @@ export function ExportSettingsPanel(): React.JSX.Element {
       disabled: disabledAudioCodecs.has(codec),
       tooltip: description,
       disabledReason
-    }
-  })
+    };
+  });
 
   return (
     <section className="flex h-full min-h-0 flex-col text-white">
       <div className="relative min-h-0 flex-1">
-        <div ref={scrollRef} className="h-full min-h-0 overflow-y-auto" onScroll={handleScroll}>
+        <div ref={scrollRef} className="h-full min-h-0 overflow-hidden">
           <div className="grid divide-y divide-white/10 border-b border-white/10">
             <div className="p-2">
               <RadioBoxes<OutputFormat>
@@ -386,7 +355,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
               </div>
             </div>
 
-            {showSavePath ? (
+            {showSavePath && (
               <div className="min-w-0 shrink-0 p-4">
                 <LocationSelector
                   mode="file"
@@ -400,23 +369,10 @@ export function ExportSettingsPanel(): React.JSX.Element {
                   onOpen={openSavePath}
                 />
               </div>
-            ) : null}
+            )}
           </div>
         </div>
-
-        {showScrollToBottom ? (
-          <div className="absolute flex items-end justify-center bottom-0 -left-3 w-full h-32 pl-3 bg-linear-to-b from-transparent to-gray to-95% pointer-events-none">
-            <Button
-              icon="chevronsDown"
-              label={t('actions.scrollToBottom')}
-              className="w-full rounded-none border-none pointer-events-auto"
-              onClick={scrollToBottom}
-              onlyIcon
-              ghost
-            />
-          </div>
-        ) : null}
       </div>
     </section>
-  )
+  );
 }
