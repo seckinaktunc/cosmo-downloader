@@ -25,7 +25,15 @@ nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  include: build/installer.nsh
+  license: build/license.txt
+  createDesktopShortcut: false
+  createStartMenuShortcut: false
+  installerSidebar: build/installerSidebar.bmp
+  uninstallerSidebar: build/installerSidebar.bmp
 mac:
   icon: icon.icns
   target:
