@@ -92,11 +92,11 @@
     "noSavePath": "Choose where this video will be saved",
     "auto": "Auto",
     "formatDescriptions": {
-      "mp4": "Widely compatible video format for most devices and apps.",
-      "mkv": "Flexible container with broad codec support.",
-      "mov": "Editing-friendly container common in Apple and pro workflows.",
-      "webm": "Web-focused format optimized for modern browsers.",
-      "mp3": "Compressed audio-only format with broad support.",
+      "mp4": "Most common video format.",
+      "mkv": "Most flexible video format with broad codec support.",
+      "mov": "Common video format in Apple and pro workflows.",
+      "webm": "Video format optimized for modern web browsers.",
+      "mp3": "Most common lossy audio-only format.",
       "wav": "Uncompressed audio-only format for maximum fidelity."
     },
     "videoCodecDescriptions": {
@@ -116,7 +116,7 @@
       "mp3": "Classic lossy audio codec with near-universal support."
     },
     "compatibilityReasons": {
-      "notAvailableWithFormat": "Not available with {{format}}.",
+      "notAvailableWithFormat": "Not compatible with {{format}}.",
       "videoDisabledForAudioOnly": "Video codecs are not used for audio-only formats.",
       "audioCodecLockedByFormat": "{{format}} chooses the audio codec automatically."
     }
