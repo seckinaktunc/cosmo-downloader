@@ -1,17 +1,20 @@
-import { app, shell, BrowserWindow, type BrowserWindowConstructorOptions } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { APP_ICON, APP_ID, APP_NAME } from './appIdentity'
-import { registerIpcHandlers } from './ipc/registerIpc'
-import { readStartupAlwaysOnTop, readStartupHardwareAcceleration } from './services/settingsService'
+import { app, shell, BrowserWindow, type BrowserWindowConstructorOptions } from 'electron';
+import { join } from 'path';
+import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import { APP_ICON, APP_ID, APP_NAME } from './appIdentity';
+import { registerIpcHandlers } from './ipc/registerIpc';
+import {
+  readStartupAlwaysOnTop,
+  readStartupHardwareAcceleration
+} from './services/settingsService';
 
-const SMOKE_TEST_EXIT_DELAY_MS = 250
-const isSmokeTest = process.env.COSMO_SMOKE_TEST === '1'
+const SMOKE_TEST_EXIT_DELAY_MS = 250;
+const isSmokeTest = process.env.COSMO_SMOKE_TEST === '1';
 
-app.setName(APP_NAME)
+app.setName(APP_NAME);
 
 if (!readStartupHardwareAcceleration()) {
-  app.disableHardwareAcceleration()
+  app.disableHardwareAcceleration();
 }
 
 function getWindowChromeOptions(): Pick<
@@ -22,7 +25,7 @@ function getWindowChromeOptions(): Pick<
     return {
       titleBarStyle: 'hiddenInset',
       trafficLightPosition: { x: 16, y: 26 }
-    }
+    };
   }
 
   return {
@@ -32,15 +35,15 @@ function getWindowChromeOptions(): Pick<
       symbolColor: '#ffffff',
       height: 64
     }
-  }
+  };
 }
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1180,
-    height: 828,
-    minWidth: 1100,
+    height: 827,
+    minWidth: 1180,
     minHeight: 827,
     title: APP_NAME,
     show: false,
@@ -54,43 +57,43 @@ function createWindow(): void {
       nodeIntegration: false,
       sandbox: true
     }
-  })
+  });
 
   if (isSmokeTest) {
     const failSmokeTest = (reason: string): void => {
-      console.error(`[smoke-test] ${reason}`)
-      app.exit(1)
-    }
+      console.error(`[smoke-test] ${reason}`);
+      app.exit(1);
+    };
 
     mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription) => {
-      failSmokeTest(`renderer failed to load (${errorCode}): ${errorDescription}`)
-    })
+      failSmokeTest(`renderer failed to load (${errorCode}): ${errorDescription}`);
+    });
     mainWindow.webContents.on('render-process-gone', (_, details) => {
-      failSmokeTest(`renderer process exited: ${details.reason}`)
-    })
+      failSmokeTest(`renderer process exited: ${details.reason}`);
+    });
     mainWindow.on('unresponsive', () => {
-      failSmokeTest('main window became unresponsive')
-    })
+      failSmokeTest('main window became unresponsive');
+    });
     mainWindow.on('ready-to-show', () => {
-      setTimeout(() => app.exit(0), SMOKE_TEST_EXIT_DELAY_MS)
-    })
+      setTimeout(() => app.exit(0), SMOKE_TEST_EXIT_DELAY_MS);
+    });
   } else {
     mainWindow.on('ready-to-show', () => {
-      mainWindow.show()
-    })
+      mainWindow.show();
+    });
   }
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+    shell.openExternal(details.url);
+    return { action: 'deny' };
+  });
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 }
 
@@ -99,38 +102,38 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId(APP_ID)
+  electronApp.setAppUserModelId(APP_ID);
 
   if (process.platform === 'darwin' && is.dev) {
-    app.dock?.setIcon(APP_ICON)
+    app.dock?.setIcon(APP_ICON);
   }
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+    optimizer.watchWindowShortcuts(window);
+  });
 
-  registerIpcHandlers()
+  registerIpcHandlers();
 
-  createWindow()
+  createWindow();
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit()
+    app.quit();
   }
-})
+});
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
