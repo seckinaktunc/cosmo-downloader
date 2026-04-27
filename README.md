@@ -38,25 +38,30 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 
 ## Features
 
-<div align="center">
+### Downloading
 
-| Spec                  | Details                                                                                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Supported formats     | `mp4`, `mkv`, `mov`, `webm`, `mp3`, `wav`, or just thumbnails                                                                                       |
-| Video codecs          | `av1`, `vp9`, `prores`, `h265`, `h264`, or `auto`                                                                                                   |
-| Audio codecs          | `opus`, `vorbis`, `aac`, `mp3`, `wav`, or `auto`                                                                                                    |
-| Max video resolution  | 4k (2160p)                                                                                                                                          |
-| Max audio bitrate     | 320kbps                                                                                                                                             |
-| Hardware acceleration | If your system supports it                                                                                                                          |
-| Download queue        | Sequential and fully editable                                                                                                                       |
-| Download history      | Persistent with metadata                                                                                                                            |
-| Trimming              | Trim videos instead of downloading the entire thing                                                                                                 |
-| Clipboard support     | One-click URL intake                                                                                                                                |
-| Log viewer            | Live and persistent                                                                                                                                 |
-| Cookie import         | Import from browsers for age-restricted content (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560)) |
-| Auto-update           | Cosmo checks updates automatically on start-up                                                                                                      |
+- Paste any URL [supported by yt-dlp](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
+- Video + audio or audio-only extraction
+- Thumbnail download / copy
+- Trim / clip with in and out timecodes
 
-</div>
+### Format & control
+
+- **Currently supported formats:** `mp4`, `mkv`, `mov`, `webm`, `mp3`, `wav`
+- **Video codecs:** `av1`, `vp9`, `prores`, `h265`, `h264`, or `auto`
+- **Audio codecs:** `opus`, `vorbis`, `aac`, `mp3`, `wav`, or `auto`
+- Resolution and bitrate selection (up to 4K/20mbps/320kbps)
+- Hardware acceleration (if your system supports it)
+
+### UX
+
+- Sequential and fully editable download queue
+- Persistent download history with re-queue option
+- Live per-download log viewer
+- Clipboard-aware URL intake
+- Browser cookie import for age-restricted content (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560))
+- Auto-update checks via GitHub Releases
+- Configurable download location and filename rules
 
 ## Installation
 
