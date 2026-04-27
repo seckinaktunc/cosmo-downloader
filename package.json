@@ -19,7 +19,6 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "test": "vitest run",
-    "generate:icons": "node scripts/generate-iconify-subset.mjs",
     "download:binaries": "node scripts/download-binaries.mjs --all",
     "download:binaries:current": "node scripts/download-binaries.mjs",
     "preflight:win-symlink": "node scripts/preflight-windows-symlink.mjs",
