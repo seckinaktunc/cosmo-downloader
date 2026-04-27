@@ -9,6 +9,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { useUiStore } from '../../stores/uiStore';
 import { useVideoStore } from '../../stores/videoStore';
 import Icon from '../miscellaneous/Icon';
+import { PlatformBadge } from '../miscellaneous/PlatformBadge';
 import { Button } from '../ui/Button';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Thumbnail } from '../ui/Thumbnail';
@@ -117,11 +118,10 @@ export function MetadataPanel(): React.JSX.Element {
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col divide-y divide-white/10">
         <div className="flex min-w-0 shrink-0 flex-col gap-1 p-4">
-          {metadata.platform ? (
-            <span className="text-sm font-bold uppercase tracking-wide text-primary">
-              {metadata.platform}
-            </span>
-          ) : null}
+          <PlatformBadge
+            platform={metadata.platform}
+            className="text-sm font-bold uppercase tracking-wide text-primary"
+          />
           <a
             href={metadata?.webpageUrl}
             target="_blank"
