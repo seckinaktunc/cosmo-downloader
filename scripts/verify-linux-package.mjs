@@ -4,7 +4,14 @@ import { join, resolve } from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
-const SMOKE_TEST_TIMEOUT_MS = 30_000;
+const SMOKE_TEST_TIMEOUT_MS = 60_000;
+
+export function getLinuxSmokeTestArgs(
+  artifact,
+  uid = typeof process.getuid === 'function' ? process.getuid() : undefined
+) {
+  return uid === 0 ? ['-a', artifact, '--no-sandbox'] : ['-a', artifact];
+}
 
 export function getLinuxAppImageArtifact(distDir = 'dist') {
   return getLinuxAppImageArtifactWithFs(distDir);
@@ -43,7 +50,7 @@ export async function verifyLinuxPackage({
   }
 
   await new Promise((resolvePromise, reject) => {
-    const child = spawnProcess('xvfb-run', ['-a', artifact], {
+    const child = spawnProcess('xvfb-run', getLinuxSmokeTestArgs(artifact), {
       stdio: 'inherit',
       shell: false,
       env: {

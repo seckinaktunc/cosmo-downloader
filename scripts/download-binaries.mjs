@@ -12,7 +12,7 @@ import {
 import { chmod, mkdtemp } from 'node:fs/promises';
 import { get } from 'node:https';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -287,6 +287,42 @@ function extractZipWindows(archivePath, destDir) {
   );
 }
 
+export function getArchiveExtractionInvocation(archivePath, destDir, platform = process.platform) {
+  const isZip = archivePath.toLowerCase().endsWith('.zip');
+
+  if (platform === 'win32' && isZip) {
+    return {
+      command: 'powershell.exe',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        'Expand-Archive -LiteralPath $env:COSMO_ARCHIVE_PATH -DestinationPath $env:COSMO_DEST_DIR -Force'
+      ],
+      env: {
+        ...process.env,
+        COSMO_ARCHIVE_PATH: archivePath,
+        COSMO_DEST_DIR: destDir
+      },
+      errorTool: 'PowerShell Expand-Archive'
+    };
+  }
+
+  if (isZip) {
+    return {
+      command: 'unzip',
+      args: ['-q', '-o', archivePath, '-d', destDir],
+      errorTool: 'unzip'
+    };
+  }
+
+  return {
+    command: 'tar',
+    args: ['-xf', pathForSystemTar(archivePath), '-C', pathForSystemTar(destDir)],
+    errorTool: 'tar'
+  };
+}
+
 function pathForSystemTar(absolutePath) {
   // Avoid Windows drive-letter parsing bugs in some tar/libarchive builds.
   if (process.platform === 'win32') {
@@ -297,16 +333,17 @@ function pathForSystemTar(absolutePath) {
 
 async function extractArchive(archivePath, binaryName, destination, sourcePath) {
   const tempDir = await mkdtemp(join(tmpdir(), 'cosmo-bin-'));
-  const isZip = archivePath.toLowerCase().endsWith('.zip');
+  const invocation = getArchiveExtractionInvocation(archivePath, tempDir);
   const result =
-    process.platform === 'win32' && isZip
+    invocation.command === 'powershell.exe'
       ? extractZipWindows(archivePath, tempDir)
-      : spawnSync('tar', ['-xf', pathForSystemTar(archivePath), '-C', pathForSystemTar(tempDir)], {
-          stdio: 'inherit'
+      : spawnSync(invocation.command, invocation.args, {
+          stdio: 'inherit',
+          env: invocation.env
         });
   if (result.status !== 0) {
     throw new Error(
-      `Failed to extract ${basename(archivePath)}. Install tar or extract it manually.`
+      `Failed to extract ${basename(archivePath)} using ${invocation.errorTool}. Install the required archive tool or extract it manually.`
     );
   }
 
@@ -383,12 +420,23 @@ async function downloadPlatform(platformKey) {
   }
 }
 
-const requestedPlatforms = process.argv.includes('--all')
-  ? Object.keys(platforms)
-  : [`${process.platform}-${process.arch}`];
+export async function downloadRequestedPlatforms(args = process.argv.slice(2)) {
+  const requestedPlatforms = args.includes('--all')
+    ? Object.keys(platforms)
+    : [`${process.platform}-${process.arch}`];
 
-for (const platformKey of requestedPlatforms) {
-  await downloadPlatform(platformKey);
+  for (const platformKey of requestedPlatforms) {
+    await downloadPlatform(platformKey);
+  }
 }
 
-console.log('Binary download complete.');
+if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
+  downloadRequestedPlatforms()
+    .then(() => {
+      console.log('Binary download complete.');
+    })
+    .catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
+}

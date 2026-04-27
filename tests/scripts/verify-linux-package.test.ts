@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { EventEmitter } from 'events'
 import {
+  getLinuxSmokeTestArgs,
   getLinuxAppImageArtifactWithFs,
   verifyLinuxPackage
 } from '../../scripts/verify-linux-package.mjs'
@@ -19,6 +20,21 @@ describe('getLinuxAppImageArtifactWithFs', () => {
 })
 
 describe('verifyLinuxPackage', () => {
+  it('adds --no-sandbox when running as root', () => {
+    expect(getLinuxSmokeTestArgs('dist/cosmo.AppImage', 0)).toEqual([
+      '-a',
+      'dist/cosmo.AppImage',
+      '--no-sandbox'
+    ])
+  })
+
+  it('omits --no-sandbox for non-root users', () => {
+    expect(getLinuxSmokeTestArgs('dist/cosmo.AppImage', 1000)).toEqual([
+      '-a',
+      'dist/cosmo.AppImage'
+    ])
+  })
+
   it('passes when the packaged app exits cleanly', async () => {
     const child = new EventEmitter() as EventEmitter & { kill: ReturnType<typeof vi.fn> }
     child.kill = vi.fn()
