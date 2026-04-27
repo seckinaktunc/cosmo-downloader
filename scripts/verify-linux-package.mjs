@@ -7,10 +7,9 @@ import { fileURLToPath } from 'url';
 const SMOKE_TEST_TIMEOUT_MS = 60_000;
 
 export function getLinuxSmokeTestArgs(
-  artifact,
-  uid = typeof process.getuid === 'function' ? process.getuid() : undefined
+  artifact
 ) {
-  return uid === 0 ? ['-a', artifact, '--no-sandbox'] : ['-a', artifact];
+  return ['-a', artifact, '--no-sandbox'];
 }
 
 export function getLinuxAppImageArtifact(distDir = 'dist') {

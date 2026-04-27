@@ -20,18 +20,11 @@ describe('getLinuxAppImageArtifactWithFs', () => {
 })
 
 describe('verifyLinuxPackage', () => {
-  it('adds --no-sandbox when running as root', () => {
-    expect(getLinuxSmokeTestArgs('dist/cosmo.AppImage', 0)).toEqual([
+  it('always adds --no-sandbox for the AppImage smoke test', () => {
+    expect(getLinuxSmokeTestArgs('dist/cosmo.AppImage')).toEqual([
       '-a',
       'dist/cosmo.AppImage',
       '--no-sandbox'
-    ])
-  })
-
-  it('omits --no-sandbox for non-root users', () => {
-    expect(getLinuxSmokeTestArgs('dist/cosmo.AppImage', 1000)).toEqual([
-      '-a',
-      'dist/cosmo.AppImage'
     ])
   })
 
@@ -56,7 +49,7 @@ describe('verifyLinuxPackage', () => {
 
     expect(spawnProcess).toHaveBeenCalledWith(
       'xvfb-run',
-      ['-a', 'dist/cosmo.AppImage'],
+      ['-a', 'dist/cosmo.AppImage', '--no-sandbox'],
       expect.objectContaining({
         env: expect.objectContaining({
           APPIMAGE_EXTRACT_AND_RUN: '1',
