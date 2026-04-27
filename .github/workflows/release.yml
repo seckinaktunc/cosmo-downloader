@@ -78,7 +78,11 @@ jobs:
       - name: Install Linux smoke test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip xvfb libnss3 libgtk-3-0 libxss1 libasound2 libatk-bridge2.0-0 libgbm1
+          ALSA_PACKAGE=libasound2
+          if apt-cache show libasound2t64 >/dev/null 2>&1; then
+            ALSA_PACKAGE=libasound2t64
+          fi
+          sudo apt-get install -y unzip xvfb libnss3 libgtk-3-0 libxss1 "$ALSA_PACKAGE" libatk-bridge2.0-0 libgbm1
       - run: npm ci
       - run: npm run download:binaries:current
       - run: npm run build:linux
