@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { existsSync, readdirSync, statSync } from 'fs'
-import { join, resolve } from 'path'
-import { spawn } from 'child_process'
-import { fileURLToPath } from 'url'
+import { existsSync, readdirSync, statSync } from 'fs';
+import { join, resolve } from 'path';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
 
-const SMOKE_TEST_TIMEOUT_MS = 30_000
+const SMOKE_TEST_TIMEOUT_MS = 30_000;
 
 export function getLinuxAppImageArtifact(distDir = 'dist') {
-  return getLinuxAppImageArtifactWithFs(distDir)
+  return getLinuxAppImageArtifactWithFs(distDir);
 }
 
 export function getLinuxAppImageArtifactWithFs(
@@ -17,7 +17,7 @@ export function getLinuxAppImageArtifactWithFs(
   return readDir(distDir)
     .filter((name) => name.endsWith('.AppImage'))
     .map((name) => join(distDir, name))
-    .sort((a, b) => stat(b).mtimeMs - stat(a).mtimeMs)[0]
+    .sort((a, b) => stat(b).mtimeMs - stat(a).mtimeMs)[0];
 }
 
 export async function verifyLinuxPackage({
@@ -30,16 +30,16 @@ export async function verifyLinuxPackage({
   spawnProcess = spawn
 } = {}) {
   if (platform !== 'linux') {
-    throw new Error('Linux package verification must run on Linux.')
+    throw new Error('Linux package verification must run on Linux.');
   }
 
-  const artifact = getArtifact(distDir)
+  const artifact = getArtifact(distDir);
   if (!artifact) {
-    throw new Error(`No Linux AppImage artifact found in ${distDir}.`)
+    throw new Error(`No Linux AppImage artifact found in ${distDir}.`);
   }
 
   if (!pathExists(artifact)) {
-    throw new Error(`Linux AppImage artifact is missing: ${artifact}`)
+    throw new Error(`Linux AppImage artifact is missing: ${artifact}`);
   }
 
   await new Promise((resolvePromise, reject) => {
@@ -51,55 +51,55 @@ export async function verifyLinuxPackage({
         APPIMAGE_EXTRACT_AND_RUN: '1',
         COSMO_SMOKE_TEST: '1'
       }
-    })
+    });
 
-    let settled = false
+    let settled = false;
     const timer = setTimeout(() => {
       if (settled) {
-        return
+        return;
       }
 
-      settled = true
-      child.kill('SIGKILL')
-      reject(new Error(`Linux AppImage smoke test timed out after ${timeoutMs}ms.`))
-    }, timeoutMs)
+      settled = true;
+      child.kill('SIGKILL');
+      reject(new Error(`Linux AppImage smoke test timed out after ${timeoutMs}ms.`));
+    }, timeoutMs);
 
     child.on('error', (error) => {
       if (settled) {
-        return
+        return;
       }
 
-      settled = true
-      clearTimeout(timer)
-      reject(error)
-    })
+      settled = true;
+      clearTimeout(timer);
+      reject(error);
+    });
 
     child.on('close', (exitCode, signal) => {
       if (settled) {
-        return
+        return;
       }
 
-      settled = true
-      clearTimeout(timer)
+      settled = true;
+      clearTimeout(timer);
 
       if (exitCode === 0) {
-        resolvePromise()
-        return
+        resolvePromise();
+        return;
       }
 
-      const outcome = signal ? `signal ${signal}` : `code ${exitCode}`
-      reject(new Error(`Linux AppImage smoke test failed with ${outcome}.`))
-    })
-  })
+      const outcome = signal ? `signal ${signal}` : `code ${exitCode}`;
+      reject(new Error(`Linux AppImage smoke test failed with ${outcome}.`));
+    });
+  });
 }
 
 if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   verifyLinuxPackage()
     .then(() => {
-      console.log('Linux AppImage smoke test passed.')
+      console.log('Linux AppImage smoke test passed.');
     })
     .catch((error) => {
-      console.error(error instanceof Error ? error.message : String(error))
-      process.exit(1)
-    })
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
 }

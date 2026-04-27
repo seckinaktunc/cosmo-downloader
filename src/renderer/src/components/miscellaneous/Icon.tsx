@@ -1,6 +1,4 @@
-import { icons as logos } from '@iconify-json/logos'
-import { icons as flags } from '@iconify-json/flag'
-import { Icon as IconifyIcon, addCollection } from '@iconify/react'
+import { Icon as IconifyIcon } from '@iconify/react'
 import {
   IconAdjustmentsHorizontal,
   IconAdjustmentsHorizontalFilled,
@@ -51,6 +49,7 @@ import {
   IconX
 } from '@tabler/icons-react'
 import AppIcon from './AppIcon'
+import { ICONIFY_ICON_DATA } from './iconCollections.generated'
 import { cn } from '@renderer/lib/utils'
 
 export interface IconProps {
@@ -62,9 +61,6 @@ export interface IconProps {
   style?: React.CSSProperties
   filled?: boolean
 }
-
-addCollection(logos)
-addCollection(flags)
 
 const iconMap = {
   appIcon: AppIcon,
@@ -133,9 +129,16 @@ export default function Icon({
   className
 }: IconProps): React.JSX.Element | null {
   if (name.startsWith('logos:') || name.startsWith('flag:')) {
+    const iconData = ICONIFY_ICON_DATA[name]
+
+    if (!iconData) {
+      console.warn(`Icon "${name}" not found in ICONIFY_ICON_DATA.`)
+      return null
+    }
+
     return (
       <IconifyIcon
-        icon={name}
+        icon={iconData}
         className={className}
         style={{
           width: `${size / 16}rem`,

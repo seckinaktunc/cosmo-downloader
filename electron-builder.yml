@@ -1,15 +1,26 @@
 appId: com.seckinaktunc.cosmodownloader
 productName: Cosmo Downloader
+compression: maximum
+electronLanguages:
+  - en-US
+  - tr
+  - zh-CN
 directories:
   buildResources: build
 files:
   - '!**/.vscode/*'
+  - '!.claude/**/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,README.md,LICENSE}'
   - '!docs/**/*'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!tests/**/*'
+  - '!scripts/**/*'
+  - '!vitest.config.ts'
+  - '!**/*.tsbuildinfo'
+  - '!**/*.map'
   - '!resources/bin/**/*'
 extraResources:
   - from: resources/bin
@@ -41,8 +52,6 @@ mac:
     - zip
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
