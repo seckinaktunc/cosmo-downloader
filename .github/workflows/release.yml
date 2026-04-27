@@ -53,6 +53,7 @@ jobs:
         run: node scripts/require-windows-signing-env.mjs
       - run: npm run download:binaries:current
       - run: npm run build
+      - run: node scripts/patch-electron-builder-nsis.mjs
       - run: npx electron-builder --win --publish never
       - if: env.WIN_CSC_LINK != ''
         run: npm run verify:win-signing

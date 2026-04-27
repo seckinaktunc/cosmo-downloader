@@ -55,6 +55,8 @@ In addition, while a download is running, the app creates temporary working file
 
 You can delete any of these files manually at any time. Preferences will reset to defaults; queue and history will be empty.
 
+On Windows, uninstall preserves this data by default. If you explicitly select the uninstaller's optional full-cleanup step, it will also remove the app's legacy roaming folder, updater cache, and temp remnants. Downloaded media in your chosen output folders is never removed by uninstall.
+
 ## Cookies
 
 If you opt in to **browser cookie import** in Preferences — typically to download age-gated or paywalled content you have access to — the selected browser's cookie store is read by **yt-dlp** (using its `--cookies-from-browser` option), *not* by Cosmo. Cosmo simply passes your browser choice to yt-dlp.

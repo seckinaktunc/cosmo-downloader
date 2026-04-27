@@ -16,6 +16,12 @@ Common false positive — yt-dlp is frequently flagged because malware sometimes
 - Whitelist the bundled binary at `<install-dir>\resources\bin\win32-x64\yt-dlp.exe`.
 - Download directly from the official [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page (don't trust copies from anywhere else).
 
+### I want uninstall to remove logs, caches, and temp files too
+
+Use the optional **full cleanup** checkbox in the Windows uninstaller.
+
+That cleanup removes Cosmo Downloader's app data, logs, caches, updater files, and temp remnants from Windows profile folders. It does **not** remove downloaded videos, audio files, or any other media in your chosen output folders.
+
 ## Download issues
 
 ### "Binary not found" or similar on launch

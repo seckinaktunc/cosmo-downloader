@@ -16,6 +16,12 @@ Make sure the selected browser is fully closed before downloading. Some browsers
 
 By default, to your system **Downloads** folder. You can change the default in **Preferences > Default download location**, or choose a per-video location in **Export Settings**.
 
+## Does uninstall delete my downloads or app data?
+
+By default, uninstall removes the app and its shortcuts, but preserves your settings, history, logs, caches, and downloaded media.
+
+If you want a full cleanup, the Windows uninstaller also offers an optional cleanup step that removes Cosmo Downloader's app data, updater cache, and temp remnants. Downloaded media and any other files in your chosen output folders are never removed by uninstall.
+
 ## Can I download audio only?
 
 Yes. Just pick an audio-only format (`mp3`, `wav`). Cosmo will extract and encode audio directly. No video processing overhead.

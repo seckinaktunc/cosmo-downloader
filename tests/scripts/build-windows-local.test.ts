@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   getElectronBuilderInvocation,
+  getElectronBuilderNsisPatchInvocation,
   getLocalWindowsBuildEnv,
   getNpmInvocation
 } from '../../scripts/build-windows-local.mjs'
+import { getElectronBuilderNsisPatchPaths } from '../../scripts/patch-electron-builder-nsis.mjs'
 
 describe('getLocalWindowsBuildEnv', () => {
   it('disables certificate autodiscovery for unsigned local builds', () => {
@@ -63,5 +65,37 @@ describe('getElectronBuilderInvocation', () => {
     expect(invocation.args[0]).toContain('electron-builder')
     expect(invocation.args).toEqual(expect.arrayContaining(['--win', '--publish', 'never']))
     expect(invocation.shell).toBe(false)
+  })
+})
+
+describe('getElectronBuilderNsisPatchInvocation', () => {
+  it('runs the NSIS template patch through node', () => {
+    const invocation = getElectronBuilderNsisPatchInvocation()
+
+    expect(invocation.command).toBe(process.execPath)
+    expect(invocation.args).toHaveLength(1)
+    expect(invocation.args[0]).toContain('patch-electron-builder-nsis.mjs')
+    expect(invocation.shell).toBe(false)
+  })
+})
+
+describe('getElectronBuilderNsisPatchPaths', () => {
+  it('patches all tracked NSIS templates that control installer and uninstaller behavior', () => {
+    const paths = getElectronBuilderNsisPatchPaths('C:\\repo')
+
+    expect(paths).toEqual([
+      {
+        source: 'C:\\repo\\build\\installer-template.nsi',
+        target: 'C:\\repo\\node_modules\\app-builder-lib\\templates\\nsis\\installer.nsi'
+      },
+      {
+        source: 'C:\\repo\\build\\assistedInstaller-template.nsh',
+        target: 'C:\\repo\\node_modules\\app-builder-lib\\templates\\nsis\\assistedInstaller.nsh'
+      },
+      {
+        source: 'C:\\repo\\build\\multiUser.nsh',
+        target: 'C:\\repo\\node_modules\\app-builder-lib\\templates\\nsis\\multiUser.nsh'
+      }
+    ])
   })
 })

@@ -50,6 +50,14 @@ export function getElectronBuilderInvocation() {
   }
 }
 
+export function getElectronBuilderNsisPatchInvocation() {
+  return {
+    command: process.execPath,
+    args: [resolve(projectRoot, 'scripts', 'patch-electron-builder-nsis.mjs')],
+    shell: false
+  }
+}
+
 function run(command, args, options = {}) {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
@@ -78,6 +86,9 @@ export async function runLocalWindowsBuild({ env = process.env } = {}) {
   await run(build.command, build.args, { env, shell: build.shell })
 
   await run(process.execPath, ['scripts/preflight-windows-symlink.mjs'], { env })
+
+  const patchNsis = getElectronBuilderNsisPatchInvocation()
+  await run(patchNsis.command, patchNsis.args, { env, shell: patchNsis.shell })
 
   const electronBuilder = getElectronBuilderInvocation()
   await run(electronBuilder.command, electronBuilder.args, {
