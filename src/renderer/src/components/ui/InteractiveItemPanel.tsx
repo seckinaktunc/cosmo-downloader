@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DownloadHistoryStatus, QueueItem, QueueItemStatus } from '../../../../shared/types';
 import { cn } from '../../lib/utils';
-import Icon, { type IconName } from '../miscellaneous/Icon';
+import { type IconName } from '../miscellaneous/Icon';
 import { ActionMenu, type ActionMenuAnchor, type ActionMenuItem } from './ActionMenu';
 import { Button } from './Button';
 import { Thumbnail, type ThumbnailAction } from './Thumbnail';
@@ -501,16 +501,17 @@ export function InteractiveItemPanel<TItem>({
                   <span
                     className={cn(
                       'absolute left-0 top-0 h-full w-1',
-                      isActiveItem ? 'bg-primary' : 'bg-white/40'
+                      isActiveItem ? 'bg-primary' : 'bg-white/50'
                     )}
                     aria-hidden
                   />
                 ) : null}
 
-                <button
+                <Button
                   type="button"
+                  icon="move"
                   className={cn(
-                    'no-drag relative z-10 flex h-full min-h-20 cursor-pointer items-center justify-center text-white/40 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70',
+                    'relative z-10 h-full w-full rounded-none hover:bg-white/10',
                     menuState?.itemId === itemId && 'bg-white/10 text-white'
                   )}
                   aria-label={actionsLabel(itemTitle)}
@@ -531,9 +532,9 @@ export function InteractiveItemPanel<TItem>({
                     );
                   }}
                   onKeyDown={(event) => event.stopPropagation()}
-                >
-                  <Icon name="move" size={20} />
-                </button>
+                  onlyIcon
+                  ghost
+                />
 
                 <div className="flex min-w-0 gap-2 p-2 pl-0">
                   {(itemHint || topRightAction) && (
@@ -558,11 +559,11 @@ export function InteractiveItemPanel<TItem>({
                           onlyIcon
                           ghost
                           className={cn(
-                            'absolute -right-2 -top-2',
                             showPersistentTopRightAction
                               ? 'pointer-events-auto opacity-100'
                               : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100'
                           )}
+                          tooltipClassName="absolute -right-2 -top-2"
                           onPointerDown={(event) => event.stopPropagation()}
                           onMouseDown={(event) => event.stopPropagation()}
                           onClick={(event) => {
@@ -590,7 +591,10 @@ export function InteractiveItemPanel<TItem>({
                       <div
                         className={cn(
                           'w-3 h-3 rounded-full bg-primary shrink-0',
-                          (itemStatus === 'pending' || itemStatus === 'paused') && 'bg-yellow',
+                          (itemStatus === 'pending' ||
+                            itemStatus === 'paused' ||
+                            itemStatus === 'fetched') &&
+                            'bg-yellow',
                           itemStatus === 'active' && 'bg-green animate-pulse',
                           itemStatus === 'completed' && 'bg-blue'
                         )}
