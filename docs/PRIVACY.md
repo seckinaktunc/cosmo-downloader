@@ -37,7 +37,9 @@ When you add a URL and start a download, the bundled yt-dlp binary makes the net
 - Requests to the video platform you pasted (e.g., YouTube, TikTok).
 - Any follow-up requests yt-dlp needs (e.g., to a CDN, or to extract stream manifests).
 
-These requests are made by yt-dlp directly — the Cosmo UI does not proxy, inspect, or modify them. yt-dlp's behavior is governed by its own project and documentation.
+These requests are made by yt-dlp directly - the Cosmo UI does not proxy, inspect, or modify them. yt-dlp's behavior is governed by its own project and documentation.
+
+When yt-dlp needs a JavaScript runtime for site extraction, Cosmo supplies bundled Deno locally. That does not create a separate developer-facing network channel; it remains part of yt-dlp's own retrieval flow.
 
 ## Local data stored on your machine
 
@@ -69,8 +71,9 @@ The files you download end up wherever you set the download location (Preference
 
 ## Third-party components
 
-- [**yt-dlp**](https://github.com/yt-dlp/yt-dlp) — runs locally, initiates network calls to the platforms you ask it to reach. Its privacy behavior is governed by the yt-dlp project.
-- [**FFmpeg**](https://ffmpeg.org/) — runs locally, performs media processing on your machine. Does not make network calls in the way Cosmo uses it.
+- [**yt-dlp**](https://github.com/yt-dlp/yt-dlp) - runs locally, initiates network calls to the platforms you ask it to reach. Its privacy behavior is governed by the yt-dlp project.
+- [**Deno**](https://deno.com/) - bundled local JavaScript runtime supplied to yt-dlp when needed. Cosmo does not use it as an independent network client.
+- [**FFmpeg**](https://ffmpeg.org/) and `ffprobe` - run locally, perform media processing and inspection on your machine. They do not make network calls in the way Cosmo uses them.
 - [**Electron**](https://www.electronjs.org/) — the runtime. Electron itself does not phone home from within this app.
 
 ## Changes to this policy

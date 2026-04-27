@@ -17,11 +17,15 @@ A high-performance video downloader for power users who value speed and aestheti
 </p>
 </div>
 
-> **Available on Windows and Linux x64.** macOS support is still on the way.
+> **Available on Windows and Linux x64.** macOS support is still on the way (very soon).
 
-Cosmo Downloader wraps the raw power of **yt-dlp** and **FFmpeg** in a modern UI, giving you fine-grained control over codecs, bitrate, resolution, and more. No pay-walls, no ads, no shady bundled toolbars.
+Cosmo Downloader wraps the raw power of **yt-dlp** and **FFmpeg** in a modern UI, giving you fine-grained control over codecs, bitrate, resolution, and more. Behind the scenes it also bundles **Deno** as yt-dlp's local JavaScript runtime and **ffprobe** for media inspection. No pay-walls, no ads; just a powerful, user-friendly and sexy downloader.
+
+<div align="center">
 
 **Download the latest release:** https://github.com/seckinaktunc/cosmo-downloader/releases
+
+</div>
 
 ## About
 
@@ -29,35 +33,30 @@ I started building this out of necessity and kept working on it out of passion. 
 
 If it helps you, that's enough for me. If you have ideas, issues, or want to contribute; please do.
 
-- **Zero external installs:** yt-dlp and FFmpeg ship bundled
+- **Zero external installs:** `yt-dlp`, `Deno`, `ffmpeg`, and `ffprobe` ship bundled
 - **Local-only:** No telemetry, no analytics, no account required
 
 ## Features
 
-### Downloading
+<div align="center">
 
-- Paste any URL supported by yt-dlp (YouTube, TikTok, Instagram, Twitch, and [hundreds more](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md))
-- Video + audio or audio-only extraction
-- Thumbnail download / copy
-- Trim / clip with in and out timecodes
+| Spec                  | Details                                                                                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supported formats     | `mp4`, `mkv`, `mov`, `webm`, `mp3`, `wav`, or just thumbnails                                                                                       |
+| Video codecs          | `av1`, `vp9`, `prores`, `h265`, `h264`, or `auto`                                                                                                   |
+| Audio codecs          | `opus`, `vorbis`, `aac`, `mp3`, `wav`, or `auto`                                                                                                    |
+| Max video resolution  | 4k (2160p)                                                                                                                                          |
+| Max audio bitrate     | 320kbps                                                                                                                                             |
+| Hardware acceleration | If your system supports it                                                                                                                          |
+| Download queue        | Sequential and fully editable                                                                                                                       |
+| Download history      | Persistent with metadata                                                                                                                            |
+| Trimming              | Trim videos instead of downloading the entire thing                                                                                                 |
+| Clipboard support     | One-click URL intake                                                                                                                                |
+| Log viewer            | Live and persistent                                                                                                                                 |
+| Cookie import         | Import from browsers for age-restricted content (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560)) |
+| Auto-update           | Cosmo checks updates automatically on start-up                                                                                                      |
 
-### Format & control
-
-- **Currently supported formats:** `mp4`, `mkv`, `webm`, `mp3`, `wav`
-- **Video codecs:** `av1`, `vp9`, `h265`, `h264`, or `auto`
-- **Audio codecs:** `opus`, `vorbis`, `aac`, `mp3`, `wav`, or `auto`
-- Resolution and bitrate selection (up to 4K/20mbps/320kbps)
-- Hardware acceleration (if your system supports it)
-
-### UX
-
-- Sequential and fully editable download queue
-- Persistent download history with re-queue option
-- Live per-download log viewer
-- Clipboard-aware URL intake
-- Browser cookie import for age-restricted content (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560))
-- Auto-update checks via GitHub Releases
-- Configurable download location and filename rules
+</div>
 
 ## Installation
 
@@ -91,7 +90,8 @@ Cosmo Downloader is a standard Electron app:
 - **Electron main process:** Download orchestration, queue, history, preferences, updates
 - **React + TypeScript + TailwindCSS** combination for UI
 - **yt-dlp:** Platform extraction and media retrieval (bundled)
-- **FFmpeg:** Encoding, remuxing, trimming (bundled)
+- **Deno:** Local JavaScript runtime passed to yt-dlp when required (bundled)
+- **FFmpeg + ffprobe:** Encoding, remuxing, trimming, and media inspection (bundled)
 
 State is managed with Zustand. IPC between main and renderer is fully typed. Tests are written in Vitest.
 
@@ -112,7 +112,7 @@ npm install
 npm run download:binaries:current
 ```
 
-`download:binaries:current` fetches yt-dlp and FFmpeg for your current platform into `resources/bin/<platform-arch>/`. This must run at least once before `dev` or any build. Use `npm run download:binaries` to fetch binaries for all platforms (useful for CI).
+`download:binaries:current` fetches `yt-dlp`, `Deno`, `ffmpeg`, and `ffprobe` for your current platform into `resources/bin/<platform-arch>/`. This must run at least once before `dev` or any build. Use `npm run download:binaries` to fetch binaries for all platforms (useful for CI).
 
 ### Run in dev
 
@@ -174,10 +174,13 @@ If either is missing, an unsigned installer is produced. You can sanity-check a 
 - [x] Queueing
 - [x] Download history
 - [x] Clipboard detection
-- [ ] Subtitle support
 - [x] Multi-language support
-- [ ] macOS build
+- [x] Windows build
 - [x] Linux build
+- [ ] Playlist support
+- [ ] Subtitle support
+- [ ] macOS build
+- [ ] Automated tasks
 
 ## Contributing
 

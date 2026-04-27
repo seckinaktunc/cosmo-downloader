@@ -26,8 +26,8 @@ That cleanup removes Cosmo Downloader's app data, logs, caches, updater files, a
 
 ### "Binary not found" or similar on launch
 
-- **Installed from the installer:** reinstall. The bundled binaries should always be present; if they're not, something went wrong during install.
-- **Built from source:** re-run `npm run download:binaries:current`.
+- **Installed from the installer:** reinstall. The required bundled binaries (`yt-dlp`, `Deno`, `ffmpeg`, and `ffprobe`) should always be present; if they're not, something went wrong during install.
+- **Built from source:** re-run `npm run download:binaries:current` to restore the current platform's bundled toolchain.
 
 ### Download fails immediately
 

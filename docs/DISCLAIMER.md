@@ -4,7 +4,7 @@
 
 ## What Cosmo Downloader is
 
-Cosmo Downloader is a graphical user interface around two well-known open-source command-line tools — [**yt-dlp**](https://github.com/yt-dlp/yt-dlp) and [**FFmpeg**](https://ffmpeg.org/). It does not contain its own extraction or decoding logic; it orchestrates these underlying tools on your behalf. It does not circumvent any platform's technical protection measures (DRM, encryption, access control). If yt-dlp or FFmpeg cannot handle a given resource, neither can Cosmo Downloader.
+Cosmo Downloader is a graphical user interface around well-known open-source media tooling - primarily [**yt-dlp**](https://github.com/yt-dlp/yt-dlp) and [**FFmpeg**](https://ffmpeg.org/), with bundled Deno as yt-dlp's local JavaScript runtime and `ffprobe` for media inspection. It does not contain its own extraction or decoding logic; it orchestrates these underlying tools on your behalf. It does not circumvent any platform's technical protection measures (DRM, encryption, access control). If yt-dlp or FFmpeg cannot handle a given resource, neither can Cosmo Downloader.
 
 ## Your responsibility
 
@@ -39,7 +39,7 @@ Trademarks and product names referenced in the app or its documentation are the 
 
 ## Third-party components
 
-Cosmo Downloader ships with third-party components (including yt-dlp, FFmpeg, Electron, and others). Those components are governed by their own licenses, which you must also respect. Nothing in this project grants you rights over those components beyond what their own licenses already grant.
+Cosmo Downloader ships with third-party components (including yt-dlp, Deno, FFmpeg, `ffprobe`, Electron, and others). Those components are governed by their own licenses, which you must also respect. Nothing in this project grants you rights over those components beyond what their own licenses already grant.
 
 ## Reporting
 

@@ -30,7 +30,7 @@ You may not use the Software to:
 
 The Software lets you interact with third-party platforms (e.g., YouTube, TikTok, etc.) that are operated by independent parties. Your use of those platforms is governed by **their** terms of service and privacy policies. Cosmo Downloader is not a party to, nor responsible for, those relationships.
 
-The Software bundles third-party open-source components, including [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [FFmpeg](https://ffmpeg.org/), each governed by its own license.
+The Software bundles third-party open-source components, including [yt-dlp](https://github.com/yt-dlp/yt-dlp), [Deno](https://deno.com/), and [FFmpeg](https://ffmpeg.org/) / `ffprobe`, each governed by its own license.
 
 ## 4. No warranty
 

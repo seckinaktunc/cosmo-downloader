@@ -48,7 +48,7 @@ Linux x64 builds are available on the [Releases](https://github.com/seckinaktunc
 
 ## Does it work offline?
 
-No, it can't. The source site needs to be reachable. Everything else (yt-dlp, FFmpeg, the UI) runs locally on your own machine.
+No, it can't. The source site needs to be reachable. Everything else (`yt-dlp`, `Deno`, `ffmpeg`, `ffprobe`, and the UI) runs locally on your own machine.
 
 ## Does Cosmo Downloader collect or upload any of my data?
 
