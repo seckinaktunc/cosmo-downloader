@@ -102,6 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -118,9 +119,9 @@ jobs:
       - name: Publish release artifacts
         shell: bash
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-context/release-notes.md
-          gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-context/release-notes.md
-          gh release upload "$GITHUB_REF_NAME" \
+          gh release view "$GITHUB_REF_NAME" --repo "$GH_REPO" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --repo "$GH_REPO" --title "$GITHUB_REF_NAME" --notes-file release-context/release-notes.md
+          gh release edit "$GITHUB_REF_NAME" --repo "$GH_REPO" --title "$GITHUB_REF_NAME" --notes-file release-context/release-notes.md
+          gh release upload "$GITHUB_REF_NAME" --repo "$GH_REPO" \
             release-assets/windows/*.exe \
             release-assets/windows/*.blockmap \
             release-assets/windows/latest.yml \
