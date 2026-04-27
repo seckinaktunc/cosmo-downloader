@@ -235,7 +235,7 @@ export function LogsPanel(): React.JSX.Element {
               </pre>
             </div>
           ) : (
-            <div className="p-4 text-sm text-white/40">{t('logs.noSelectionDetail')}</div>
+            <div className="p-4 text-sm text-white/25">{t('logs.noSelectionDetail')}</div>
           )}
         </div>
       </div>
