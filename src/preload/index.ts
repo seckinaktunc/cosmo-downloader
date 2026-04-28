@@ -4,6 +4,7 @@ import type {
   AppEnvironment,
   AppSettings,
   CancelMetadataRequest,
+  FetchMetadataResponse,
   ChooseOutputPathRequest,
   ChooseOutputPathResult,
   CookieBrowserOption,
@@ -18,6 +19,7 @@ import type {
   HistoryItemRequest,
   IpcResult,
   MetadataFetchLifecycleEvent,
+  MetadataPrefetchCacheSummary,
   OpenPathRequest,
   QueueAddRequest,
   QueueBulkRequest,
@@ -31,7 +33,6 @@ import type {
   SettingsUpdate,
   ThumbnailRequest,
   UpdateState,
-  VideoMetadata,
   WindowAction
 } from '../shared/types';
 
@@ -65,8 +66,10 @@ export type CosmoApi = {
     detectCookieBrowsers: () => Promise<IpcResult<CookieBrowserOption[]>>;
   };
   video: {
-    fetchMetadata: (request: FetchMetadataRequest) => Promise<IpcResult<VideoMetadata>>;
+    fetchMetadata: (request: FetchMetadataRequest) => Promise<FetchMetadataResponse>;
     cancelMetadata: (request: CancelMetadataRequest) => Promise<IpcResult<null>>;
+    getPrefetchCacheSummary: () => Promise<IpcResult<MetadataPrefetchCacheSummary>>;
+    clearPrefetchCache: () => Promise<IpcResult<MetadataPrefetchCacheSummary>>;
     onFetchLifecycle: (listener: (event: MetadataFetchLifecycleEvent) => void) => Unsubscribe;
   };
   download: {
@@ -170,8 +173,13 @@ const api: CosmoApi = {
       invoke<CookieBrowserOption[]>(IPC_CHANNELS.system.detectCookieBrowsers)
   },
   video: {
-    fetchMetadata: (request) => invoke<VideoMetadata>(IPC_CHANNELS.video.fetchMetadata, request),
+    fetchMetadata: (request) =>
+      ipcRenderer.invoke(IPC_CHANNELS.video.fetchMetadata, request) as Promise<FetchMetadataResponse>,
     cancelMetadata: (request) => invoke<null>(IPC_CHANNELS.video.cancelMetadata, request),
+    getPrefetchCacheSummary: () =>
+      invoke<MetadataPrefetchCacheSummary>(IPC_CHANNELS.video.getPrefetchCacheSummary),
+    clearPrefetchCache: () =>
+      invoke<MetadataPrefetchCacheSummary>(IPC_CHANNELS.video.clearPrefetchCache),
     onFetchLifecycle: (listener) =>
       subscribe<MetadataFetchLifecycleEvent>(IPC_CHANNELS.video.fetchLifecycle, listener)
   },

@@ -526,9 +526,9 @@ export function InteractiveItemPanel<TItem>({
                       current?.itemId === itemId
                         ? null
                         : {
-                            itemId,
-                            anchor: { type: 'element', element: currentTarget }
-                          }
+                          itemId,
+                          anchor: { type: 'element', element: currentTarget }
+                        }
                     );
                   }}
                   onKeyDown={(event) => event.stopPropagation()}
@@ -594,7 +594,7 @@ export function InteractiveItemPanel<TItem>({
                           (itemStatus === 'pending' ||
                             itemStatus === 'paused' ||
                             itemStatus === 'fetched') &&
-                            'bg-yellow',
+                          'bg-yellow',
                           itemStatus === 'active' && 'bg-green animate-pulse',
                           itemStatus === 'completed' && 'bg-blue'
                         )}

@@ -7,7 +7,6 @@ import type {
 } from '../../../shared/types';
 import { getValidLookingSingleVideoUrl } from '../lib/urlInput';
 import { validateUrl } from '../lib/validateUrl';
-import { classifyVideoUrl } from '../lib/videoUrlClassifier';
 import { useDownloadStore } from './downloadStore';
 import { useUiStore } from './uiStore';
 
@@ -35,7 +34,8 @@ type VideoState = {
   setUrl: (url: string) => void;
   clear: () => void;
   subscribe: () => void;
-  fetchMetadata: (settings: AppSettings) => Promise<void>;
+  fetchMetadata: (settings: AppSettings, options?: { forceRefresh?: boolean }) => Promise<void>;
+  retryMetadata: (settings: AppSettings) => Promise<void>;
 };
 
 export const useVideoStore = create<VideoState>((set, get) => ({
@@ -107,22 +107,11 @@ export const useVideoStore = create<VideoState>((set, get) => ({
     set({ isSubscribed: true });
   },
 
-  fetchMetadata: async (settings) => {
+  fetchMetadata: async (settings, options) => {
     const url = get().url.trim();
     const validation = validateUrl(url);
     if (!validation.isValid || !validation.normalized) {
       set({ metadata: null, stage: 'idle', error: validation.reason, activeFetchLog: null });
-      return;
-    }
-
-    const kind = classifyVideoUrl(validation.normalized);
-    if (kind === 'playlist' || kind === 'channel') {
-      set({
-        metadata: null,
-        stage: 'failed',
-        error: 'Only single-video links are supported in this version.',
-        activeFetchLog: null
-      });
       return;
     }
 
@@ -142,61 +131,77 @@ export const useVideoStore = create<VideoState>((set, get) => ({
     const result = await window.cosmo.video.fetchMetadata({
       requestId,
       url: validation.normalized,
-      settings
+      settings,
+      forceRefresh: options?.forceRefresh
     });
 
     if (get().activeRequestId !== requestId) {
       return;
     }
 
-    if (result.ok) {
-      useUiStore.getState().initializePreviewExportSettings(result.data, settings);
+    const fetchResult = result.result;
+    const responseLogPath = result.logPath;
+    const resolvedFetchLog =
+      responseLogPath != null
+        ? {
+            requestId,
+            url: validation.normalized,
+            logPath: responseLogPath,
+            state: fetchResult.ok ? ('succeeded' as const) : ('failed' as const),
+            timestamp: new Date().toISOString()
+          }
+        : get().activeFetchLog;
+
+    if (fetchResult.ok) {
+      useUiStore.getState().initializePreviewExportSettings(fetchResult.data, settings);
       const resolvedExportSettings = useUiStore.getState().previewExportSettings;
-      const activeFetchLog = get().activeFetchLog;
       const recordResult =
-        activeFetchLog?.requestId === requestId
+        responseLogPath != null
           ? await window.cosmo.history.recordFetch({
-              metadata: result.data,
+              metadata: fetchResult.data,
               exportSettings: resolvedExportSettings,
               settings,
               status: 'fetched',
-              logPath: activeFetchLog.logPath
+              logPath: responseLogPath
             })
           : null;
       useDownloadStore.getState().resetForNewPreview();
       set({
-        metadata: result.data,
+        metadata: fetchResult.data,
         stage: 'ready',
         error: undefined,
         activeRequestId: undefined,
-        activeFetchLog: recordResult == null || recordResult.ok ? null : activeFetchLog
+        activeFetchLog: recordResult == null || recordResult.ok ? null : resolvedFetchLog
       });
       return;
     }
 
-    if (result.error.code === 'CANCELLED') {
+    if (fetchResult.error.code === 'CANCELLED') {
       set({ activeFetchLog: null, activeRequestId: undefined });
       return;
     }
 
-    const activeFetchLog = get().activeFetchLog;
     const recordResult =
-      activeFetchLog?.requestId === requestId
+      responseLogPath != null
         ? await window.cosmo.history.recordFetch({
             metadata: createFailedFetchMetadata(requestId, validation.normalized),
             exportSettings: useUiStore.getState().previewExportSettings,
             settings,
             status: 'fetch_failed',
-            logPath: activeFetchLog.logPath,
-            error: result.error.message
+            logPath: responseLogPath,
+            error: fetchResult.error.message
           })
         : null;
     set({
       metadata: null,
       stage: 'failed',
-      error: result.error.message,
+      error: fetchResult.error.message,
       activeRequestId: undefined,
-      activeFetchLog: recordResult == null || recordResult.ok ? null : activeFetchLog
+      activeFetchLog: recordResult == null || recordResult.ok ? null : resolvedFetchLog
     });
+  },
+
+  retryMetadata: async (settings) => {
+    await get().fetchMetadata(settings, { forceRefresh: true });
   }
 }));

@@ -41,6 +41,8 @@
     "hardwareAcceleration": "硬件加速",
     "hardwareAccelerationDescription": "使用 GPU 提升处理性能（推荐）。",
     "automaticUpdates": "自动检查更新",
+    "clipboardPrefetch": "剪贴板元数据预取",
+    "clipboardPrefetchDescription": "静默预取已复制网页链接的元数据，并在预览相同 URL 时立即复用结果。",
     "cookiesBrowser": "用于读取 Cookie 的浏览器",
     "cookiesBrowserDescription": "从所选浏览器导入 Cookie，以更可靠地访问受保护内容（推荐）。",
     "alwaysAsk": "始终询问下载位置",
@@ -48,7 +50,11 @@
     "createFolderPerDownloadDescription": "将每次下载保存到以输出文件命名的文件夹中。",
     "downloadLocation": "默认下载位置",
     "language": "界面语言",
-    "restartRequired": "硬件加速更改需要重启。"
+    "restartRequired": "硬件加速更改需要重启。",
+    "prefetchCache": "预取缓存",
+    "prefetchCacheEmpty": "还没有缓存的元数据。",
+    "prefetchCacheSummary": "{{count}} 条记录 · {{inflight}} 个进行中 · {{size}}",
+    "clearPrefetchCache": "清除缓存"
   },
   "updates": {
     "checkNow": "检查更新",

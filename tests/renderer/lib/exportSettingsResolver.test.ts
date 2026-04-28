@@ -43,7 +43,8 @@ function queueItem(id: string, status: QueueItemStatus, exportSettings = setting
       defaultDownloadLocation: '/downloads',
       interfaceLanguage: 'en_US',
       cookiesBrowser: 'none',
-      alwaysOnTop: false
+      alwaysOnTop: false,
+      clipboardPrefetchEnabled: true
     },
     status,
     createdAt: '2026-01-01T00:00:00.000Z',

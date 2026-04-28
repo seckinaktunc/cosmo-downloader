@@ -41,6 +41,8 @@
     "hardwareAcceleration": "Hardware acceleration",
     "hardwareAccelerationDescription": "Uses GPU for better processing performance (recommended).",
     "automaticUpdates": "Check for updates automatically",
+    "clipboardPrefetch": "Clipboard metadata prefetch",
+    "clipboardPrefetchDescription": "Silently prefetch metadata for copied web links and reuse the result instantly when you preview the same URL.",
     "cookiesBrowser": "Browser to use for cookies",
     "cookiesBrowserDescription": "Imports cookies from the selected browser to access to protected content more reliably (recommended).",
     "alwaysAsk": "Always ask for download location",
@@ -48,7 +50,11 @@
     "createFolderPerDownloadDescription": "Save each download inside a folder named after its output file.",
     "downloadLocation": "Default download location",
     "language": "Interface language",
-    "restartRequired": "Restart required for hardware acceleration changes."
+    "restartRequired": "Restart required for hardware acceleration changes.",
+    "prefetchCache": "Prefetch cache",
+    "prefetchCacheEmpty": "No cached metadata yet.",
+    "prefetchCacheSummary": "{{count}} entries · {{inflight}} in progress · {{size}}",
+    "clearPrefetchCache": "Clear cache"
   },
   "updates": {
     "checkNow": "Check for updates",

@@ -41,6 +41,8 @@
     "hardwareAcceleration": "Donanım hızlandırma",
     "hardwareAccelerationDescription": "Daha iyi işleme performansı için GPU kullanır (önerilir).",
     "automaticUpdates": "Güncellemeleri otomatik denetle",
+    "clipboardPrefetch": "Pano meta veri önbelleklemesi",
+    "clipboardPrefetchDescription": "Kopyalanan web bağlantılarının meta verilerini sessizce önceden getirir ve aynı URL'yi önizlediğinizde sonucu anında yeniden kullanır.",
     "cookiesBrowser": "Çerezler için kullanılacak tarayıcı",
     "cookiesBrowserDescription": "Korumalı içeriklere daha güvenilir erişmek için seçili tarayıcıdan çerezleri içe aktarır (önerilir).",
     "alwaysAsk": "İndirme konumunu her zaman sor",
@@ -48,7 +50,11 @@
     "createFolderPerDownloadDescription": "Her indirmeyi çıkış dosyasının adıyla oluşturulan bir klasöre kaydet.",
     "downloadLocation": "Varsayılan indirme konumu",
     "language": "Arayüz dili",
-    "restartRequired": "Donanım hızlandırma değişiklikleri için yeniden başlatma gerekir."
+    "restartRequired": "Donanım hızlandırma değişiklikleri için yeniden başlatma gerekir.",
+    "prefetchCache": "Ön getirme önbelleği",
+    "prefetchCacheEmpty": "Henüz önbelleğe alınmış meta veri yok.",
+    "prefetchCacheSummary": "{{count}} kayıt · {{inflight}} işlem sürüyor · {{size}}",
+    "clearPrefetchCache": "Önbelleği temizle"
   },
   "updates": {
     "checkNow": "Güncellemeleri denetle",

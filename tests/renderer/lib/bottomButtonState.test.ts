@@ -24,7 +24,8 @@ const queueItem: QueueItem = {
     defaultDownloadLocation: '/downloads',
     interfaceLanguage: 'en_US',
     cookiesBrowser: 'none',
-    alwaysOnTop: false
+    alwaysOnTop: false,
+    clipboardPrefetchEnabled: true
   },
   status: 'pending',
   createdAt: '2026-01-01T00:00:00.000Z',

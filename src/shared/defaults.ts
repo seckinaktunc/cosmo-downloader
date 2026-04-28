@@ -51,6 +51,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     lastDownloadDirectory: downloadsPath,
     interfaceLanguage: 'en_US',
     cookiesBrowser: 'none',
-    alwaysOnTop: false
+    alwaysOnTop: false,
+    clipboardPrefetchEnabled: true
   }
 }

@@ -44,7 +44,8 @@ const baseSettings: AppSettings = {
   lastDownloadDirectory: '/downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
-  alwaysOnTop: false
+  alwaysOnTop: false,
+  clipboardPrefetchEnabled: true
 }
 
 class FakeUpdater extends EventEmitter {

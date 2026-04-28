@@ -20,6 +20,7 @@ export function MetadataPanel(): React.JSX.Element {
   const metadata = useDisplayMetadata();
   const stage = useVideoStore((state) => state.stage);
   const error = useVideoStore((state) => state.error);
+  const retryMetadata = useVideoStore((state) => state.retryMetadata);
   const [confirmDuplicate, setConfirmDuplicate] = useState(false);
   const settings = useSettingsStore((state) => state.settings);
   const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath);
@@ -53,7 +54,19 @@ export function MetadataPanel(): React.JSX.Element {
             {stage === 'fetching_metadata' ? t('metadata.fetching') : t('metadata.emptyTitle')}
           </h1>
           {error ? (
-            <p className="mt-1 max-w-xl text-sm text-white/50">{error}</p>
+            <div className="mt-1 flex flex-col items-center gap-3">
+              <p className="max-w-xl text-sm text-white/50">{error}</p>
+              {stage === 'failed' ? (
+                <Button
+                  icon="reload"
+                  label={t('queue.actions.retry')}
+                  size="sm"
+                  className="rounded-none"
+                  disabled={!settings}
+                  onClick={() => settings && void retryMetadata(settings)}
+                />
+              ) : null}
+            </div>
           ) : (
             stage !== 'fetching_metadata' && (
               <p className="mt-1 max-w-xl text-sm text-white/50">{t('metadata.emptySubtitle')}</p>

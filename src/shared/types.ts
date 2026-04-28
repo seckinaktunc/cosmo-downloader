@@ -60,6 +60,7 @@ export type AppSettings = {
   interfaceLanguage: string;
   cookiesBrowser: CookieBrowser;
   alwaysOnTop: boolean;
+  clipboardPrefetchEnabled: boolean;
 };
 
 export type SettingsUpdate = Partial<AppSettings>;
@@ -123,6 +124,16 @@ export type FetchMetadataRequest = {
   requestId: string;
   url: string;
   settings: AppSettings;
+  forceRefresh?: boolean;
+};
+
+export type MetadataFetchSource = 'fresh' | 'prefetch_cache' | 'prefetch_attach';
+
+export type FetchMetadataResponse = {
+  requestId: string;
+  source: MetadataFetchSource;
+  logPath?: string;
+  result: IpcResult<VideoMetadata>;
 };
 
 export type CancelMetadataRequest = {
@@ -137,6 +148,15 @@ export type MetadataFetchLifecycleEvent = {
   logPath: string;
   state: MetadataFetchState;
   timestamp: string;
+};
+
+export type MetadataPrefetchCacheSummary = {
+  enabled: boolean;
+  entryCount: number;
+  successCount: number;
+  failureCount: number;
+  inflightCount: number;
+  sizeBytes: number;
 };
 
 export type DownloadProgress = {

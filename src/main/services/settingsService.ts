@@ -53,7 +53,11 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
       typeof saved.cookiesBrowser === 'string'
         ? (saved.cookiesBrowser as AppSettings['cookiesBrowser'])
         : defaults.cookiesBrowser,
-    alwaysOnTop: typeof saved.alwaysOnTop === 'boolean' ? saved.alwaysOnTop : defaults.alwaysOnTop
+    alwaysOnTop: typeof saved.alwaysOnTop === 'boolean' ? saved.alwaysOnTop : defaults.alwaysOnTop,
+    clipboardPrefetchEnabled:
+      typeof saved.clipboardPrefetchEnabled === 'boolean'
+        ? saved.clipboardPrefetchEnabled
+        : defaults.clipboardPrefetchEnabled
   }
 }
 

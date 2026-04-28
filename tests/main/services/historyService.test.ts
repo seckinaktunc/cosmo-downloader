@@ -32,7 +32,8 @@ const settings: AppSettings = {
   defaultDownloadLocation: '/downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
-  alwaysOnTop: false
+  alwaysOnTop: false,
+  clipboardPrefetchEnabled: true
 };
 
 const exportSettings: ExportSettings = {

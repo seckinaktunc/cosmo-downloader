@@ -12,7 +12,8 @@ const settings: AppSettings = {
   lastDownloadDirectory: 'C:\\Users\\me\\Downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
-  alwaysOnTop: false
+  alwaysOnTop: false,
+  clipboardPrefetchEnabled: true
 }
 
 function metadata(title: string, duration?: number): VideoMetadata {

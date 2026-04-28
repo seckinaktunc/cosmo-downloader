@@ -35,6 +35,7 @@ import { QueueService } from '../services/queueService';
 import { UpdateService } from '../services/updateService';
 import { createUniquePath } from '../services/filename';
 import { readDownloadLogTail } from '../services/logService';
+import { VideoMetadataCoordinator } from '../services/videoMetadataCoordinator';
 import {
   copyThumbnailImage,
   downloadThumbnail,
@@ -54,12 +55,22 @@ function getOpenablePath(targetPath: string): string | null {
 export function registerIpcHandlers(): void {
   const settingsService = new SettingsService();
   const binaryService = new BinaryService();
-  const metadataService = new VideoMetadataService(binaryService);
+  const logsDirectory = join(app.getPath('userData'), 'logs');
+  const metadataService = new VideoMetadataService(binaryService, logsDirectory);
+  const metadataCoordinator = new VideoMetadataCoordinator(
+    metadataService,
+    () => settingsService.get(),
+    logsDirectory
+  );
   const downloadService = new DownloadService(binaryService);
   const historyService = new HistoryService();
   const queueService = new QueueService(downloadService, historyService);
   const updateService = new UpdateService(settingsService, {
     isMediaBusy: () => downloadService.isActive() || queueService.hasActiveItem()
+  });
+  metadataCoordinator.startClipboardWatcher();
+  app.once('before-quit', () => {
+    metadataCoordinator.dispose();
   });
 
   ipcMain.handle(IPC_CHANNELS.app.environment, () => {
@@ -160,13 +171,21 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.system.detectCookieBrowsers, () => ok(detectCookieBrowsers()));
 
   ipcMain.handle(IPC_CHANNELS.video.fetchMetadata, (_event, request: FetchMetadataRequest) =>
-    metadataService.fetch(request.requestId, request.url, request.settings)
+    metadataCoordinator.fetch(request)
   );
 
   ipcMain.handle(IPC_CHANNELS.video.cancelMetadata, (_event, request: CancelMetadataRequest) => {
-    metadataService.cancel(request.requestId);
+    metadataCoordinator.cancel(request.requestId);
     return ok(null);
   });
+
+  ipcMain.handle(IPC_CHANNELS.video.getPrefetchCacheSummary, () =>
+    ok(metadataCoordinator.getPrefetchCacheSummary())
+  );
+
+  ipcMain.handle(IPC_CHANNELS.video.clearPrefetchCache, () =>
+    ok(metadataCoordinator.clearPrefetchCache())
+  );
 
   ipcMain.handle(IPC_CHANNELS.download.start, (event, request: DownloadStartRequest) =>
     downloadService.start(event.sender, request)

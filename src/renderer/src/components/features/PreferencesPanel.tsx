@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CookieBrowser } from '../../../../shared/types'
 import type { IconName } from '../miscellaneous/Icon'
@@ -22,17 +23,40 @@ const COOKIE_BROWSER_ICONS: Record<CookieBrowser, IconName> = {
   whale: 'browser'
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) {
+    return '0 B'
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB']
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const value = bytes / 1024 ** exponent
+  return `${value >= 10 || exponent === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[exponent]}`
+}
+
 export function PreferencesPanel(): React.JSX.Element {
   const { t } = useTranslation()
   const settings = useSettingsStore((state) => state.settings)
   const cookieBrowsers = useSettingsStore((state) => state.cookieBrowsers)
   const restartRequired = useSettingsStore((state) => state.restartRequired)
+  const prefetchCacheSummary = useSettingsStore((state) => state.prefetchCacheSummary)
   const update = useSettingsStore((state) => state.update)
+  const refreshPrefetchCacheSummary = useSettingsStore((state) => state.refreshPrefetchCacheSummary)
+  const clearPrefetchCache = useSettingsStore((state) => state.clearPrefetchCache)
   const chooseDownloadDirectory = useSettingsStore((state) => state.chooseDownloadDirectory)
   const updateState = useUpdateStore((state) => state.state)
   const checkForUpdates = useUpdateStore((state) => state.checkNow)
   const downloadUpdate = useUpdateStore((state) => state.download)
   const installUpdate = useUpdateStore((state) => state.install)
+
+  useEffect(() => {
+    void refreshPrefetchCacheSummary()
+    const timer = window.setInterval(() => {
+      void refreshPrefetchCacheSummary()
+    }, 1000)
+
+    return () => window.clearInterval(timer)
+  }, [refreshPrefetchCacheSummary])
 
   if (!settings) {
     return <div className="text-white/60">{t('preferences.loading')}</div>
@@ -66,6 +90,39 @@ export function PreferencesPanel(): React.JSX.Element {
           checked={settings.automaticUpdates}
           onChange={(automaticUpdates) => void update({ automaticUpdates })}
         />
+      </div>
+      <div className="p-4">
+        <Switch
+          label={t('preferences.clipboardPrefetch')}
+          checked={settings.clipboardPrefetchEnabled}
+          onChange={(clipboardPrefetchEnabled) => void update({ clipboardPrefetchEnabled })}
+          description={t('preferences.clipboardPrefetchDescription')}
+        />
+      </div>
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <span className="text-white/50">{t('preferences.prefetchCache')}</span>
+            <p className="min-w-0 text-sm text-white/25">
+              {prefetchCacheSummary == null
+                ? t('preferences.loading')
+                : prefetchCacheSummary.entryCount === 0
+                  ? t('preferences.prefetchCacheEmpty')
+                  : t('preferences.prefetchCacheSummary', {
+                    count: prefetchCacheSummary.entryCount,
+                    inflight: prefetchCacheSummary.inflightCount,
+                    size: formatBytes(prefetchCacheSummary.sizeBytes)
+                  })}
+            </p>
+          </div>
+          <Button
+            label={t('preferences.clearPrefetchCache')}
+            size="sm"
+            className="rounded-none"
+            disabled={prefetchCacheSummary == null || prefetchCacheSummary.entryCount === 0}
+            onClick={() => void clearPrefetchCache()}
+          />
+        </div>
       </div>
 
       <div className="p-4">

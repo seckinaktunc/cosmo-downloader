@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AppEnvironment, AppSettings, CookieBrowserOption, IpcResult } from '@shared/types'
+import type {
+  AppEnvironment,
+  AppSettings,
+  CookieBrowserOption,
+  IpcResult,
+  MetadataPrefetchCacheSummary
+} from '@shared/types'
 import i18next from '@renderer/i18n'
 import { useSettingsStore } from '@renderer/stores/settingsStore'
 
@@ -12,7 +18,8 @@ const baseSettings: AppSettings = {
   lastDownloadDirectory: '/downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
-  alwaysOnTop: false
+  alwaysOnTop: false,
+  clipboardPrefetchEnabled: true
 }
 
 const environment: AppEnvironment = {
@@ -23,6 +30,14 @@ const environment: AppEnvironment = {
 }
 
 const browsers: CookieBrowserOption[] = [{ id: 'none', label: 'None', exists: true }]
+const prefetchSummary: MetadataPrefetchCacheSummary = {
+  enabled: true,
+  entryCount: 0,
+  successCount: 0,
+  failureCount: 0,
+  inflightCount: 0,
+  sizeBytes: 0
+}
 
 function ok<T>(data: T): IpcResult<T> {
   return { ok: true, data }
@@ -55,6 +70,10 @@ function installCosmoMock(initialSettings = baseSettings): {
       },
       app: {
         getEnvironment: vi.fn(async () => ok(environment))
+      },
+      video: {
+        getPrefetchCacheSummary: vi.fn(async () => ok(prefetchSummary)),
+        clearPrefetchCache: vi.fn(async () => ok(prefetchSummary))
       }
     }
   })
@@ -76,6 +95,7 @@ beforeEach(async () => {
     cookieBrowsers: [{ id: 'none', label: 'None', exists: true }],
     restartRequired: false,
     initialHardwareAcceleration: null,
+    prefetchCacheSummary: null,
     isLoading: false,
     error: undefined
   })

@@ -66,6 +66,26 @@ export function validateUrl(input: string, options?: ValidateUrlOptions): Valida
   return { isValid: true, normalized: url.toString() }
 }
 
+export function extractFirstValidUrlFromText(text: string): string | null {
+  const candidates = text
+    .split(/\s+/)
+    .map((part) => part.trim().replace(/[),.;]+$/g, ''))
+    .filter(Boolean)
+
+  for (const candidate of candidates) {
+    if (!/^https?:\/\//i.test(candidate) && !/^[^\s/]+\.[^\s/]+/.test(candidate)) {
+      continue
+    }
+
+    const validation = validateUrl(candidate)
+    if (validation.isValid && validation.normalized) {
+      return validation.normalized
+    }
+  }
+
+  return null
+}
+
 function normalizeHostname(hostname: string): string {
   const lowered = hostname.toLowerCase()
   return lowered.startsWith('www.') ? lowered.slice(4) : lowered

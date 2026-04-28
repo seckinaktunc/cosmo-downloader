@@ -27,14 +27,14 @@ export type ActionMenuItem = {
 
 export type ActionMenuAnchor =
   | {
-      type: 'element'
-      element: HTMLElement
-    }
+    type: 'element'
+    element: HTMLElement
+  }
   | {
-      type: 'point'
-      x: number
-      y: number
-    }
+    type: 'point'
+    x: number
+    y: number
+  }
 
 type ActionMenuProps = {
   open: boolean
@@ -131,8 +131,8 @@ export function ActionMenu({
       typeof ResizeObserver === 'undefined'
         ? null
         : new ResizeObserver(() => {
-            updatePosition()
-          })
+          updatePosition()
+        })
     if (rootRef.current && observer) {
       observer.observe(rootRef.current)
     }

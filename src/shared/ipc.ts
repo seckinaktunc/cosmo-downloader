@@ -26,7 +26,9 @@ export const IPC_CHANNELS = {
   video: {
     fetchMetadata: 'video:fetch-metadata',
     cancelMetadata: 'video:cancel-metadata',
-    fetchLifecycle: 'video:fetch-lifecycle'
+    fetchLifecycle: 'video:fetch-lifecycle',
+    getPrefetchCacheSummary: 'video:get-prefetch-cache-summary',
+    clearPrefetchCache: 'video:clear-prefetch-cache'
   },
   download: {
     start: 'download:start',

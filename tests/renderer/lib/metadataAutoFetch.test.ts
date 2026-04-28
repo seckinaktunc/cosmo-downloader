@@ -11,7 +11,8 @@ const settings: AppSettings = {
   lastDownloadDirectory: '/downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
-  alwaysOnTop: false
+  alwaysOnTop: false,
+  clipboardPrefetchEnabled: true
 }
 
 describe('getMetadataAutoFetchKey', () => {
@@ -52,7 +53,8 @@ describe('getMetadataAutoFetchKey', () => {
         defaultDownloadLocation: '/other-downloads',
         lastDownloadDirectory: '/custom-output',
         interfaceLanguage: 'tr_TR',
-        alwaysOnTop: true
+        alwaysOnTop: true,
+        clipboardPrefetchEnabled: false
       })
     ).toBe(baseKey)
   })
