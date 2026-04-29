@@ -11,12 +11,14 @@
 
 ### Changed
 
-- Reorganized Preferences into collapsible General, Downloads, Metadata, and Updates sections, with remembered section state between launches.
+- Added the app icon, name and version to the header of Preferences.
+- Reorganized Preferences into collapsible General, Downloads, and Metadata sections, with remembered section state between launches.
 - Improved trim interaction so range adjustments feel more direct and preview feedback stays aligned to the active handle.
+- Improved the styling of location selector.
 
 ### Fixed
 
-- Fixed error tooltip behavior and styling so validation messages render and position correctly.
+- Fixed error tooltip's broken styling.
 
 ## v1.0.5
 
