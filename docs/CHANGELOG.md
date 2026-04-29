@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.0.6
+
+### Added
+
+- Added clipboard metadata prefetch for copied web links, with instant reuse when previewing the same URL later.
+- Added prefetch cache visibility and cache-clearing controls in Preferences.
+- Added storyboard-based scrub previews and anchored timecodes while adjusting trim handles.
+- Added drag-to-move support for the selected trim range.
+
+### Changed
+
+- Reorganized Preferences into collapsible General, Downloads, Metadata, and Updates sections, with remembered section state between launches.
+- Improved trim interaction so range adjustments feel more direct and preview feedback stays aligned to the active handle.
+
+### Fixed
+
+- Fixed error tooltip behavior and styling so validation messages render and position correctly.
+
 ## v1.0.5
 
 ### Added
