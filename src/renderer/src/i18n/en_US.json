@@ -38,6 +38,12 @@
   "preferences": {
     "title": "Preferences",
     "loading": "Loading preferences...",
+    "sections": {
+      "general": "General",
+      "downloads": "Downloads",
+      "metadata": "Metadata",
+      "updates": "Updates"
+    },
     "hardwareAcceleration": "Hardware acceleration",
     "hardwareAccelerationDescription": "Uses GPU for better processing performance (recommended).",
     "automaticUpdates": "Check for updates automatically",

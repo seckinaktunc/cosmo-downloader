@@ -1,25 +1,25 @@
-import Icon, { type IconName } from '../miscellaneous/Icon'
-import { Button } from './Button'
-import { cn } from '../../lib/utils'
+import Icon, { type IconName } from '../miscellaneous/Icon';
+import { Button } from './Button';
+import { cn } from '../../lib/utils';
 
-type LocationSelectorMode = 'directory' | 'file'
+type LocationSelectorMode = 'directory' | 'file';
 
 type LocationSelectorProps = {
-  mode: LocationSelectorMode
-  label?: string
-  value?: string
-  placeholder: string
-  chooseLabel: string
-  icon?: IconName
-  disabled?: boolean
-  className?: string
-  labelClassName?: string
-  pathClassName?: string
-  layout?: 'inline' | 'stacked'
-  buttonSize?: 'xs' | 'sm' | 'lg'
-  onChoose: () => void
-  onOpen: () => void
-}
+  mode: LocationSelectorMode;
+  label?: string;
+  value?: string;
+  placeholder: string;
+  chooseLabel: string;
+  icon?: IconName;
+  disabled?: boolean;
+  className?: string;
+  labelClassName?: string;
+  pathClassName?: string;
+  layout?: 'inline' | 'stacked';
+  buttonSize?: 'xs' | 'sm' | 'lg';
+  onChoose: () => void;
+  onOpen: () => void;
+};
 
 export function LocationSelector({
   mode,
@@ -41,7 +41,7 @@ export function LocationSelector({
     <button
       type="button"
       className={cn(
-        'flex flex-1 min-w-0 items-center h-10 gap-2 bg-dark px-3 py-2 text-left text-sm text-white/50 outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed cursor-pointer',
+        'flex flex-1 min-w-0 items-center h-10 gap-2 bg-dark px-3 py-2 text-left text-sm text-white/50 outline-none transition hover:ring-1 hover:ring-white/25 focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed cursor-pointer',
         pathClassName
       )}
       disabled={disabled || !value}
@@ -50,7 +50,7 @@ export function LocationSelector({
       <Icon name={icon} className="shrink-0" />
       <span className="min-w-0 truncate whitespace-nowrap">{value ?? placeholder}</span>
     </button>
-  )
+  );
   const chooseButton = (
     <Button
       type="button"
@@ -62,7 +62,7 @@ export function LocationSelector({
       disabled={disabled}
       onClick={onChoose}
     />
-  )
+  );
 
   if (layout === 'stacked') {
     return (
@@ -73,7 +73,7 @@ export function LocationSelector({
           {chooseButton}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -90,5 +90,5 @@ export function LocationSelector({
         {chooseButton}
       </div>
     </div>
-  )
+  );
 }

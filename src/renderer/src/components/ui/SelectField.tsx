@@ -1,17 +1,17 @@
-import { useId } from 'react'
-import { Dropdown, type DropdownOption } from './Dropdown'
-import { Tooltip } from './Tooltip'
-import Icon from '../miscellaneous/Icon'
+import { useId } from 'react';
+import { Dropdown, type DropdownOption } from './Dropdown';
+import { Tooltip } from './Tooltip';
+import Icon from '../miscellaneous/Icon';
 
 type SelectFieldProps<T extends string> = {
-  label: string
-  description?: string
-  error?: string
-  orientation?: 'horizontal' | 'vertical'
-  value: T
-  options: Array<DropdownOption<T>>
-  onChange: (value: T) => void
-}
+  label: string;
+  description?: string;
+  error?: string;
+  orientation?: 'horizontal' | 'vertical';
+  value: T;
+  options: Array<DropdownOption<T>>;
+  onChange: (value: T) => void;
+};
 
 export function SelectField<T extends string>({
   label,
@@ -22,7 +22,7 @@ export function SelectField<T extends string>({
   options,
   onChange
 }: SelectFieldProps<T>): React.JSX.Element {
-  const labelId = useId()
+  const labelId = useId();
 
   return (
     <div
@@ -46,5 +46,5 @@ export function SelectField<T extends string>({
       </div>
       <Dropdown value={value} options={options} onChange={onChange} ariaLabelledBy={labelId} />
     </div>
-  )
+  );
 }

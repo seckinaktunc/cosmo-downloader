@@ -1,4 +1,4 @@
-import type { AppSettings, ExportSettings } from './types'
+import type { AppSettings, ExportSettings, PreferencesSectionsExpanded } from './types'
 
 export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
   outputFormat: 'mp4',
@@ -40,6 +40,15 @@ export function mergeExportSettings(value: unknown): ExportSettings {
   }
 }
 
+export function createDefaultPreferencesSectionsExpanded(): PreferencesSectionsExpanded {
+  return {
+    general: true,
+    downloads: true,
+    metadata: true,
+    updates: true
+  }
+}
+
 export function createDefaultSettings(downloadsPath: string): AppSettings {
   return {
     hardwareAcceleration: true,
@@ -52,6 +61,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     interfaceLanguage: 'en_US',
     cookiesBrowser: 'none',
     alwaysOnTop: false,
-    clipboardPrefetchEnabled: true
+    clipboardPrefetchEnabled: true,
+    preferencesSectionsExpanded: createDefaultPreferencesSectionsExpanded()
   }
 }

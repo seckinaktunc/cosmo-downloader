@@ -38,6 +38,12 @@
   "preferences": {
     "title": "Tercihler",
     "loading": "Tercihler yükleniyor...",
+    "sections": {
+      "general": "Genel",
+      "downloads": "İndirmeler",
+      "metadata": "Meta Veri",
+      "updates": "Güncellemeler"
+    },
     "hardwareAcceleration": "Donanım hızlandırma",
     "hardwareAccelerationDescription": "Daha iyi işleme performansı için GPU kullanır (önerilir).",
     "automaticUpdates": "Güncellemeleri otomatik denetle",

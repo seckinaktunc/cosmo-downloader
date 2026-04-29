@@ -49,6 +49,10 @@ export type CookieBrowserOption = {
   exists: boolean;
 };
 
+export type PreferencesSection = 'general' | 'downloads' | 'metadata' | 'updates';
+
+export type PreferencesSectionsExpanded = Record<PreferencesSection, boolean>;
+
 export type AppSettings = {
   hardwareAcceleration: boolean;
   automaticUpdates: boolean;
@@ -61,6 +65,7 @@ export type AppSettings = {
   cookiesBrowser: CookieBrowser;
   alwaysOnTop: boolean;
   clipboardPrefetchEnabled: boolean;
+  preferencesSectionsExpanded: PreferencesSectionsExpanded;
 };
 
 export type SettingsUpdate = Partial<AppSettings>;

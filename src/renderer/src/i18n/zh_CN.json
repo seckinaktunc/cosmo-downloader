@@ -38,6 +38,12 @@
   "preferences": {
     "title": "偏好设置",
     "loading": "正在加载偏好设置...",
+    "sections": {
+      "general": "常规",
+      "downloads": "下载",
+      "metadata": "元数据",
+      "updates": "更新"
+    },
     "hardwareAcceleration": "硬件加速",
     "hardwareAccelerationDescription": "使用 GPU 提升处理性能（推荐）。",
     "automaticUpdates": "自动检查更新",

@@ -2,12 +2,28 @@ import { app } from 'electron'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { createDefaultSettings } from '../../shared/defaults'
-import type { AppSettings, SettingsUpdate } from '../../shared/types'
+import type { AppSettings, PreferencesSectionsExpanded, SettingsUpdate } from '../../shared/types'
 
 const SETTINGS_FILE = 'settings.json'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value != null && !Array.isArray(value)
+}
+
+function mergePreferencesSectionsExpanded(
+  defaults: PreferencesSectionsExpanded,
+  saved: unknown
+): PreferencesSectionsExpanded {
+  if (!isRecord(saved)) {
+    return defaults
+  }
+
+  return {
+    general: typeof saved.general === 'boolean' ? saved.general : defaults.general,
+    downloads: typeof saved.downloads === 'boolean' ? saved.downloads : defaults.downloads,
+    metadata: typeof saved.metadata === 'boolean' ? saved.metadata : defaults.metadata,
+    updates: typeof saved.updates === 'boolean' ? saved.updates : defaults.updates
+  }
 }
 
 export function mergeSettings(defaults: AppSettings, saved: unknown): AppSettings {
@@ -57,7 +73,11 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
     clipboardPrefetchEnabled:
       typeof saved.clipboardPrefetchEnabled === 'boolean'
         ? saved.clipboardPrefetchEnabled
-        : defaults.clipboardPrefetchEnabled
+        : defaults.clipboardPrefetchEnabled,
+    preferencesSectionsExpanded: mergePreferencesSectionsExpanded(
+      defaults.preferencesSectionsExpanded,
+      saved.preferencesSectionsExpanded
+    )
   }
 }
 
