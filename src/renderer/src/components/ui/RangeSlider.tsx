@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import {
   formatTimecode,
   normalizeTrimRange,
@@ -31,6 +31,14 @@ type DraftInput = {
   text: string
 }
 
+type RangeDragState = {
+  pointerId: number
+  initialClientX: number
+  initialStartSeconds: number
+  initialEndSeconds: number
+  trackWidth: number
+}
+
 export function RangeSlider({
   label,
   startLabel,
@@ -42,8 +50,11 @@ export function RangeSlider({
   invalidLabel
 }: RangeSliderProps): React.JSX.Element {
   const { t } = useTranslation()
+  const trackRef = useRef<HTMLDivElement | null>(null)
+  const rangeDragRef = useRef<RangeDragState | null>(null)
   const [draft, setDraft] = useState<DraftInput>({ field: null, text: '' })
   const [error, setError] = useState<string | null>(null)
+  const [isDraggingRange, setIsDraggingRange] = useState(false)
   const duration = Math.max(0, Math.floor(max))
   const normalized = useMemo(
     () => normalizeTrimRange(value.startSeconds, value.endSeconds, duration),
@@ -54,6 +65,10 @@ export function RangeSlider({
   const endPercent = (normalized.endSeconds / range) * 100
   const startText = draft.field === 'start' ? draft.text : formatTimecode(normalized.startSeconds)
   const endText = draft.field === 'end' ? draft.text : formatTimecode(normalized.endSeconds)
+  const canDragSelectedRange =
+    !disabled &&
+    duration > TRIM_MIN_LENGTH_SECONDS &&
+    normalized.endSeconds > normalized.startSeconds
 
   const commitRange = (startSeconds: number, endSeconds: number): void => {
     if (disabled || duration <= 0) {
@@ -108,6 +123,61 @@ export function RangeSlider({
     setDraft({ field: null, text: '' })
   }
 
+  const clearRangeDrag = (): void => {
+    rangeDragRef.current = null
+    setIsDraggingRange(false)
+  }
+
+  const handleSelectedRangePointerDown = (event: ReactPointerEvent<HTMLDivElement>): void => {
+    if (!canDragSelectedRange) {
+      return
+    }
+
+    const trackWidth = trackRef.current?.getBoundingClientRect().width ?? 0
+    if (trackWidth <= 0) {
+      return
+    }
+
+    rangeDragRef.current = {
+      pointerId: event.pointerId,
+      initialClientX: event.clientX,
+      initialStartSeconds: normalized.startSeconds,
+      initialEndSeconds: normalized.endSeconds,
+      trackWidth
+    }
+    setIsDraggingRange(true)
+    setError(null)
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handleSelectedRangePointerMove = (event: ReactPointerEvent<HTMLDivElement>): void => {
+    const dragState = rangeDragRef.current
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return
+    }
+
+    const selectedLength = dragState.initialEndSeconds - dragState.initialStartSeconds
+    const deltaSeconds = Math.round(
+      ((event.clientX - dragState.initialClientX) / dragState.trackWidth) * duration
+    )
+    const maxStart = Math.max(0, duration - selectedLength)
+    const nextStart = Math.max(0, Math.min(maxStart, dragState.initialStartSeconds + deltaSeconds))
+
+    commitRange(nextStart, nextStart + selectedLength)
+  }
+
+  const handleSelectedRangePointerUp = (event: ReactPointerEvent<HTMLDivElement>): void => {
+    if (rangeDragRef.current?.pointerId !== event.pointerId) {
+      return
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    clearRangeDrag()
+  }
+
   return (
     <div className={cn('flex flex-col gap-2', disabled && 'opacity-40')}>
       <div className="flex items-center justify-between gap-4">
@@ -128,14 +198,25 @@ export function RangeSlider({
         </span>
       </div>
 
-      <div className="relative h-2">
+      <div ref={trackRef} className="relative h-2">
         <div className="absolute inset-0 rounded-lg bg-white/10" />
         <div
-          className="absolute top-0 h-2 rounded-lg bg-linear-to-r from-primary/50 to-primary"
+          className={cn(
+            'absolute top-0 z-10 h-2 rounded-lg bg-linear-to-r from-primary/50 to-primary',
+            canDragSelectedRange
+              ? 'touch-none cursor-grab select-none active:cursor-grabbing'
+              : 'pointer-events-none',
+            isDraggingRange && 'cursor-grabbing'
+          )}
           style={{
             left: `${startPercent}%`,
             width: `${Math.max(0, endPercent - startPercent)}%`
           }}
+          onPointerDown={handleSelectedRangePointerDown}
+          onPointerMove={handleSelectedRangePointerMove}
+          onPointerUp={handleSelectedRangePointerUp}
+          onPointerCancel={handleSelectedRangePointerUp}
+          onLostPointerCapture={clearRangeDrag}
         />
         <input
           aria-label={startLabel}
