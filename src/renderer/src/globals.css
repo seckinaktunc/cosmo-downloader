@@ -4,6 +4,7 @@
   --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 
   --color-primary: rgb(var(--primary));
+  --color-primary-dark: rgb(var(--primary-dark));
   --color-yellow: rgb(var(--yellow));
   --color-green: rgb(var(--green));
   --color-blue: rgb(var(--blue));
@@ -33,6 +34,7 @@
   -moz-osx-font-smoothing: grayscale;
 
   --primary: 255 96 92;
+  --primary-dark: 79 39 38;
   --yellow: 255 189 68;
   --green: 0 202 78;
   --blue: 0 156 223;

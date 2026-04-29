@@ -258,7 +258,7 @@ export function Tooltip({
                     className={cn(
                       'absolute border',
                       type === 'default' && 'border-white/10 bg-dark',
-                      type === 'error' && 'border-primary/50 bg-primary/25'
+                      type === 'error' && 'border-primary/50 bg-primary-dark'
                     )}
                     style={getTailDiamondStyle(position.tailSide)}
                   />
@@ -274,7 +274,7 @@ export function Tooltip({
                     rounded-md border text-sm shadow-lg backdrop-blur-lg
                   `,
                   type === 'default' && 'border-white/10 bg-dark text-white/50',
-                  type === 'error' && 'border-primary/50 bg-primary/25 text-primary',
+                  type === 'error' && 'border-primary/50 bg-primary-dark text-primary',
                   'px-3 py-2'
                 )}
               >
@@ -285,7 +285,7 @@ export function Tooltip({
                     className={cn(
                       'pointer-events-none absolute backdrop-blur-lg z-30',
                       type === 'default' && 'bg-dark',
-                      type === 'error' && 'bg-primary/25'
+                      type === 'error' && 'bg-primary-dark'
                     )}
                     style={getTailBridgeStyle(position.tailSide, position.tailOffset)}
                   />
