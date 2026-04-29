@@ -23,6 +23,7 @@ const baseSettings: AppSettings = {
 }
 
 const environment: AppEnvironment = {
+  name: 'Cosmo Downloader',
   platform: 'win32',
   isPackaged: false,
   version: '1.0.0',

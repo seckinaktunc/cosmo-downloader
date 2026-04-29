@@ -76,6 +76,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.app.environment, () => {
     const environment: AppEnvironment = {
+      name: app.getName(),
       platform: process.platform,
       isPackaged: app.isPackaged,
       version: app.getVersion(),

@@ -232,6 +232,7 @@ export type DownloadLogAppend = {
 };
 
 export type AppEnvironment = {
+  name: string;
   platform: NodeJS.Platform;
   isPackaged: boolean;
   version: string;

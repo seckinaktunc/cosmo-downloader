@@ -39,6 +39,7 @@ function formatBytes(bytes: number): string {
 export function PreferencesPanel(): React.JSX.Element {
   const { t } = useTranslation();
   const settings = useSettingsStore((state) => state.settings);
+  const environment = useSettingsStore((state) => state.environment);
   const cookieBrowsers = useSettingsStore((state) => state.cookieBrowsers);
   const restartRequired = useSettingsStore((state) => state.restartRequired);
   const prefetchCacheSummary = useSettingsStore((state) => state.prefetchCacheSummary);
@@ -74,6 +75,11 @@ export function PreferencesPanel(): React.JSX.Element {
       }
     });
   };
+  const appTitle = environment?.name ?? t('app.title');
+  const appIdentity =
+    environment?.version != null && environment.version.length > 0
+      ? `${appTitle} v${environment.version}`
+      : appTitle;
 
   return (
     <section className="grid divide-y divide-white/10 border-b border-white/10">
@@ -82,7 +88,7 @@ export function PreferencesPanel(): React.JSX.Element {
           <div className="flex items-center gap-4">
             <AppIcon className="w-12" />
             <div className="flex flex-col">
-              <span className="font-bold">Cosmo Downloader v1.0.5</span>
+              <span className="font-bold">{appIdentity}</span>
               <span className="text-sm text-white/50">
                 {updateState.error ??
                   updateState.unavailableReason ??
