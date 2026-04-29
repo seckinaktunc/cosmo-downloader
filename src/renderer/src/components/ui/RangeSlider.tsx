@@ -1,42 +1,198 @@
-import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent
+} from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   formatTimecode,
   normalizeTrimRange,
   parseTimecode,
   TRIM_MIN_LENGTH_SECONDS
-} from '../../../../shared/trim'
-import { cn } from '../../lib/utils'
-import { Tooltip } from './Tooltip'
-import Icon from '../miscellaneous/Icon'
-import { useTranslation } from 'react-i18next'
+} from '../../../../shared/trim';
+import type { ScrubPreviewStoryboard } from '../../../../shared/types';
+import { cn } from '../../lib/utils';
+import Icon from '../miscellaneous/Icon';
+import { ScrubPreviewPopover } from './ScrubPreviewPopover';
+import { Tooltip } from './Tooltip';
 
 type RangeValue = {
-  startSeconds: number
-  endSeconds: number
-}
+  startSeconds: number;
+  endSeconds: number;
+};
 
 type RangeSliderProps = {
-  label: string
-  startLabel: string
-  endLabel: string
-  value: RangeValue
-  max: number
-  onChange: (value: RangeValue) => void
-  disabled?: boolean
-  invalidLabel?: string
-}
+  label: string;
+  startLabel: string;
+  endLabel: string;
+  value: RangeValue;
+  max: number;
+  scrubPreview?: ScrubPreviewStoryboard;
+  onChange: (value: RangeValue) => void;
+  disabled?: boolean;
+  invalidLabel?: string;
+};
 
 type DraftInput = {
-  field: 'start' | 'end' | null
-  text: string
-}
+  field: 'start' | 'end' | null;
+  text: string;
+};
 
 type RangeDragState = {
-  pointerId: number
-  initialClientX: number
-  initialStartSeconds: number
-  initialEndSeconds: number
-  trackWidth: number
+  pointerId: number;
+  initialClientX: number;
+  initialStartSeconds: number;
+  initialEndSeconds: number;
+  trackWidth: number;
+};
+
+type PreviewThumb = 'start' | 'end';
+
+type ResolvedScrubPreviewFrame = {
+  fragmentKey: string;
+  fragmentUrl: string;
+  headers?: ScrubPreviewStoryboard['headers'];
+  tileColumn: number;
+  tileRow: number;
+  timeSeconds: number;
+};
+
+type PreviewImageState =
+  | { key: null; status: 'idle' }
+  | { key: string; status: 'loading' | 'error' }
+  | { key: string; status: 'ready'; dataUrl: string };
+
+const THUMB_HOVER_RADIUS_PX = 10;
+const PREVIEW_MIN_WIDTH_PX = 120;
+const PREVIEW_MAX_WIDTH_PX = 200;
+const RANGE_THUMB_DIAMETER_PX = 14;
+const PREVIEW_POPOVER_OFFSET_PX = 64;
+
+function createScrubPreviewFragmentKey(
+  url: string,
+  headers: ScrubPreviewStoryboard['headers'] | undefined
+): string {
+  const normalizedHeaders =
+    headers == null
+      ? {}
+      : Object.fromEntries(
+          Object.entries(headers)
+            .filter(([, value]) => value.trim().length > 0)
+            .sort(([left], [right]) => left.localeCompare(right))
+        );
+
+  return `${url}\u001f${JSON.stringify(normalizedHeaders)}`;
+}
+
+function resolveHoveredThumb(
+  clientX: number,
+  trackElement: HTMLDivElement | null,
+  startPercent: number,
+  endPercent: number
+): PreviewThumb | null {
+  if (trackElement == null) {
+    return null;
+  }
+
+  const trackRect = trackElement.getBoundingClientRect();
+  const usableTrackWidth = trackRect.width - RANGE_THUMB_DIAMETER_PX;
+  if (trackRect.width <= 0 || usableTrackWidth < 0) {
+    return null;
+  }
+
+  const startX =
+    trackRect.left + RANGE_THUMB_DIAMETER_PX / 2 + usableTrackWidth * (startPercent / 100);
+  const endX = trackRect.left + RANGE_THUMB_DIAMETER_PX / 2 + usableTrackWidth * (endPercent / 100);
+  const startDistance = Math.abs(clientX - startX);
+  const endDistance = Math.abs(clientX - endX);
+  const nearestDistance = Math.min(startDistance, endDistance);
+
+  if (nearestDistance > THUMB_HOVER_RADIUS_PX) {
+    return null;
+  }
+
+  return startDistance <= endDistance ? 'start' : 'end';
+}
+
+function resolveScrubPreviewFrame(
+  scrubPreview: ScrubPreviewStoryboard,
+  timeSeconds: number
+): ResolvedScrubPreviewFrame | null {
+  if (scrubPreview.fragments.length === 0) {
+    return null;
+  }
+
+  const maxTime = Math.max(0, scrubPreview.totalDurationSeconds - scrubPreview.frameStepSeconds);
+  let remainingTime = Math.max(0, Math.min(timeSeconds, maxTime));
+
+  for (let index = 0; index < scrubPreview.fragments.length; index += 1) {
+    const fragment = scrubPreview.fragments[index];
+    const isLastFragment = index === scrubPreview.fragments.length - 1;
+
+    if (remainingTime < fragment.durationSeconds || isLastFragment) {
+      const tileIndex = Math.min(
+        fragment.frameCount - 1,
+        Math.max(0, Math.floor(remainingTime * scrubPreview.frameRate))
+      );
+
+      return {
+        fragmentKey: createScrubPreviewFragmentKey(fragment.url, scrubPreview.headers),
+        fragmentUrl: fragment.url,
+        headers: scrubPreview.headers,
+        tileColumn: tileIndex % scrubPreview.columns,
+        tileRow: Math.floor(tileIndex / scrubPreview.columns),
+        timeSeconds: Math.max(0, timeSeconds)
+      };
+    }
+
+    remainingTime -= fragment.durationSeconds;
+  }
+
+  return null;
+}
+
+function getScrubPreviewDisplaySize(scrubPreview: ScrubPreviewStoryboard): {
+  width: number;
+  height: number;
+} {
+  const width = Math.max(
+    PREVIEW_MIN_WIDTH_PX,
+    Math.min(PREVIEW_MAX_WIDTH_PX, scrubPreview.tileWidth)
+  );
+
+  return {
+    width,
+    height: Math.max(1, Math.round((width / scrubPreview.tileWidth) * scrubPreview.tileHeight))
+  };
+}
+
+function getThumbCenterPoint(
+  trackElement: HTMLDivElement | null,
+  thumbPercent: number
+): { x: number; y: number } | null {
+  if (trackElement == null) {
+    return null;
+  }
+
+  const trackRect = trackElement.getBoundingClientRect();
+  if (trackRect.width <= 0) {
+    return null;
+  }
+
+  const usableTrackWidth = Math.max(0, trackRect.width - RANGE_THUMB_DIAMETER_PX);
+  const x =
+    trackRect.left +
+    RANGE_THUMB_DIAMETER_PX / 2 +
+    (usableTrackWidth * Math.max(0, Math.min(thumbPercent, 100))) / 100;
+
+  return {
+    x,
+    y: trackRect.top + trackRect.height / 2
+  };
 }
 
 export function RangeSlider({
@@ -45,97 +201,289 @@ export function RangeSlider({
   endLabel,
   value,
   max,
+  scrubPreview,
   onChange,
   disabled = false,
   invalidLabel
 }: RangeSliderProps): React.JSX.Element {
-  const { t } = useTranslation()
-  const trackRef = useRef<HTMLDivElement | null>(null)
-  const rangeDragRef = useRef<RangeDragState | null>(null)
-  const [draft, setDraft] = useState<DraftInput>({ field: null, text: '' })
-  const [error, setError] = useState<string | null>(null)
-  const [isDraggingRange, setIsDraggingRange] = useState(false)
-  const duration = Math.max(0, Math.floor(max))
+  const { t } = useTranslation();
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const rangeDragRef = useRef<RangeDragState | null>(null);
+  const previewImageCacheRef = useRef<Map<string, string>>(new Map());
+  const [draft, setDraft] = useState<DraftInput>({ field: null, text: '' });
+  const [error, setError] = useState<string | null>(null);
+  const [isDraggingRange, setIsDraggingRange] = useState(false);
+  const [hoveredThumb, setHoveredThumb] = useState<PreviewThumb | null>(null);
+  const [draggingThumb, setDraggingThumb] = useState<PreviewThumb | null>(null);
+  const [previewAnchorPoint, setPreviewAnchorPoint] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [previewImage, setPreviewImage] = useState<PreviewImageState>({
+    key: null,
+    status: 'idle'
+  });
+  const duration = Math.max(0, Math.floor(max));
   const normalized = useMemo(
     () => normalizeTrimRange(value.startSeconds, value.endSeconds, duration),
     [duration, value.endSeconds, value.startSeconds]
-  )
-  const range = Math.max(1, duration)
-  const startPercent = (normalized.startSeconds / range) * 100
-  const endPercent = (normalized.endSeconds / range) * 100
-  const startText = draft.field === 'start' ? draft.text : formatTimecode(normalized.startSeconds)
-  const endText = draft.field === 'end' ? draft.text : formatTimecode(normalized.endSeconds)
+  );
+  const range = Math.max(1, duration);
+  const startPercent = (normalized.startSeconds / range) * 100;
+  const endPercent = (normalized.endSeconds / range) * 100;
+  const startText = draft.field === 'start' ? draft.text : formatTimecode(normalized.startSeconds);
+  const endText = draft.field === 'end' ? draft.text : formatTimecode(normalized.endSeconds);
   const canDragSelectedRange =
     !disabled &&
     duration > TRIM_MIN_LENGTH_SECONDS &&
-    normalized.endSeconds > normalized.startSeconds
+    normalized.endSeconds > normalized.startSeconds;
+  const canPreviewThumbs = scrubPreview != null && duration > 0;
+  const activePreviewThumb = isDraggingRange ? null : (draggingThumb ?? hoveredThumb);
+  const activePreviewTime =
+    activePreviewThumb === 'start'
+      ? normalized.startSeconds
+      : activePreviewThumb === 'end'
+        ? normalized.endSeconds
+        : null;
+  const activePreviewFrame = useMemo(() => {
+    if (!canPreviewThumbs || scrubPreview == null || activePreviewTime == null) {
+      return null;
+    }
+
+    return resolveScrubPreviewFrame(scrubPreview, activePreviewTime);
+  }, [activePreviewTime, canPreviewThumbs, scrubPreview]);
+  const previewDisplaySize = useMemo(
+    () => (scrubPreview == null ? null : getScrubPreviewDisplaySize(scrubPreview)),
+    [scrubPreview]
+  );
+  const previewDataUrl =
+    activePreviewFrame != null &&
+    previewImage.status === 'ready' &&
+    previewImage.key === activePreviewFrame.fragmentKey
+      ? previewImage.dataUrl
+      : null;
+  const activePreviewTimecode =
+    activePreviewFrame == null ? null : formatTimecode(activePreviewFrame.timeSeconds);
+  const activePreviewFragmentKey = activePreviewFrame?.fragmentKey ?? null;
+  const activePreviewFragmentUrl = activePreviewFrame?.fragmentUrl;
+  const activePreviewHeaders = activePreviewFrame?.headers;
+  const updatePreviewAnchorPoint = useCallback((): void => {
+    if (activePreviewThumb == null) {
+      setPreviewAnchorPoint(null);
+      return;
+    }
+
+    setPreviewAnchorPoint(
+      getThumbCenterPoint(
+        trackRef.current,
+        activePreviewThumb === 'start' ? startPercent : endPercent
+      )
+    );
+  }, [activePreviewThumb, endPercent, startPercent]);
 
   const commitRange = (startSeconds: number, endSeconds: number): void => {
     if (disabled || duration <= 0) {
-      return
+      return;
     }
 
-    setError(null)
-    onChange(normalizeTrimRange(startSeconds, endSeconds, duration))
-  }
+    setError(null);
+    onChange(normalizeTrimRange(startSeconds, endSeconds, duration));
+  };
 
   const commitStartText = (): void => {
     if (disabled || duration <= 0) {
-      return
+      return;
     }
 
-    const parsed = parseTimecode(startText)
+    const parsed = parseTimecode(startText);
     if (parsed == null) {
-      setError(invalidLabel ?? null)
-      setDraft({ field: null, text: '' })
-      return
+      setError(invalidLabel ?? null);
+      setDraft({ field: null, text: '' });
+      return;
     }
 
     const nextRange = normalizeTrimRange(
       Math.min(parsed, normalized.endSeconds - TRIM_MIN_LENGTH_SECONDS),
       normalized.endSeconds,
       duration
-    )
-    setError(parsed === nextRange.startSeconds ? null : (invalidLabel ?? null))
-    onChange(nextRange)
-    setDraft({ field: null, text: '' })
-  }
+    );
+    setError(parsed === nextRange.startSeconds ? null : (invalidLabel ?? null));
+    onChange(nextRange);
+    setDraft({ field: null, text: '' });
+  };
 
   const commitEndText = (): void => {
     if (disabled || duration <= 0) {
-      return
+      return;
     }
 
-    const parsed = parseTimecode(endText)
+    const parsed = parseTimecode(endText);
     if (parsed == null) {
-      setError(invalidLabel ?? null)
-      setDraft({ field: null, text: '' })
-      return
+      setError(invalidLabel ?? null);
+      setDraft({ field: null, text: '' });
+      return;
     }
 
     const nextRange = normalizeTrimRange(
       normalized.startSeconds,
       Math.max(parsed, normalized.startSeconds + TRIM_MIN_LENGTH_SECONDS),
       duration
-    )
-    setError(parsed === nextRange.endSeconds ? null : (invalidLabel ?? null))
-    onChange(nextRange)
-    setDraft({ field: null, text: '' })
-  }
+    );
+    setError(parsed === nextRange.endSeconds ? null : (invalidLabel ?? null));
+    onChange(nextRange);
+    setDraft({ field: null, text: '' });
+  };
 
   const clearRangeDrag = (): void => {
-    rangeDragRef.current = null
-    setIsDraggingRange(false)
-  }
+    rangeDragRef.current = null;
+    setIsDraggingRange(false);
+  };
+
+  useEffect(() => {
+    if (!canPreviewThumbs) {
+      setHoveredThumb(null);
+      setDraggingThumb(null);
+      setPreviewAnchorPoint(null);
+      setPreviewImage({ key: null, status: 'idle' });
+    }
+  }, [canPreviewThumbs]);
+
+  useLayoutEffect(() => {
+    updatePreviewAnchorPoint();
+  }, [updatePreviewAnchorPoint]);
+
+  useEffect(() => {
+    if (activePreviewThumb == null) {
+      return undefined;
+    }
+
+    const handleUpdate = (): void => updatePreviewAnchorPoint();
+    window.addEventListener('resize', handleUpdate);
+    window.addEventListener('scroll', handleUpdate, true);
+
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(handleUpdate);
+    if (trackRef.current && observer) {
+      observer.observe(trackRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleUpdate);
+      window.removeEventListener('scroll', handleUpdate, true);
+      observer?.disconnect();
+    };
+  }, [activePreviewThumb, updatePreviewAnchorPoint]);
+
+  useEffect(() => {
+    if (activePreviewFragmentKey == null || activePreviewFragmentUrl == null) {
+      setPreviewImage({ key: null, status: 'idle' });
+      return;
+    }
+
+    const cachedDataUrl = previewImageCacheRef.current.get(activePreviewFragmentKey);
+    if (cachedDataUrl) {
+      setPreviewImage({
+        key: activePreviewFragmentKey,
+        status: 'ready',
+        dataUrl: cachedDataUrl
+      });
+      return;
+    }
+
+    let cancelled = false;
+    setPreviewImage((current) =>
+      current.key === activePreviewFragmentKey && current.status === 'loading'
+        ? current
+        : { key: activePreviewFragmentKey, status: 'loading' }
+    );
+
+    void window.cosmo.video
+      .fetchScrubPreviewFragment({
+        url: activePreviewFragmentUrl,
+        headers: activePreviewHeaders
+      })
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+
+        if (!result.ok) {
+          setPreviewImage((current) =>
+            current.key === activePreviewFragmentKey
+              ? { key: activePreviewFragmentKey, status: 'error' }
+              : current
+          );
+          return;
+        }
+
+        const image = new Image();
+        image.onload = () => {
+          if (cancelled) {
+            return;
+          }
+
+          previewImageCacheRef.current.set(activePreviewFragmentKey, result.data.dataUrl);
+          setPreviewImage({
+            key: activePreviewFragmentKey,
+            status: 'ready',
+            dataUrl: result.data.dataUrl
+          });
+        };
+        image.onerror = () => {
+          if (cancelled) {
+            return;
+          }
+
+          setPreviewImage({ key: activePreviewFragmentKey, status: 'error' });
+        };
+        image.src = result.data.dataUrl;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activePreviewFragmentKey, activePreviewFragmentUrl, activePreviewHeaders]);
+
+  const handleTrackPointerMove = (event: ReactPointerEvent<HTMLDivElement>): void => {
+    if (!canPreviewThumbs || draggingThumb != null || isDraggingRange) {
+      return;
+    }
+
+    setHoveredThumb(resolveHoveredThumb(event.clientX, trackRef.current, startPercent, endPercent));
+  };
+
+  const handleTrackPointerLeave = (): void => {
+    if (draggingThumb == null) {
+      setHoveredThumb(null);
+    }
+  };
+
+  const handleThumbPointerDown = (thumb: PreviewThumb) => (): void => {
+    if (!canPreviewThumbs || disabled || duration <= TRIM_MIN_LENGTH_SECONDS) {
+      return;
+    }
+
+    setDraggingThumb(thumb);
+    setHoveredThumb(thumb);
+  };
+
+  const handleThumbPointerUp = (event: ReactPointerEvent<HTMLInputElement>): void => {
+    setDraggingThumb(null);
+
+    if (!canPreviewThumbs || isDraggingRange) {
+      return;
+    }
+
+    setHoveredThumb(resolveHoveredThumb(event.clientX, trackRef.current, startPercent, endPercent));
+  };
 
   const handleSelectedRangePointerDown = (event: ReactPointerEvent<HTMLDivElement>): void => {
     if (!canDragSelectedRange) {
-      return
+      return;
     }
 
-    const trackWidth = trackRef.current?.getBoundingClientRect().width ?? 0
+    const trackWidth = trackRef.current?.getBoundingClientRect().width ?? 0;
     if (trackWidth <= 0) {
-      return
+      return;
     }
 
     rangeDragRef.current = {
@@ -144,39 +492,41 @@ export function RangeSlider({
       initialStartSeconds: normalized.startSeconds,
       initialEndSeconds: normalized.endSeconds,
       trackWidth
-    }
-    setIsDraggingRange(true)
-    setError(null)
-    event.preventDefault()
-    event.currentTarget.setPointerCapture(event.pointerId)
-  }
+    };
+    setIsDraggingRange(true);
+    setDraggingThumb(null);
+    setHoveredThumb(null);
+    setError(null);
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
 
   const handleSelectedRangePointerMove = (event: ReactPointerEvent<HTMLDivElement>): void => {
-    const dragState = rangeDragRef.current
+    const dragState = rangeDragRef.current;
     if (!dragState || dragState.pointerId !== event.pointerId) {
-      return
+      return;
     }
 
-    const selectedLength = dragState.initialEndSeconds - dragState.initialStartSeconds
+    const selectedLength = dragState.initialEndSeconds - dragState.initialStartSeconds;
     const deltaSeconds = Math.round(
       ((event.clientX - dragState.initialClientX) / dragState.trackWidth) * duration
-    )
-    const maxStart = Math.max(0, duration - selectedLength)
-    const nextStart = Math.max(0, Math.min(maxStart, dragState.initialStartSeconds + deltaSeconds))
+    );
+    const maxStart = Math.max(0, duration - selectedLength);
+    const nextStart = Math.max(0, Math.min(maxStart, dragState.initialStartSeconds + deltaSeconds));
 
-    commitRange(nextStart, nextStart + selectedLength)
-  }
+    commitRange(nextStart, nextStart + selectedLength);
+  };
 
   const handleSelectedRangePointerUp = (event: ReactPointerEvent<HTMLDivElement>): void => {
     if (rangeDragRef.current?.pointerId !== event.pointerId) {
-      return
+      return;
     }
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
+      event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    clearRangeDrag()
-  }
+    clearRangeDrag();
+  };
 
   return (
     <div className={cn('flex flex-col gap-2', disabled && 'opacity-40')}>
@@ -198,7 +548,32 @@ export function RangeSlider({
         </span>
       </div>
 
-      <div ref={trackRef} className="relative h-2">
+      <div
+        ref={trackRef}
+        className="relative h-2"
+        onPointerMove={handleTrackPointerMove}
+        onPointerLeave={handleTrackPointerLeave}
+      >
+        {previewDataUrl != null &&
+          previewDisplaySize != null &&
+          previewAnchorPoint != null &&
+          scrubPreview != null &&
+          activePreviewFrame != null &&
+          activePreviewTimecode != null && (
+            <ScrubPreviewPopover
+              open
+              anchorPoint={previewAnchorPoint}
+              imageUrl={previewDataUrl}
+              imageWidth={previewDisplaySize.width}
+              imageHeight={previewDisplaySize.height}
+              columns={scrubPreview.columns}
+              rows={scrubPreview.rows}
+              tileColumn={activePreviewFrame.tileColumn}
+              tileRow={activePreviewFrame.tileRow}
+              timecode={activePreviewTimecode}
+              offset={PREVIEW_POPOVER_OFFSET_PX}
+            />
+          )}
         <div className="absolute inset-0 rounded-lg bg-white/10" />
         <div
           className={cn(
@@ -235,6 +610,10 @@ export function RangeSlider({
               normalized.endSeconds
             )
           }
+          onPointerDown={handleThumbPointerDown('start')}
+          onPointerUp={handleThumbPointerUp}
+          onPointerCancel={() => setDraggingThumb(null)}
+          onLostPointerCapture={() => setDraggingThumb(null)}
           className={`
             absolute inset-0 h-2 w-full appearance-none bg-transparent pointer-events-none z-20
             [&::-webkit-slider-thumb]:appearance-none
@@ -270,6 +649,10 @@ export function RangeSlider({
               )
             )
           }
+          onPointerDown={handleThumbPointerDown('end')}
+          onPointerUp={handleThumbPointerUp}
+          onPointerCancel={() => setDraggingThumb(null)}
+          onLostPointerCapture={() => setDraggingThumb(null)}
           className={`
             absolute inset-0 h-2 w-full appearance-none bg-transparent pointer-events-none z-30
             [&::-webkit-slider-thumb]:appearance-none
@@ -305,7 +688,7 @@ export function RangeSlider({
             onBlur={commitStartText}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
-                event.currentTarget.blur()
+                event.currentTarget.blur();
               }
             }}
             className="py-1 text-[10px] font-medium text-white outline-none transition-colors disabled:cursor-not-allowed"
@@ -322,7 +705,7 @@ export function RangeSlider({
             onBlur={commitEndText}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
-                event.currentTarget.blur()
+                event.currentTarget.blur();
               }
             }}
             className="py-1 text-[10px] text-right font-medium text-white outline-none transition-colors disabled:cursor-not-allowed"
@@ -331,5 +714,5 @@ export function RangeSlider({
         </label>
       </div>
     </div>
-  )
+  );
 }

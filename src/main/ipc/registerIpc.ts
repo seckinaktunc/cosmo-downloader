@@ -41,6 +41,7 @@ import {
   downloadThumbnail,
   openThumbnailExternal
 } from '../services/thumbnailService';
+import { fetchScrubPreviewFragment } from '../services/scrubPreviewService';
 import { fail, ok } from '../utils/ipcResult';
 
 function getOpenablePath(targetPath: string): string | null {
@@ -178,6 +179,10 @@ export function registerIpcHandlers(): void {
     metadataCoordinator.cancel(request.requestId);
     return ok(null);
   });
+
+  ipcMain.handle(IPC_CHANNELS.video.fetchScrubPreviewFragment, (_event, request) =>
+    fetchScrubPreviewFragment(request)
+  );
 
   ipcMain.handle(IPC_CHANNELS.video.getPrefetchCacheSummary, () =>
     ok(metadataCoordinator.getPrefetchCacheSummary())

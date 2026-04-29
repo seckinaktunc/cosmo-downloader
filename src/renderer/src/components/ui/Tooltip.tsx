@@ -14,8 +14,7 @@ const TAIL_SIZE_PX = 12;
 const TAIL_PROTRUSION_PX = TAIL_SIZE_PX / Math.SQRT2;
 const TAIL_BOUNDING_BOX_PX = TAIL_SIZE_PX * Math.SQRT2;
 const TAIL_JOIN_OVERLAP_PX = 1;
-const TAIL_BRIDGE_THICKNESS_PX = 2;
-const TOOLTIP_BODY_OFFSET_PX = DEFAULT_FLOATING_OFFSET + TAIL_PROTRUSION_PX;
+const TAIL_BRIDGE_THICKNESS_PX = 4;
 
 function getTailContainerStyle(side: FloatingTailSide, offset: number): CSSProperties {
   if (side === 'top') {
@@ -97,7 +96,7 @@ function getTailBridgeStyle(side: FloatingTailSide, offset: number): CSSProperti
   if (side === 'top') {
     return {
       left: offset - TAIL_SIZE_PX / 2,
-      top: -1,
+      top: -TAIL_JOIN_OVERLAP_PX,
       width: TAIL_SIZE_PX,
       height: TAIL_BRIDGE_THICKNESS_PX
     };
@@ -106,7 +105,7 @@ function getTailBridgeStyle(side: FloatingTailSide, offset: number): CSSProperti
   if (side === 'bottom') {
     return {
       left: offset - TAIL_SIZE_PX / 2,
-      bottom: -1,
+      bottom: -TAIL_JOIN_OVERLAP_PX,
       width: TAIL_SIZE_PX,
       height: TAIL_BRIDGE_THICKNESS_PX
     };
@@ -114,7 +113,7 @@ function getTailBridgeStyle(side: FloatingTailSide, offset: number): CSSProperti
 
   if (side === 'left') {
     return {
-      left: -1,
+      left: -TAIL_JOIN_OVERLAP_PX,
       top: offset - TAIL_SIZE_PX / 2,
       width: TAIL_BRIDGE_THICKNESS_PX,
       height: TAIL_SIZE_PX
@@ -122,7 +121,7 @@ function getTailBridgeStyle(side: FloatingTailSide, offset: number): CSSProperti
   }
 
   return {
-    right: -1,
+    right: -TAIL_JOIN_OVERLAP_PX,
     top: offset - TAIL_SIZE_PX / 2,
     width: TAIL_BRIDGE_THICKNESS_PX,
     height: TAIL_SIZE_PX
@@ -130,25 +129,30 @@ function getTailBridgeStyle(side: FloatingTailSide, offset: number): CSSProperti
 }
 
 type TooltipProps = {
-  label: string;
+  open?: boolean;
+  label?: string;
   type?: 'default' | 'error';
   className?: string;
-  children: ReactNode;
+  style?: CSSProperties;
+  children?: ReactNode;
   placement?: FloatingPlacement;
 };
 
 export function Tooltip({
+  open = false,
   label,
   type = 'default',
   className,
+  style,
   children,
   placement = 'top'
 }: TooltipProps): React.JSX.Element {
   const tooltipId = useId();
   const anchorRef = useRef<HTMLSpanElement | null>(null);
-  const tooltipRef = useRef<HTMLSpanElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState<FloatingPosition | null>(null);
+  const isOpen = visible || open;
 
   const updatePosition = useCallback((): void => {
     const anchor = anchorRef.current;
@@ -159,33 +163,46 @@ export function Tooltip({
 
     const anchorRect = anchor.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
-    setPosition(
-      computeFloatingPosition({
-        anchor: {
-          type: 'rect',
-          rect: {
-            left: anchorRect.left,
-            top: anchorRect.top,
-            width: anchorRect.width,
-            height: anchorRect.height
-          }
-        },
-        size: { width: tooltipRect.width, height: tooltipRect.height },
-        viewport: { width: window.innerWidth, height: window.innerHeight },
-        placement,
-        offset: TOOLTIP_BODY_OFFSET_PX
-      })
-    );
+    const nextPosition = computeFloatingPosition({
+      anchor: {
+        type: 'rect',
+        rect: {
+          left: anchorRect.left,
+          top: anchorRect.top,
+          width: anchorRect.width,
+          height: anchorRect.height
+        }
+      },
+      size: { width: tooltipRect.width, height: tooltipRect.height },
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      placement,
+      offset: DEFAULT_FLOATING_OFFSET + TAIL_PROTRUSION_PX
+    });
+
+    setPosition((current) => {
+      if (
+        current &&
+        current.left === nextPosition.left &&
+        current.top === nextPosition.top &&
+        current.placement === nextPosition.placement &&
+        current.tailSide === nextPosition.tailSide &&
+        current.tailOffset === nextPosition.tailOffset
+      ) {
+        return current;
+      }
+
+      return nextPosition;
+    });
   }, [placement]);
 
   useLayoutEffect(() => {
-    if (visible) {
+    if (isOpen && label) {
       updatePosition();
     }
-  }, [label, updatePosition, visible]);
+  }, [isOpen, label, updatePosition]);
 
   useEffect(() => {
-    if (!visible) {
+    if (!isOpen || !label) {
       return undefined;
     }
 
@@ -204,22 +221,23 @@ export function Tooltip({
       window.removeEventListener('scroll', handleUpdate, true);
       observer?.disconnect();
     };
-  }, [updatePosition, visible]);
+  }, [isOpen, label, updatePosition]);
 
   return (
     <span
       ref={anchorRef}
       className={cn('inline-flex', className)}
-      aria-describedby={visible ? tooltipId : undefined}
+      aria-describedby={isOpen && label ? tooltipId : undefined}
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
       onFocus={() => setVisible(true)}
       onBlur={() => setVisible(false)}
+      style={style}
     >
       {children}
-      {visible
+      {isOpen && label
         ? createPortal(
-            <span
+            <div
               id={tooltipId}
               role="tooltip"
               className="pointer-events-none fixed z-50 inline-block"
@@ -237,31 +255,43 @@ export function Tooltip({
                   style={getTailContainerStyle(position.tailSide, position.tailOffset)}
                 >
                   <span
-                    className={`absolute border ${type === 'default' ? 'border-white/10 bg-dark' : 'border-primary/50 bg-primary/25'}`}
+                    className={cn(
+                      'absolute border',
+                      type === 'default' && 'border-white/10 bg-dark',
+                      type === 'error' && 'border-primary/50 bg-primary/25'
+                    )}
                     style={getTailDiamondStyle(position.tailSide)}
                   />
                 </span>
               ) : null}
-              <span
+              <div
                 ref={tooltipRef}
-                className={`
-              relative z-10 inline-block
-        w-fit max-w-[min(28rem,calc(100vw-1rem))]
-        whitespace-normal wrap-break-word text-center
-        rounded-md border ${type === 'default' ? 'border-white/10 bg-dark text-white/50' : 'border-primary/50 bg-primary/25 text-primary'}
-        px-3 py-2 text-sm shadow-lg backdrop-blur-lg
-                `}
+                className={cn(
+                  `
+                    relative z-10 inline-block
+                    w-fit max-w-[min(28rem,calc(100vw-1rem))]
+                    whitespace-normal wrap-break-word text-center
+                    rounded-md border text-sm shadow-lg backdrop-blur-lg
+                  `,
+                  type === 'default' && 'border-white/10 bg-dark text-white/50',
+                  type === 'error' && 'border-primary/50 bg-primary/25 text-primary',
+                  'px-3 py-2'
+                )}
               >
                 {label}
                 {position ? (
                   <span
                     aria-hidden="true"
-                    className={`pointer-events-none absolute z-30 ${type === 'default' ? 'bg-dark' : 'bg-primary/25'} backdrop-blur-lg`}
+                    className={cn(
+                      'pointer-events-none absolute backdrop-blur-lg z-30',
+                      type === 'default' && 'bg-dark',
+                      type === 'error' && 'bg-primary/25'
+                    )}
                     style={getTailBridgeStyle(position.tailSide, position.tailOffset)}
                   />
                 ) : null}
-              </span>
-            </span>,
+              </div>
+            </div>,
             document.body
           )
         : null}

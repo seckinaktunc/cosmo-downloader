@@ -15,6 +15,8 @@ import type {
   DownloadProgress,
   DownloadStartRequest,
   FetchMetadataRequest,
+  FetchScrubPreviewFragmentRequest,
+  FetchScrubPreviewFragmentResult,
   HistoryBulkRequest,
   HistoryItemRequest,
   IpcResult,
@@ -68,6 +70,9 @@ export type CosmoApi = {
   video: {
     fetchMetadata: (request: FetchMetadataRequest) => Promise<FetchMetadataResponse>;
     cancelMetadata: (request: CancelMetadataRequest) => Promise<IpcResult<null>>;
+    fetchScrubPreviewFragment: (
+      request: FetchScrubPreviewFragmentRequest
+    ) => Promise<IpcResult<FetchScrubPreviewFragmentResult>>;
     getPrefetchCacheSummary: () => Promise<IpcResult<MetadataPrefetchCacheSummary>>;
     clearPrefetchCache: () => Promise<IpcResult<MetadataPrefetchCacheSummary>>;
     onFetchLifecycle: (listener: (event: MetadataFetchLifecycleEvent) => void) => Unsubscribe;
@@ -176,6 +181,8 @@ const api: CosmoApi = {
     fetchMetadata: (request) =>
       ipcRenderer.invoke(IPC_CHANNELS.video.fetchMetadata, request) as Promise<FetchMetadataResponse>,
     cancelMetadata: (request) => invoke<null>(IPC_CHANNELS.video.cancelMetadata, request),
+    fetchScrubPreviewFragment: (request) =>
+      invoke<FetchScrubPreviewFragmentResult>(IPC_CHANNELS.video.fetchScrubPreviewFragment, request),
     getPrefetchCacheSummary: () =>
       invoke<MetadataPrefetchCacheSummary>(IPC_CHANNELS.video.getPrefetchCacheSummary),
     clearPrefetchCache: () =>

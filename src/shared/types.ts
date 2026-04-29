@@ -86,6 +86,27 @@ export type VideoFormat = {
   protocol?: string;
 };
 
+export type ScrubPreviewHeaders = Record<string, string>;
+
+export type ScrubPreviewFragment = {
+  url: string;
+  durationSeconds: number;
+  frameCount: number;
+};
+
+export type ScrubPreviewStoryboard = {
+  kind: 'storyboard';
+  tileWidth: number;
+  tileHeight: number;
+  columns: number;
+  rows: number;
+  frameRate: number;
+  frameStepSeconds: number;
+  totalDurationSeconds: number;
+  headers?: ScrubPreviewHeaders;
+  fragments: ScrubPreviewFragment[];
+};
+
 export type VideoMetadata = {
   requestId: string;
   url: string;
@@ -97,6 +118,7 @@ export type VideoMetadata = {
   uploader?: string;
   uploaderUrl?: string;
   duration?: number;
+  scrubPreview?: ScrubPreviewStoryboard;
   maxResolution?: number;
   containers: string[];
   videoCodecs: string[];
@@ -130,6 +152,15 @@ export type FetchMetadataRequest = {
   url: string;
   settings: AppSettings;
   forceRefresh?: boolean;
+};
+
+export type FetchScrubPreviewFragmentRequest = {
+  url: string;
+  headers?: ScrubPreviewHeaders;
+};
+
+export type FetchScrubPreviewFragmentResult = {
+  dataUrl: string;
 };
 
 export type MetadataFetchSource = 'fresh' | 'prefetch_cache' | 'prefetch_attach';

@@ -268,6 +268,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
                 endLabel={t('exportSettings.trimEnd')}
                 value={trimRange}
                 max={durationSeconds}
+                scrubPreview={metadata?.scrubPreview}
                 disabled={controlsDisabled}
                 invalidLabel={t('exportSettings.trimInvalid')}
                 onChange={({ startSeconds, endSeconds }) =>

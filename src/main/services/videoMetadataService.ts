@@ -10,6 +10,9 @@ import type {
   DownloadLogAppend,
   IpcResult,
   MetadataFetchLifecycleEvent,
+  ScrubPreviewFragment,
+  ScrubPreviewHeaders,
+  ScrubPreviewStoryboard,
   VideoFormat,
   VideoMetadata
 } from '../../shared/types';
@@ -28,6 +31,17 @@ type RawYtDlpFormat = {
   filesize?: unknown;
   filesize_approx?: unknown;
   protocol?: unknown;
+  format_note?: unknown;
+  rows?: unknown;
+  columns?: unknown;
+  url?: unknown;
+  fragments?: unknown;
+  http_headers?: unknown;
+};
+
+type RawYtDlpFragment = {
+  url?: unknown;
+  duration?: unknown;
 };
 
 export type RawYtDlpMetadata = {
@@ -55,6 +69,31 @@ function asString(value: unknown): string | undefined {
 
 function asNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function asPositiveNumber(value: unknown): number | undefined {
+  const number = asNumber(value);
+  return number != null && number > 0 ? number : undefined;
+}
+
+function asPositiveInteger(value: unknown): number | undefined {
+  const number = asPositiveNumber(value);
+  return number != null ? Math.floor(number) : undefined;
+}
+
+function asStringRecord(value: unknown): ScrubPreviewHeaders | undefined {
+  if (value == null || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>).filter(
+    (entry): entry is [string, string] => {
+      const [key, rawValue] = entry;
+      return key.trim().length > 0 && typeof rawValue === 'string' && rawValue.trim().length > 0;
+    }
+  );
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 }
 
 function uniqueSortedStrings(values: Array<string | undefined>): string[] {
@@ -145,6 +184,138 @@ function parseFormats(rawFormats: unknown): VideoFormat[] {
   });
 }
 
+function createScrubPreviewFragment(
+  url: string | undefined,
+  durationSeconds: number | undefined,
+  frameRate: number,
+  maxFramesPerFragment: number
+): ScrubPreviewFragment | null {
+  if (!url || durationSeconds == null || durationSeconds <= 0) {
+    return null;
+  }
+
+  const frameCount = Math.max(
+    1,
+    Math.min(maxFramesPerFragment, Math.round(durationSeconds * frameRate))
+  );
+
+  return {
+    url,
+    durationSeconds,
+    frameCount
+  };
+}
+
+function parseScrubPreview(
+  rawFormats: unknown,
+  duration: number | undefined
+): ScrubPreviewStoryboard | undefined {
+  if (!Array.isArray(rawFormats)) {
+    return undefined;
+  }
+
+  const candidates = rawFormats
+    .map((raw) => {
+      const format = raw as RawYtDlpFormat;
+      const formatNote = asString(format.format_note)?.toLowerCase();
+      const protocol = asString(format.protocol)?.toLowerCase();
+      const looksLikeStoryboard = formatNote === 'storyboard' || protocol === 'mhtml';
+      if (!looksLikeStoryboard) {
+        return undefined;
+      }
+
+      const tileWidth = asPositiveInteger(format.width);
+      const tileHeight = asPositiveInteger(format.height);
+      const rows = asPositiveInteger(format.rows);
+      const columns = asPositiveInteger(format.columns);
+      const frameRate = asPositiveNumber(format.fps);
+      if (!tileWidth || !tileHeight || !rows || !columns || !frameRate) {
+        return undefined;
+      }
+
+      const maxFramesPerFragment = rows * columns;
+      const fallbackUrl = asString(format.url);
+      const fallbackDuration = asPositiveNumber(duration);
+      const fragments = Array.isArray(format.fragments)
+        ? format.fragments
+            .map((rawFragment) => {
+              const fragment = rawFragment as RawYtDlpFragment;
+              return createScrubPreviewFragment(
+                asString(fragment.url),
+                asPositiveNumber(fragment.duration),
+                frameRate,
+                maxFramesPerFragment
+              );
+            })
+            .filter((fragment): fragment is ScrubPreviewFragment => fragment != null)
+        : fallbackUrl && fallbackDuration
+          ? [
+              createScrubPreviewFragment(
+                fallbackUrl,
+                fallbackDuration,
+                frameRate,
+                maxFramesPerFragment
+              )
+            ].filter((fragment): fragment is ScrubPreviewFragment => fragment != null)
+          : [];
+
+      if (fragments.length === 0) {
+        return undefined;
+      }
+
+      const headers = asStringRecord(format.http_headers);
+
+      return headers == null
+        ? {
+            kind: 'storyboard' as const,
+            tileWidth,
+            tileHeight,
+            columns,
+            rows,
+            frameRate,
+            frameStepSeconds: 1 / frameRate,
+            totalDurationSeconds: fragments.reduce(
+              (sum, fragment) => sum + fragment.durationSeconds,
+              0
+            ),
+            fragments
+          }
+        : {
+            kind: 'storyboard' as const,
+            tileWidth,
+            tileHeight,
+            columns,
+            rows,
+            frameRate,
+            frameStepSeconds: 1 / frameRate,
+            totalDurationSeconds: fragments.reduce(
+              (sum, fragment) => sum + fragment.durationSeconds,
+              0
+            ),
+            headers,
+            fragments
+          };
+    })
+    .filter((candidate): candidate is ScrubPreviewStoryboard => candidate != null)
+    .sort((left, right) => {
+      const leftArea = left.tileWidth * left.tileHeight;
+      const rightArea = right.tileWidth * right.tileHeight;
+      if (leftArea !== rightArea) {
+        return rightArea - leftArea;
+      }
+
+      const leftGrid = left.columns * left.rows;
+      const rightGrid = right.columns * right.rows;
+      if (leftGrid !== rightGrid) {
+        return rightGrid - leftGrid;
+      }
+
+      return right.fragments.length - left.fragments.length;
+    });
+
+  return candidates[0];
+}
+
 export function parseMetadata(
   requestId: string,
   url: string,
@@ -156,6 +327,8 @@ export function parseMetadata(
 
   const formats = parseFormats(raw.formats);
   const videoFormats = formats.filter((format) => format.videoCodec !== 'none');
+  const duration = asNumber(raw.duration);
+  const scrubPreview = parseScrubPreview(raw.formats, duration);
 
   return {
     requestId,
@@ -171,7 +344,8 @@ export function parseMetadata(
       asString(raw.channel_url) ??
       asString(raw.creator_url) ??
       asString(raw.artist_url),
-    duration: asNumber(raw.duration),
+    duration,
+    scrubPreview,
     maxResolution: Math.max(0, ...videoFormats.map((format) => format.height ?? 0)) || undefined,
     containers: uniqueSortedStrings(formats.map((format) => format.extension)),
     videoCodecs: uniqueSortedStrings(videoFormats.map((format) => format.videoCodec)),
@@ -179,6 +353,10 @@ export function parseMetadata(
     fpsOptions: uniqueSortedNumbers(videoFormats.map((format) => format.fps)),
     formats
   };
+}
+
+function getYtDlpJsRuntimeArg(denoPath: string): string {
+  return `deno:${denoPath}`;
 }
 
 function now(): string {
@@ -297,10 +475,12 @@ export class VideoMetadataService {
       emitFetchLifecycle('started');
       const args = [
         '--ignore-config',
+        '--no-js-runtimes',
+        '--js-runtimes',
+        getYtDlpJsRuntimeArg(binaries.deno),
         '--dump-single-json',
         '--skip-download',
-        '--no-playlist',
-        '--no-warnings'
+        '--no-playlist'
       ];
 
       if (settings.cookiesBrowser !== 'none') {
