@@ -98,11 +98,13 @@ jobs:
   build-macos-arm64:
     needs: validate-version
     runs-on: macos-15
+    timeout-minutes: 45
     env:
       CSC_LINK: ${{ secrets.CSC_LINK }}
       CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      DEBUG: electron-osx-sign*,electron-notarize*
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -133,11 +135,13 @@ jobs:
   build-macos-x64:
     needs: validate-version
     runs-on: macos-15-intel
+    timeout-minutes: 45
     env:
       CSC_LINK: ${{ secrets.CSC_LINK }}
       CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      DEBUG: electron-osx-sign*,electron-notarize*
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -168,11 +172,13 @@ jobs:
   build-macos-universal-update:
     needs: validate-version
     runs-on: macos-15
+    timeout-minutes: 45
     env:
       CSC_LINK: ${{ secrets.CSC_LINK }}
       CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      DEBUG: electron-osx-sign*,electron-notarize*
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

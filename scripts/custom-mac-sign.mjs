@@ -94,10 +94,12 @@ export default async function customMacSign(opts) {
   };
 
   for (let attempt = 1; attempt <= SIGN_ATTEMPTS; attempt += 1) {
+    console.log(`custom-mac-sign: starting sign attempt ${attempt} for ${opts.app}`);
     await stripSignaturesFromApp(opts.app);
 
     try {
       await sign(signingOpts);
+      console.log(`custom-mac-sign: sign attempt ${attempt} completed successfully`);
       return;
     } catch (error) {
       lastError = error;
