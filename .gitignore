@@ -4,6 +4,16 @@ out
 .DS_Store
 .eslintcache
 *.log*
+.env
+.env.*
+!.env.example
+!.env.*.example
+.certs/
+.private/
+*.p8
+*.p12
+*.cer
+*.mobileprovision
 resources/bin/*
 !resources/bin/.gitkeep
 .claude
