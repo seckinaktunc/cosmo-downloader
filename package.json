@@ -33,6 +33,7 @@
     "build:mac": "npm run build && electron-builder --mac --publish never",
     "build:mac:local": "node scripts/build-mac-local.mjs",
     "verify:mac:package": "node scripts/verify-mac-package.mjs",
+    "release:public": "node scripts/release-public.mjs",
     "build:linux": "npm run build && electron-builder --linux AppImage --x64 --publish never",
     "build:linux:local": "node scripts/build-linux-local.mjs",
     "verify:linux:package": "node scripts/verify-linux-package.mjs"

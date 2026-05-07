@@ -200,6 +200,7 @@ Mac in-app auto-updates use a separate universal Mac ZIP plus `latest-mac.yml`.
 | ---------------------- | -------------------------------------------------- |
 | `npm run lint`         | ESLint over the project                            |
 | `npm run format`       | Prettier write                                     |
+| `npm run release:public` | Prepare, tag, and trigger the public GitHub release workflow |
 | `npm run typecheck`    | Node + web TS projects                             |
 | `npm run test`         | Vitest (one-shot)                                  |
 | `npm run build:unpack` | Unpacked build for local inspection (no installer) |
