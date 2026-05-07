@@ -15,6 +15,7 @@ import {
   TRIM_MIN_LENGTH_SECONDS
 } from '../../../../shared/trim';
 import type { ScrubPreviewStoryboard } from '../../../../shared/types';
+import { getScrubPreviewFrameSize } from '../../lib/scrubPreviewLayout';
 import { cn } from '../../lib/utils';
 import Icon from '../miscellaneous/Icon';
 import { ScrubPreviewPopover } from './ScrubPreviewPopover';
@@ -67,8 +68,6 @@ type PreviewImageState =
   | { key: string; status: 'ready'; dataUrl: string };
 
 const THUMB_HOVER_RADIUS_PX = 10;
-const PREVIEW_MIN_WIDTH_PX = 120;
-const PREVIEW_MAX_WIDTH_PX = 200;
 const RANGE_THUMB_DIAMETER_PX = 14;
 const PREVIEW_POPOVER_OFFSET_PX = 64;
 
@@ -155,21 +154,6 @@ function resolveScrubPreviewFrame(
   return null;
 }
 
-function getScrubPreviewDisplaySize(scrubPreview: ScrubPreviewStoryboard): {
-  width: number;
-  height: number;
-} {
-  const width = Math.max(
-    PREVIEW_MIN_WIDTH_PX,
-    Math.min(PREVIEW_MAX_WIDTH_PX, scrubPreview.tileWidth)
-  );
-
-  return {
-    width,
-    height: Math.max(1, Math.round((width / scrubPreview.tileWidth) * scrubPreview.tileHeight))
-  };
-}
-
 function getThumbCenterPoint(
   trackElement: HTMLDivElement | null,
   thumbPercent: number
@@ -251,8 +235,8 @@ export function RangeSlider({
 
     return resolveScrubPreviewFrame(scrubPreview, activePreviewTime);
   }, [activePreviewTime, canPreviewThumbs, scrubPreview]);
-  const previewDisplaySize = useMemo(
-    () => (scrubPreview == null ? null : getScrubPreviewDisplaySize(scrubPreview)),
+  const previewFrameSize = useMemo(
+    () => (scrubPreview == null ? null : getScrubPreviewFrameSize(scrubPreview.tileWidth)),
     [scrubPreview]
   );
   const previewDataUrl =
@@ -555,7 +539,7 @@ export function RangeSlider({
         onPointerLeave={handleTrackPointerLeave}
       >
         {previewDataUrl != null &&
-          previewDisplaySize != null &&
+          previewFrameSize != null &&
           previewAnchorPoint != null &&
           scrubPreview != null &&
           activePreviewFrame != null &&
@@ -564,8 +548,10 @@ export function RangeSlider({
               open
               anchorPoint={previewAnchorPoint}
               imageUrl={previewDataUrl}
-              imageWidth={previewDisplaySize.width}
-              imageHeight={previewDisplaySize.height}
+              frameWidth={previewFrameSize.width}
+              frameHeight={previewFrameSize.height}
+              tileWidth={scrubPreview.tileWidth}
+              tileHeight={scrubPreview.tileHeight}
               columns={scrubPreview.columns}
               rows={scrubPreview.rows}
               tileColumn={activePreviewFrame.tileColumn}

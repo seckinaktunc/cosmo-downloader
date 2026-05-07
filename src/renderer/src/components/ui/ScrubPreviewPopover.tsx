@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { computeFloatingPosition, type FloatingPosition } from '../../lib/floatingPosition';
+import { getScrubPreviewSpriteLayout } from '../../lib/scrubPreviewLayout';
 import { Tooltip } from './Tooltip';
 
 type ScrubPreviewPopoverProps = {
   open: boolean;
   anchorPoint: { x: number; y: number } | null;
   imageUrl: string | null;
-  imageWidth: number;
-  imageHeight: number;
+  frameWidth: number;
+  frameHeight: number;
+  tileWidth: number;
+  tileHeight: number;
   columns: number;
   rows: number;
   tileColumn: number;
@@ -21,8 +24,10 @@ export function ScrubPreviewPopover({
   open,
   anchorPoint,
   imageUrl,
-  imageWidth,
-  imageHeight,
+  frameWidth,
+  frameHeight,
+  tileWidth,
+  tileHeight,
   columns,
   rows,
   tileColumn,
@@ -68,7 +73,7 @@ export function ScrubPreviewPopover({
     if (open && anchorPoint != null && imageUrl != null) {
       updatePosition();
     }
-  }, [anchorPoint, imageUrl, imageHeight, imageWidth, open, updatePosition]);
+  }, [anchorPoint, frameHeight, frameWidth, imageUrl, open, updatePosition]);
 
   useEffect(() => {
     if (!open || anchorPoint == null || imageUrl == null) {
@@ -96,6 +101,18 @@ export function ScrubPreviewPopover({
     return null;
   }
 
+  const spriteLayout = getScrubPreviewSpriteLayout({
+    frameWidth,
+    frameHeight,
+    tileWidth,
+    tileHeight,
+    columns,
+    rows,
+    tileColumn,
+    tileRow
+  });
+  const spriteImageUrl = `url(${JSON.stringify(imageUrl)})`;
+
   return createPortal(
     <div
       aria-label="Scrub preview"
@@ -107,20 +124,43 @@ export function ScrubPreviewPopover({
       }}
       data-placement={position?.placement}
     >
-      <div ref={previewRef} className="relative overflow-visible">
+      <div
+        ref={previewRef}
+        className="relative overflow-visible aspect-video"
+        style={{
+          width: `${frameWidth}px`,
+          height: `${frameHeight}px`
+        }}
+      >
         <div
           aria-hidden="true"
-          className="overflow-hidden rounded-md border border-white bg-white shadow-lg shadow-black/35"
+          className="relative overflow-hidden rounded-md border border-white bg-black shadow-lg shadow-black/35 aspect-video"
           style={{
-            width: `${imageWidth}px`,
-            height: `${imageHeight}px`,
-            backgroundImage: `url(${JSON.stringify(imageUrl)})`,
-            backgroundPosition: `-${tileColumn * imageWidth}px -${tileRow * imageHeight}px`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: `${imageWidth * columns}px ${imageHeight * rows}px`
+            width: `${frameWidth}px`,
+            height: `${frameHeight}px`
           }}
-        />
-        {position ? (
+        >
+          <div
+            className="absolute overflow-hidden"
+            style={{
+              left: `${spriteLayout.insetX}px`,
+              top: `${spriteLayout.insetY}px`,
+              width: `${spriteLayout.renderedTileWidth}px`,
+              height: `${spriteLayout.renderedTileHeight}px`
+            }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: spriteImageUrl,
+                backgroundPosition: `${spriteLayout.spriteOffsetX}px ${spriteLayout.spriteOffsetY}px`,
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: `${spriteLayout.spriteWidth}px ${spriteLayout.spriteHeight}px`
+              }}
+            />
+          </div>
+        </div>
+        {position && (
           <Tooltip
             open
             label={timecode}
@@ -128,11 +168,11 @@ export function ScrubPreviewPopover({
             className="pointer-events-none absolute z-10"
             style={{
               left: `${position.tailOffset}px`,
-              bottom: 'calc(-50% - 0.25rem)',
+              top: 'calc(100% + 3.5rem)',
               transform: 'translateX(-50%)'
             }}
           />
-        ) : null}
+        )}
       </div>
     </div>,
     document.body
