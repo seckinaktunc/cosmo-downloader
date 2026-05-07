@@ -323,6 +323,41 @@ export function getArchiveExtractionInvocation(archivePath, destDir, platform = 
   };
 }
 
+export function resolveRequestedPlatforms(args = process.argv.slice(2)) {
+  const requestedPlatforms = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const value = args[index];
+    if (value === '--all') {
+      return Object.keys(platforms);
+    }
+
+    if (value === '--platform') {
+      const platformKey = args[index + 1];
+      if (!platformKey) {
+        throw new Error('Expected a platform key after --platform.');
+      }
+      requestedPlatforms.push(platformKey);
+      index += 1;
+      continue;
+    }
+
+    if (value.startsWith('--platform=')) {
+      const platformKey = value.slice('--platform='.length).trim();
+      if (!platformKey) {
+        throw new Error('Expected a platform key after --platform=');
+      }
+      requestedPlatforms.push(platformKey);
+    }
+  }
+
+  if (requestedPlatforms.length > 0) {
+    return requestedPlatforms;
+  }
+
+  return [`${process.platform}-${process.arch}`];
+}
+
 function pathForSystemTar(absolutePath) {
   // Avoid Windows drive-letter parsing bugs in some tar/libarchive builds.
   if (process.platform === 'win32') {
@@ -421,9 +456,7 @@ async function downloadPlatform(platformKey) {
 }
 
 export async function downloadRequestedPlatforms(args = process.argv.slice(2)) {
-  const requestedPlatforms = args.includes('--all')
-    ? Object.keys(platforms)
-    : [`${process.platform}-${process.arch}`];
+  const requestedPlatforms = resolveRequestedPlatforms(args);
 
   for (const platformKey of requestedPlatforms) {
     await downloadPlatform(platformKey);

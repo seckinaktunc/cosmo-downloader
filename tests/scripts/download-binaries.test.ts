@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getArchiveExtractionInvocation } from '../../scripts/download-binaries.mjs';
+import {
+  getArchiveExtractionInvocation,
+  resolveRequestedPlatforms
+} from '../../scripts/download-binaries.mjs';
 
 describe('getArchiveExtractionInvocation', () => {
   it('uses PowerShell for zip extraction on Windows', () => {
@@ -40,5 +43,27 @@ describe('getArchiveExtractionInvocation', () => {
       '/tmp/out'
     ]);
     expect(invocation.errorTool).toBe('tar');
+  });
+});
+
+describe('resolveRequestedPlatforms', () => {
+  it('uses the current runtime platform by default', () => {
+    expect(resolveRequestedPlatforms([])).toEqual([`${process.platform}-${process.arch}`]);
+  });
+
+  it('returns all known platform keys for --all', () => {
+    expect(resolveRequestedPlatforms(['--all'])).toEqual(
+      expect.arrayContaining(['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'])
+    );
+  });
+
+  it('supports repeated explicit --platform arguments', () => {
+    expect(
+      resolveRequestedPlatforms(['--platform', 'darwin-x64', '--platform', 'darwin-arm64'])
+    ).toEqual(['darwin-x64', 'darwin-arm64']);
+  });
+
+  it('supports inline --platform=value arguments', () => {
+    expect(resolveRequestedPlatforms(['--platform=darwin-arm64'])).toEqual(['darwin-arm64']);
   });
 });

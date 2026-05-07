@@ -147,6 +147,25 @@ Runs the full Linux packaging flow: fetch binaries -> typecheck -> bundle -> `el
 
 > `build:linux` (no `:local`) is the CI-oriented packaging command. Use `build:linux:local` for local Linux release builds.
 
+### Build a macOS release
+
+```bash
+npm run build:mac:local
+```
+
+Runs the full macOS release flow on a Mac: fetch binaries for the current Mac architecture -> typecheck -> bundle -> `electron-builder` -> verify signing, Gatekeeper acceptance, and stapled notarization tickets.
+
+Before running it, create a local `.env.mac.local` from `.env.mac.local.example` and populate:
+
+- `APPLE_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
+- `APPLE_TEAM_ID`
+- optional `CSC_NAME`
+
+The local script merges `.env.mac.local` into the current shell environment without overriding already-exported values. The real certificate should stay in macOS Keychain.
+
+> `build:mac` (no `:local`) is the CI-oriented packaging command. Use `build:mac:local` for local notarized release builds.
+
 ### Code signing (optional)
 
 For a signed installer, set these before building:
@@ -155,6 +174,25 @@ For a signed installer, set these before building:
 - `WIN_CSC_KEY_PASSWORD` - its password
 
 If either is missing, an unsigned installer is produced. You can sanity-check a signed artifact with `npm run verify:win-signing`.
+
+### macOS release secrets
+
+For local notarized Mac builds, use `.env.mac.local` with Apple ID credentials.
+
+For GitHub Actions macOS release jobs, configure these repository secrets:
+
+- `CSC_LINK` - base64-encoded `.p12` export of the `Developer ID Application` certificate
+- `CSC_KEY_PASSWORD` - password used when exporting that `.p12`
+- `APPLE_API_KEY_P8` - App Store Connect Team API key contents
+- `APPLE_API_KEY_ID` - App Store Connect API key ID
+- `APPLE_API_ISSUER` - App Store Connect issuer UUID
+
+Mac release uploads are split by architecture for manual downloads:
+
+- native `arm64` DMG/ZIP
+- native `x64` DMG/ZIP
+
+Mac in-app auto-updates use a separate universal Mac ZIP plus `latest-mac.yml`.
 
 ### Other scripts
 

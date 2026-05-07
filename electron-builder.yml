@@ -47,16 +47,20 @@ nsis:
   uninstallerSidebar: build/installerSidebar.bmp
 mac:
   icon: icon.icns
+  artifactName: ${name}-${version}-mac-${arch}.${ext}
   target:
     - dmg
     - zip
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  sign: scripts/custom-mac-sign.mjs
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize: false
+  notarize: true
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}-${version}-mac-${arch}.${ext}
 linux:
   icon: icon.png
   target:

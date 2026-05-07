@@ -30,7 +30,9 @@
     "build:win": "npm run build && node scripts/patch-electron-builder-nsis.mjs && electron-builder --win",
     "build:win:local": "node scripts/build-windows-local.mjs",
     "verify:win-signing": "node scripts/verify-windows-signing.mjs",
-    "build:mac": "npm run build && electron-builder --mac",
+    "build:mac": "npm run build && electron-builder --mac --publish never",
+    "build:mac:local": "node scripts/build-mac-local.mjs",
+    "verify:mac:package": "node scripts/verify-mac-package.mjs",
     "build:linux": "npm run build && electron-builder --linux AppImage --x64 --publish never",
     "build:linux:local": "node scripts/build-linux-local.mjs",
     "verify:linux:package": "node scripts/verify-linux-package.mjs"
@@ -50,6 +52,7 @@
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.1.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
+    "@electron/osx-sign": "^2.4.0",
     "@fontsource-variable/space-grotesk": "^5.2.10",
     "@iconify-json/flag": "^1.2.12",
     "@iconify-json/logos": "^1.2.11",
