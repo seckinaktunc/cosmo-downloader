@@ -4,6 +4,9 @@ import {
   getCodesignVerifyArgs,
   getMacAppArtifactWithFs,
   getMacDmgArtifactWithFs,
+  getMacUpdateManifestName,
+  getMacUpdateManifestWithFs,
+  getMacZipBlockmapArtifactWithFs,
   getMacZipArtifactWithFs,
   getSpctlAssessArgs,
   getStaplerValidateArgs,
@@ -45,16 +48,38 @@ describe('getMacDmgArtifactWithFs', () => {
 
 describe('getMacZipArtifactWithFs', () => {
   it('ignores blockmaps when selecting the packaged zip', () => {
-    const artifact = getMacZipArtifactWithFs('dist', 'universal', {
+    const artifact = getMacZipArtifactWithFs('dist', 'arm64', {
       readDir: () => [
-        'cosmo-downloader-1.0.5-mac-universal.zip.blockmap',
-        'cosmo-downloader-1.0.5-mac-universal.zip'
+        'cosmo-downloader-1.0.5-mac-arm64.zip.blockmap',
+        'cosmo-downloader-1.0.5-mac-arm64.zip'
       ],
       stat: () => ({ mtimeMs: 1 })
     });
 
-    expect(artifact).toContain('mac-universal.zip');
+    expect(artifact).toContain('mac-arm64.zip');
     expect(artifact).not.toContain('.blockmap');
+  });
+});
+
+describe('getMacZipBlockmapArtifactWithFs', () => {
+  it('finds the matching zip blockmap for the requested architecture', () => {
+    const artifact = getMacZipBlockmapArtifactWithFs('dist', 'arm64', {
+      readDir: () => ['cosmo-downloader-1.0.5-mac-arm64.zip.blockmap'],
+      stat: () => ({ mtimeMs: 1 })
+    });
+
+    expect(artifact).toContain('mac-arm64.zip.blockmap');
+  });
+});
+
+describe('getMacUpdateManifestWithFs', () => {
+  it('finds the arch-specific mac update manifest', () => {
+    const artifact = getMacUpdateManifestWithFs('dist', 'x64', {
+      readDir: () => ['latest-x64-mac.yml']
+    });
+
+    expect(getMacUpdateManifestName('x64')).toBe('latest-x64-mac.yml');
+    expect(artifact).toContain('latest-x64-mac.yml');
   });
 });
 
@@ -75,6 +100,8 @@ describe('verifyMacPackage', () => {
         getAppArtifact: () => 'dist/mac-arm64/Cosmo Downloader.app',
         getDmgArtifact: () => 'dist/cosmo-downloader-1.0.6-mac-arm64.dmg',
         getZipArtifact: () => 'dist/cosmo-downloader-1.0.6-mac-arm64.zip',
+        getZipBlockmapArtifact: () => 'dist/cosmo-downloader-1.0.6-mac-arm64.zip.blockmap',
+        getManifestArtifact: () => 'dist/latest-arm64-mac.yml',
         pathExists: () => true,
         spawnProcess,
         timeoutMs: 1000
@@ -99,37 +126,22 @@ describe('verifyMacPackage', () => {
       getStaplerValidateArgs('dist/mac-arm64/Cosmo Downloader.app'),
       expect.any(Object)
     );
-    expect(spawnProcess).toHaveBeenNthCalledWith(
-      4,
-      'xcrun',
-      getStaplerValidateArgs('dist/cosmo-downloader-1.0.6-mac-arm64.dmg'),
-      expect.any(Object)
-    );
+    expect(spawnProcess).toHaveBeenCalledTimes(3);
   });
 
-  it('allows zip-only verification for universal update packages', async () => {
-    const child = new EventEmitter() as EventEmitter & { kill: ReturnType<typeof vi.fn> };
-    child.kill = vi.fn();
-
-    const spawnProcess = vi.fn(() => {
-      queueMicrotask(() => child.emit('close', 0, null));
-      return child;
-    });
-
+  it('requires the arch-specific updater manifest and blockmap to exist', async () => {
     await expect(
       verifyMacPackage({
         platform: 'darwin',
-        arch: 'universal',
-        requireDmg: false,
-        getAppArtifact: () => 'dist/mac-universal/Cosmo Downloader.app',
-        getZipArtifact: () => 'dist/cosmo-downloader-1.0.6-mac-universal.zip',
-        pathExists: () => true,
-        spawnProcess,
-        timeoutMs: 1000
+        arch: 'x64',
+        getAppArtifact: () => 'dist/mac/Cosmo Downloader.app',
+        getDmgArtifact: () => 'dist/cosmo-downloader-1.0.6-mac-x64.dmg',
+        getZipArtifact: () => 'dist/cosmo-downloader-1.0.6-mac-x64.zip',
+        getZipBlockmapArtifact: () => undefined,
+        getManifestArtifact: () => undefined,
+        pathExists: () => true
       })
-    ).resolves.toBeUndefined();
-
-    expect(spawnProcess).toHaveBeenCalledTimes(3);
+    ).rejects.toThrow('No macOS ZIP blockmap found');
   });
 
   it('fails outside macOS', async () => {

@@ -1,8 +1,8 @@
-import { EventEmitter } from 'events'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AppSettings, SettingsUpdate } from '@shared/types'
-import type { SettingsService } from '@main/services/settingsService'
-import { shouldRunAutomaticUpdateCheck, UpdateService } from '@main/services/updateService'
+import { EventEmitter } from 'events';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AppSettings, SettingsUpdate } from '@shared/types';
+import type { SettingsService } from '@main/services/settingsService';
+import { shouldRunAutomaticUpdateCheck, UpdateService } from '@main/services/updateService';
 
 vi.mock('electron', () => ({
   app: {
@@ -11,7 +11,7 @@ vi.mock('electron', () => ({
   webContents: {
     getAllWebContents: () => []
   }
-}))
+}));
 
 vi.mock('electron-updater', () => ({
   autoUpdater: {
@@ -24,16 +24,16 @@ vi.mock('electron-updater', () => ({
     downloadUpdate: vi.fn(),
     quitAndInstall: vi.fn()
   }
-}))
+}));
 
-const logError = vi.hoisted(() => vi.fn())
+const logError = vi.hoisted(() => vi.fn());
 vi.mock('electron-log/main', () => ({
   default: {
     info: vi.fn(),
     warn: vi.fn(),
     error: logError
   }
-}))
+}));
 
 const baseSettings: AppSettings = {
   hardwareAcceleration: true,
@@ -46,28 +46,38 @@ const baseSettings: AppSettings = {
   cookiesBrowser: 'none',
   alwaysOnTop: false,
   clipboardPrefetchEnabled: true
-}
+};
 
 class FakeUpdater extends EventEmitter {
-  autoDownload = true
-  autoInstallOnAppQuit = false
-  allowPrerelease = true
-  logger: unknown = null
-  checkForUpdates = vi.fn(async () => ({}))
-  downloadUpdate = vi.fn(async () => [])
-  quitAndInstall = vi.fn()
-  getFeedURL = vi.fn(() => 'https://github.com/seckinaktunc/cosmo-downloader')
+  autoDownload = true;
+  autoInstallOnAppQuit = false;
+  allowPrerelease = true;
+  logger: unknown = null;
+  feedUrl = 'https://github.com/seckinaktunc/cosmo-downloader';
+  feedConfig: {
+    provider: 'generic';
+    url: string;
+    channel: string;
+  } | null = null;
+  checkForUpdates = vi.fn(async () => ({}));
+  downloadUpdate = vi.fn(async () => []);
+  quitAndInstall = vi.fn();
+  getFeedURL = vi.fn(() => this.feedUrl);
+  setFeedURL = vi.fn((options: { provider: 'generic'; url: string; channel: string }) => {
+    this.feedConfig = options;
+    this.feedUrl = options.url;
+  });
 }
 
 function createSettingsService(initial: Partial<AppSettings> = {}): SettingsService {
-  let settings = { ...baseSettings, ...initial }
+  let settings = { ...baseSettings, ...initial };
   return {
     get: () => settings,
     update: (update: SettingsUpdate) => {
-      settings = { ...settings, ...update }
-      return settings
+      settings = { ...settings, ...update };
+      return settings;
     }
-  } as SettingsService
+  } as SettingsService;
 }
 
 function createService({
@@ -75,38 +85,44 @@ function createService({
   updater = new FakeUpdater(),
   isPackaged = true,
   isMediaBusy = false,
-  now = new Date('2026-04-19T10:00:00.000Z')
+  now = new Date('2026-04-19T10:00:00.000Z'),
+  platform = 'linux',
+  arch = 'x64'
 }: {
-  settings?: Partial<AppSettings>
-  updater?: FakeUpdater
-  isPackaged?: boolean
-  isMediaBusy?: boolean
-  now?: Date
+  settings?: Partial<AppSettings>;
+  updater?: FakeUpdater;
+  isPackaged?: boolean;
+  isMediaBusy?: boolean;
+  now?: Date;
+  platform?: NodeJS.Platform;
+  arch?: string;
 } = {}): { service: UpdateService; updater: FakeUpdater; settingsService: SettingsService } {
-  const settingsService = createSettingsService(settings)
+  const settingsService = createSettingsService(settings);
   const service = new UpdateService(settingsService, {
     updater,
     isPackaged: () => isPackaged,
     isMediaBusy: () => isMediaBusy,
     now: () => now,
     startupDelayMs: 1,
-    intervalMs: 24 * 60 * 60 * 1000
-  })
+    intervalMs: 24 * 60 * 60 * 1000,
+    platform,
+    arch
+  });
 
-  return { service, updater, settingsService }
+  return { service, updater, settingsService };
 }
 
 beforeEach(() => {
-  vi.clearAllMocks()
-})
+  vi.clearAllMocks();
+});
 
 describe('shouldRunAutomaticUpdateCheck', () => {
   it('runs when there is no previous check or the timestamp is stale', () => {
-    const now = new Date('2026-04-19T10:00:00.000Z')
+    const now = new Date('2026-04-19T10:00:00.000Z');
 
-    expect(shouldRunAutomaticUpdateCheck(undefined, now)).toBe(true)
-    expect(shouldRunAutomaticUpdateCheck('2026-04-17T10:00:00.000Z', now)).toBe(true)
-  })
+    expect(shouldRunAutomaticUpdateCheck(undefined, now)).toBe(true);
+    expect(shouldRunAutomaticUpdateCheck('2026-04-17T10:00:00.000Z', now)).toBe(true);
+  });
 
   it('skips when the previous check is recent', () => {
     expect(
@@ -114,73 +130,114 @@ describe('shouldRunAutomaticUpdateCheck', () => {
         '2026-04-19T09:00:00.000Z',
         new Date('2026-04-19T10:00:00.000Z')
       )
-    ).toBe(false)
-  })
-})
+    ).toBe(false);
+  });
+});
 
 describe('UpdateService', () => {
+  it('configures an arch-specific generic feed for packaged arm64 mac builds', () => {
+    const updater = new FakeUpdater();
+    createService({
+      updater,
+      platform: 'darwin',
+      arch: 'arm64'
+    });
+
+    expect(updater.setFeedURL).toHaveBeenCalledWith({
+      provider: 'generic',
+      url: 'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/',
+      channel: 'latest-arm64'
+    });
+  });
+
+  it('configures an arch-specific generic feed for packaged x64 mac builds', () => {
+    const updater = new FakeUpdater();
+    createService({
+      updater,
+      platform: 'darwin',
+      arch: 'x64'
+    });
+
+    expect(updater.setFeedURL).toHaveBeenCalledWith({
+      provider: 'generic',
+      url: 'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/',
+      channel: 'latest-x64'
+    });
+  });
+
+  it('keeps the existing updater provider on non-mac builds', () => {
+    const updater = new FakeUpdater();
+    createService({
+      updater,
+      platform: 'linux',
+      arch: 'x64'
+    });
+
+    expect(updater.setFeedURL).not.toHaveBeenCalled();
+  });
+
   it('guards manual checks in unpackaged builds', async () => {
-    const { service, updater } = createService({ isPackaged: false })
+    const { service, updater } = createService({ isPackaged: false });
 
-    const result = await service.checkNow()
+    const result = await service.checkNow();
 
-    expect(result.ok).toBe(true)
-    expect(service.getState().status).toBe('unavailable')
-    expect(updater.checkForUpdates).not.toHaveBeenCalled()
-  })
+    expect(result.ok).toBe(true);
+    expect(service.getState().status).toBe('unavailable');
+    expect(updater.checkForUpdates).not.toHaveBeenCalled();
+  });
 
   it('respects the automatic check throttle', async () => {
     const { service, updater } = createService({
       settings: { lastAutomaticUpdateCheckAt: '2026-04-19T09:00:00.000Z' }
-    })
+    });
 
-    await service.checkAutomatic()
+    await service.checkAutomatic();
 
-    expect(updater.checkForUpdates).not.toHaveBeenCalled()
-  })
+    expect(updater.checkForUpdates).not.toHaveBeenCalled();
+  });
 
   it('lets manual checks bypass the automatic throttle', async () => {
     const { service, updater } = createService({
       settings: { lastAutomaticUpdateCheckAt: '2026-04-19T09:00:00.000Z' }
-    })
+    });
 
-    await service.checkNow()
+    await service.checkNow();
 
-    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1)
-  })
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
+  });
 
   it('logs automatic check failures without surfacing an error state', async () => {
-    const updater = new FakeUpdater()
-    updater.checkForUpdates.mockRejectedValueOnce(new Error('Network failed'))
-    const { service } = createService({ updater })
+    const updater = new FakeUpdater();
+    updater.checkForUpdates.mockRejectedValueOnce(new Error('Network failed'));
+    const { service } = createService({ updater });
 
-    await service.checkAutomatic()
+    await service.checkAutomatic();
 
-    expect(service.getState().status).toBe('idle')
-    expect(service.getState().error).toBeUndefined()
-    expect(logError).toHaveBeenCalled()
-  })
+    expect(service.getState().status).toBe('idle');
+    expect(service.getState().error).toBeUndefined();
+    expect(logError).toHaveBeenCalled();
+  });
 
   it('surfaces manual check failures', async () => {
-    const updater = new FakeUpdater()
-    updater.checkForUpdates.mockRejectedValueOnce(new Error('Network failed'))
-    const { service } = createService({ updater })
+    const updater = new FakeUpdater();
+    updater.checkForUpdates.mockRejectedValueOnce(new Error('Network failed'));
+    const { service } = createService({ updater });
 
-    const result = await service.checkNow()
+    const result = await service.checkNow();
 
-    expect(result.ok).toBe(false)
-    expect(service.getState().status).toBe('error')
-    expect(service.getState().error).toBe('Network failed')
-  })
+    expect(result.ok).toBe(false);
+    expect(service.getState().status).toBe('error');
+    expect(service.getState().error).toBe('Network failed');
+  });
 
   it('blocks install while media work is active', () => {
-    const updater = new FakeUpdater()
-    const { service } = createService({ updater, isMediaBusy: true })
-    updater.emit('update-downloaded', { version: '1.2.3' })
+    const updater = new FakeUpdater();
+    const { service } = createService({ updater, isMediaBusy: true });
+    updater.emit('update-downloaded', { version: '1.2.3' });
 
-    const result = service.install()
+    const result = service.install();
 
-    expect(result.ok).toBe(false)
-    expect(updater.quitAndInstall).not.toHaveBeenCalled()
-  })
-})
+    expect(result.ok).toBe(false);
+    expect(updater.quitAndInstall).not.toHaveBeenCalled();
+  });
+});

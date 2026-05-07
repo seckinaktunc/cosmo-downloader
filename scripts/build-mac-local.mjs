@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'fs';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { runMacReleaseBuild } from './build-mac-release.mjs';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(scriptDir, '..');
@@ -76,18 +77,10 @@ export function getNpmInvocation(args, env = process.env, platform = process.pla
   };
 }
 
-export function getElectronBuilderInvocation(arch = process.arch) {
-  const archFlag = arch === 'arm64' ? '--arm64' : '--x64';
-
+export function getMacReleaseInvocation(arch = process.arch) {
   return {
     command: process.execPath,
-    args: [
-      resolve(projectRoot, 'node_modules', 'electron-builder', 'cli.js'),
-      '--mac',
-      archFlag,
-      '--publish',
-      'never'
-    ],
+    args: [resolve(projectRoot, 'scripts', 'build-mac-release.mjs'), '--arch', arch],
     shell: false
   };
 }
@@ -137,14 +130,10 @@ export async function runLocalMacBuild({
   const build = getNpmInvocation(['run', 'build'], resolvedEnv, platform);
   await run(build.command, build.args, { env: resolvedEnv, shell: build.shell });
 
-  const electronBuilder = getElectronBuilderInvocation(arch);
-  await run(electronBuilder.command, electronBuilder.args, {
+  await runMacReleaseBuild({
+    arch,
     env: resolvedEnv,
-    shell: electronBuilder.shell
-  });
-
-  await run(process.execPath, ['scripts/verify-mac-package.mjs', '--arch', arch], {
-    env: resolvedEnv
+    platform
   });
 }
 

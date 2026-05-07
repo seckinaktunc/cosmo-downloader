@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import {
-  getElectronBuilderInvocation,
+  getMacReleaseInvocation,
   getLocalMacBuildEnv,
   getMissingMacNotarizationEnv,
   getNpmInvocation,
@@ -102,23 +102,19 @@ describe('getNpmInvocation', () => {
   });
 });
 
-describe('getElectronBuilderInvocation', () => {
-  it('pins native Apple Silicon packaging with publish disabled', () => {
-    const invocation = getElectronBuilderInvocation('arm64');
+describe('getMacReleaseInvocation', () => {
+  it('routes native Apple Silicon packaging through the staged mac release script', () => {
+    const invocation = getMacReleaseInvocation('arm64');
 
     expect(invocation.command).toBe(process.execPath);
-    expect(invocation.args[0]).toContain('electron-builder');
-    expect(invocation.args).toEqual(
-      expect.arrayContaining(['--mac', '--arm64', '--publish', 'never'])
-    );
+    expect(invocation.args[0]).toContain('build-mac-release.mjs');
+    expect(invocation.args).toEqual(expect.arrayContaining(['--arch', 'arm64']));
     expect(invocation.shell).toBe(false);
   });
 
-  it('pins native Intel packaging with publish disabled', () => {
-    const invocation = getElectronBuilderInvocation('x64');
+  it('routes native Intel packaging through the staged mac release script', () => {
+    const invocation = getMacReleaseInvocation('x64');
 
-    expect(invocation.args).toEqual(
-      expect.arrayContaining(['--mac', '--x64', '--publish', 'never'])
-    );
+    expect(invocation.args).toEqual(expect.arrayContaining(['--arch', 'x64']));
   });
 });

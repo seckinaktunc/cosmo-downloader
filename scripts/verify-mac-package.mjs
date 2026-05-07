@@ -12,7 +12,9 @@ export function parseVerifyMacArgs(args = process.argv.slice(2)) {
     arch: process.arch,
     distDir: DEFAULT_DIST_DIR,
     requireDmg: true,
-    requireZip: true
+    requireZip: true,
+    requireManifest: true,
+    requireZipBlockmap: true
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -29,27 +31,17 @@ export function parseVerifyMacArgs(args = process.argv.slice(2)) {
       index += 1;
       continue;
     }
-
-    if (value === '--zip-only') {
-      options.requireDmg = false;
-      options.requireZip = true;
-      options.arch = options.arch === process.arch ? 'universal' : options.arch;
-    }
   }
 
   return options;
 }
 
 export function getMacAppDirectoryCandidates(arch = process.arch) {
-  if (arch === 'universal') {
-    return ['mac-universal', 'mac-arm64', 'mac'];
-  }
-
   if (arch === 'arm64') {
-    return ['mac-arm64', 'mac-universal', 'mac'];
+    return ['mac-arm64', 'mac'];
   }
 
-  return ['mac', 'mac-x64', 'mac-universal'];
+  return ['mac', 'mac-x64'];
 }
 
 export function getNewestPath(paths, stat = statSync) {
@@ -95,7 +87,7 @@ export function getMacDmgArtifactWithFs(
   arch = process.arch,
   fsHelpers = {}
 ) {
-  const archToken = arch === 'universal' ? 'universal' : `-${arch}.`;
+  const archToken = `-${arch}.`;
 
   return getNewestFileMatching(
     distDir,
@@ -109,13 +101,43 @@ export function getMacZipArtifactWithFs(
   arch = process.arch,
   fsHelpers = {}
 ) {
-  const archToken = arch === 'universal' ? 'universal' : `-${arch}.`;
+  const archToken = `-${arch}.`;
 
   return getNewestFileMatching(
     distDir,
     (name) => name.endsWith('.zip') && !name.endsWith('.blockmap') && name.includes(archToken),
     fsHelpers
   );
+}
+
+export function getMacZipBlockmapArtifactWithFs(
+  distDir = DEFAULT_DIST_DIR,
+  arch = process.arch,
+  fsHelpers = {}
+) {
+  const archToken = `-${arch}.`;
+
+  return getNewestFileMatching(
+    distDir,
+    (name) => name.endsWith('.zip.blockmap') && name.includes(archToken),
+    fsHelpers
+  );
+}
+
+export function getMacUpdateManifestName(arch = process.arch) {
+  return arch === 'arm64' ? 'latest-arm64-mac.yml' : 'latest-x64-mac.yml';
+}
+
+export function getMacUpdateManifestWithFs(
+  distDir = DEFAULT_DIST_DIR,
+  arch = process.arch,
+  { readDir = readdirSync } = {}
+) {
+  const manifestName = getMacUpdateManifestName(arch);
+  const matches = readDir(distDir)
+    .filter((name) => name === manifestName)
+    .map((name) => join(distDir, name));
+  return matches[0];
 }
 
 export function getCodesignVerifyArgs(appPath) {
@@ -190,12 +212,16 @@ export async function verifyMacPackage({
   distDir = DEFAULT_DIST_DIR,
   requireDmg = true,
   requireZip = true,
+  requireManifest = true,
+  requireZipBlockmap = true,
   platform = process.platform,
   env = process.env,
   timeoutMs = DEFAULT_MAC_VERIFY_TIMEOUT_MS,
   getAppArtifact = getMacAppArtifactWithFs,
   getDmgArtifact = getMacDmgArtifactWithFs,
   getZipArtifact = getMacZipArtifactWithFs,
+  getZipBlockmapArtifact = getMacZipBlockmapArtifactWithFs,
+  getManifestArtifact = getMacUpdateManifestWithFs,
   pathExists = existsSync,
   spawnProcess = spawn
 } = {}) {
@@ -213,9 +239,21 @@ export async function verifyMacPackage({
     throw new Error(`No macOS ZIP artifact found in ${distDir} for ${arch}.`);
   }
 
+  const zipBlockmapArtifact = requireZipBlockmap
+    ? getZipBlockmapArtifact(distDir, arch)
+    : undefined;
+  if (requireZipBlockmap && (!zipBlockmapArtifact || !pathExists(zipBlockmapArtifact))) {
+    throw new Error(`No macOS ZIP blockmap found in ${distDir} for ${arch}.`);
+  }
+
   const dmgArtifact = requireDmg ? getDmgArtifact(distDir, arch) : undefined;
   if (requireDmg && (!dmgArtifact || !pathExists(dmgArtifact))) {
     throw new Error(`No macOS DMG artifact found in ${distDir} for ${arch}.`);
+  }
+
+  const manifestArtifact = requireManifest ? getManifestArtifact(distDir, arch) : undefined;
+  if (requireManifest && (!manifestArtifact || !pathExists(manifestArtifact))) {
+    throw new Error(`No macOS update manifest found in ${distDir} for ${arch}.`);
   }
 
   await runCommand('codesign', getCodesignVerifyArgs(appArtifact), {
@@ -233,14 +271,6 @@ export async function verifyMacPackage({
     spawnProcess,
     timeoutMs
   });
-
-  if (dmgArtifact) {
-    await runCommand('xcrun', getStaplerValidateArgs(dmgArtifact), {
-      env,
-      spawnProcess,
-      timeoutMs
-    });
-  }
 }
 
 if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {

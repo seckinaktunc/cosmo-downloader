@@ -31,6 +31,7 @@
     "build:win:local": "node scripts/build-windows-local.mjs",
     "verify:win-signing": "node scripts/verify-windows-signing.mjs",
     "build:mac": "npm run build && electron-builder --mac --publish never",
+    "build:mac:release": "node scripts/build-mac-release.mjs",
     "build:mac:local": "node scripts/build-mac-local.mjs",
     "verify:mac:package": "node scripts/verify-mac-package.mjs",
     "release:public": "node scripts/release-public.mjs",
