@@ -54,6 +54,7 @@ mac:
   hardenedRuntime: true
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  x64ArchFiles: Contents/Resources/bin/**/*
   sign: scripts/custom-mac-sign.mjs
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
