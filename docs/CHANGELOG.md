@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.7
+
+### Added
+
+- Added MacOS release scripts.
+
+### Fixed
+
+- Fixed the layout issue with scrub previews of videos with different aspect ratios.
+
 ## v1.0.6
 
 ### Added
