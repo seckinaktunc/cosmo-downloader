@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.8
+
+### Fixed
+
+- Fixed a macOS signed release regression that prevented the bundled `yt-dlp` binary from launching.
+
 ## v1.0.7
 
 ### Added
