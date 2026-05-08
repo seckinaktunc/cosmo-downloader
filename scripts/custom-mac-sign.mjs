@@ -2,7 +2,12 @@
 import { sign } from '@electron/osx-sign';
 import { realpath } from 'fs/promises';
 import { join, sep } from 'path';
-import { collectCodeSignPaths, stripSignaturesFromApp } from './prepare-mac-signing.mjs';
+import {
+  collectCodeSignPaths,
+  inferMacUpdaterArch,
+  stripSignaturesFromApp,
+  writeMacAppUpdateConfig
+} from './prepare-mac-signing.mjs';
 
 const SIGN_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 5_000;
@@ -81,6 +86,7 @@ export default async function customMacSign(opts) {
   let lastError;
   const codeSignPaths = new Set(await collectCodeSignPaths(join(opts.app, 'Contents')));
   const duplicateAliasPaths = await getDuplicateAliasPaths(opts.app);
+  const macUpdaterArch = inferMacUpdaterArch(opts.app);
   const signingOpts = {
     ...opts,
     ignore: (filePath) =>
@@ -95,6 +101,7 @@ export default async function customMacSign(opts) {
 
   for (let attempt = 1; attempt <= SIGN_ATTEMPTS; attempt += 1) {
     console.log(`custom-mac-sign: starting sign attempt ${attempt} for ${opts.app}`);
+    await writeMacAppUpdateConfig(opts.app, macUpdaterArch);
     await stripSignaturesFromApp(opts.app);
 
     try {

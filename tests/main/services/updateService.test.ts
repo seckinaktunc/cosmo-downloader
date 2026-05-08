@@ -1,12 +1,21 @@
+import { mkdtempSync, readFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { EventEmitter } from 'events';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppSettings, SettingsUpdate } from '@shared/types';
 import type { SettingsService } from '@main/services/settingsService';
-import { shouldRunAutomaticUpdateCheck, UpdateService } from '@main/services/updateService';
+import {
+  ensureMacUpdateConfigFile,
+  getMacUpdateConfigPath,
+  shouldRunAutomaticUpdateCheck,
+  UpdateService
+} from '@main/services/updateService';
 
 vi.mock('electron', () => ({
   app: {
-    isPackaged: true
+    isPackaged: true,
+    getPath: () => '/tmp/cosmo-user-data'
   },
   webContents: {
     getAllWebContents: () => []
@@ -53,6 +62,7 @@ class FakeUpdater extends EventEmitter {
   autoInstallOnAppQuit = false;
   allowPrerelease = true;
   logger: unknown = null;
+  updateConfigPath: string | undefined;
   feedUrl = 'https://github.com/seckinaktunc/cosmo-downloader';
   feedConfig: {
     provider: 'generic';
@@ -87,7 +97,8 @@ function createService({
   isMediaBusy = false,
   now = new Date('2026-04-19T10:00:00.000Z'),
   platform = 'linux',
-  arch = 'x64'
+  arch = 'x64',
+  userDataPath
 }: {
   settings?: Partial<AppSettings>;
   updater?: FakeUpdater;
@@ -96,6 +107,7 @@ function createService({
   now?: Date;
   platform?: NodeJS.Platform;
   arch?: string;
+  userDataPath?: string;
 } = {}): { service: UpdateService; updater: FakeUpdater; settingsService: SettingsService } {
   const settingsService = createSettingsService(settings);
   const service = new UpdateService(settingsService, {
@@ -106,7 +118,8 @@ function createService({
     startupDelayMs: 1,
     intervalMs: 24 * 60 * 60 * 1000,
     platform,
-    arch
+    arch,
+    userDataPath
   });
 
   return { service, updater, settingsService };
@@ -135,19 +148,43 @@ describe('shouldRunAutomaticUpdateCheck', () => {
 });
 
 describe('UpdateService', () => {
+  it('writes a mac updater config file that electron-updater can read later', () => {
+    const userDataPath = mkdtempSync(join(tmpdir(), 'cosmo-updater-config-'));
+
+    try {
+      const configPath = ensureMacUpdateConfigFile(userDataPath, 'arm64');
+
+      expect(configPath).toBe(getMacUpdateConfigPath(userDataPath));
+      expect(readFileSync(configPath, 'utf8')).toContain('channel: "latest-arm64-mac"');
+      expect(readFileSync(configPath, 'utf8')).toContain(
+        'updaterCacheDirName: "cosmo-downloader-updater"'
+      );
+    } finally {
+      rmSync(userDataPath, { recursive: true, force: true });
+    }
+  });
+
   it('configures an arch-specific generic feed for packaged arm64 mac builds', () => {
     const updater = new FakeUpdater();
+    const userDataPath = mkdtempSync(join(tmpdir(), 'cosmo-updater-service-'));
+
     createService({
       updater,
       platform: 'darwin',
-      arch: 'arm64'
+      arch: 'arm64',
+      userDataPath
     });
 
-    expect(updater.setFeedURL).toHaveBeenCalledWith({
-      provider: 'generic',
-      url: 'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/',
-      channel: 'latest-arm64'
-    });
+    try {
+      expect(updater.setFeedURL).toHaveBeenCalledWith({
+        provider: 'generic',
+        url: 'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/',
+        channel: 'latest-arm64-mac'
+      });
+      expect(updater.updateConfigPath).toBe(getMacUpdateConfigPath(userDataPath));
+    } finally {
+      rmSync(userDataPath, { recursive: true, force: true });
+    }
   });
 
   it('configures an arch-specific generic feed for packaged x64 mac builds', () => {
@@ -161,7 +198,7 @@ describe('UpdateService', () => {
     expect(updater.setFeedURL).toHaveBeenCalledWith({
       provider: 'generic',
       url: 'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/',
-      channel: 'latest-x64'
+      channel: 'latest-x64-mac'
     });
   });
 

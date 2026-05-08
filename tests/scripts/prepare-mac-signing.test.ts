@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import {
   collectCodeSignPaths,
   collectSignablePaths,
-  isMachOFile
+  inferMacUpdaterArch,
+  isMachOFile,
+  writeMacAppUpdateConfig
 } from '../../scripts/prepare-mac-signing.mjs';
 import { shouldIgnoreMacSignPath } from '../../scripts/custom-mac-sign.mjs';
 
@@ -70,6 +72,20 @@ describe('prepare-mac-signing', () => {
     const signablePaths = await collectSignablePaths(tempDir);
 
     expect(signablePaths).toContain(localePath);
+  });
+
+  it('writes an arch-specific app-update.yml into the signed macOS bundle resources', async () => {
+    tempDir = mkdtempSync(join(tmpdir(), 'cosmo-app-update-config-'));
+    const appPath = join(tempDir, 'dist', 'mac-arm64', 'Cosmo Downloader.app');
+
+    await writeMacAppUpdateConfig(appPath, inferMacUpdaterArch(appPath));
+
+    const configPath = join(appPath, 'Contents', 'Resources', 'app-update.yml');
+    const config = readFileSync(configPath, 'utf8');
+
+    expect(config).toContain('provider: "generic"');
+    expect(config).toContain('channel: "latest-arm64-mac"');
+    expect(config).toContain('updaterCacheDirName: "cosmo-downloader-updater"');
   });
 
   it('ignores non-code blobs during the actual signing pass', () => {

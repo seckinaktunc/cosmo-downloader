@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { app, webContents } from 'electron';
 import log from 'electron-log/main';
 import { autoUpdater } from 'electron-updater';
@@ -15,6 +17,7 @@ const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const STARTUP_UPDATE_CHECK_DELAY_MS = 5_000;
 const MAC_UPDATE_BASE_URL =
   'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/';
+const MAC_UPDATER_CACHE_DIR_NAME = 'cosmo-downloader-updater';
 
 type UpdateCheckMode = 'automatic' | 'manual';
 
@@ -37,6 +40,7 @@ type UpdaterClient = {
   autoInstallOnAppQuit: boolean;
   allowPrerelease: boolean;
   logger: unknown;
+  updateConfigPath?: string;
   on: (event: string, listener: (...args: unknown[]) => void) => void;
   checkForUpdates: () => Promise<unknown>;
   downloadUpdate: () => Promise<unknown>;
@@ -54,6 +58,14 @@ type UpdateServiceOptions = {
   intervalMs?: number;
   platform?: NodeJS.Platform;
   arch?: string;
+  userDataPath?: string;
+};
+
+type MacUpdateConfig = {
+  provider: 'generic';
+  url: string;
+  channel: string;
+  updaterCacheDirName: string;
 };
 
 function normalizeReleaseNotes(notes: unknown): string | undefined {
@@ -114,7 +126,38 @@ export function shouldRunAutomaticUpdateCheck(
 }
 
 export function getMacUpdateChannel(arch: string): string {
-  return arch === 'arm64' ? 'latest-arm64' : 'latest-x64';
+  return arch === 'arm64' ? 'latest-arm64-mac' : 'latest-x64-mac';
+}
+
+export function getMacUpdateConfig(arch: string): MacUpdateConfig {
+  return {
+    provider: 'generic',
+    url: MAC_UPDATE_BASE_URL,
+    channel: getMacUpdateChannel(arch),
+    updaterCacheDirName: MAC_UPDATER_CACHE_DIR_NAME
+  };
+}
+
+export function serializeMacUpdateConfig(config: MacUpdateConfig): string {
+  return [
+    `provider: ${JSON.stringify(config.provider)}`,
+    `url: ${JSON.stringify(config.url)}`,
+    `channel: ${JSON.stringify(config.channel)}`,
+    `updaterCacheDirName: ${JSON.stringify(config.updaterCacheDirName)}`,
+    ''
+  ].join('\n');
+}
+
+export function getMacUpdateConfigPath(userDataPath: string): string {
+  return join(userDataPath, 'app-update.yml');
+}
+
+export function ensureMacUpdateConfigFile(userDataPath: string, arch: string): string {
+  mkdirSync(userDataPath, { recursive: true });
+
+  const configPath = getMacUpdateConfigPath(userDataPath);
+  writeFileSync(configPath, serializeMacUpdateConfig(getMacUpdateConfig(arch)), 'utf8');
+  return configPath;
 }
 
 export function shouldUseArchSpecificMacFeed(
@@ -133,6 +176,7 @@ export class UpdateService {
   private readonly intervalMs: number;
   private readonly platform: NodeJS.Platform;
   private readonly arch: string;
+  private readonly userDataPath: string;
   private state: UpdateState = { status: 'idle' };
   private activeCheckMode: UpdateCheckMode | null = null;
   private automaticInterval: NodeJS.Timeout | null = null;
@@ -150,6 +194,7 @@ export class UpdateService {
     this.intervalMs = options.intervalMs ?? UPDATE_CHECK_INTERVAL_MS;
     this.platform = options.platform ?? process.platform;
     this.arch = options.arch ?? process.arch;
+    this.userDataPath = options.userDataPath ?? app.getPath?.('userData') ?? process.cwd();
 
     this.updater.autoDownload = false;
     this.updater.autoInstallOnAppQuit = true;
@@ -309,6 +354,12 @@ export class UpdateService {
   private configureMacFeed(): void {
     if (!shouldUseArchSpecificMacFeed(this.platform, this.isPackaged())) {
       return;
+    }
+
+    try {
+      this.updater.updateConfigPath = ensureMacUpdateConfigFile(this.userDataPath, this.arch);
+    } catch (error) {
+      log.warn(`[updates] Failed to prepare macOS updater config: ${this.errorMessage(error)}`);
     }
 
     this.updater.setFeedURL?.({

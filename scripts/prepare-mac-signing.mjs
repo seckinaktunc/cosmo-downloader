@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { open, readdir, stat } from 'fs/promises';
+import { open, readdir, stat, mkdir, writeFile } from 'fs/promises';
 import { isBinaryFile } from 'isbinaryfile';
 import { join, extname } from 'path';
 
 const execFileAsync = promisify(execFile);
+const MAC_UPDATE_BASE_URL =
+  'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/';
+const MAC_UPDATER_CACHE_DIR_NAME = 'cosmo-downloader-updater';
 const SIGNABLE_DIRECTORY_EXTENSIONS = new Set([
   '.app',
   '.framework',
@@ -136,11 +139,54 @@ export async function stripSignaturesFromApp(appPath) {
   }
 }
 
+export function inferMacUpdaterArch(appPath, archHint) {
+  if (archHint === 'arm64' || archHint === 'x64') {
+    return archHint;
+  }
+
+  const normalizedPath = appPath.toLowerCase();
+  if (normalizedPath.includes('arm64')) {
+    return 'arm64';
+  }
+
+  if (normalizedPath.includes('x64')) {
+    return 'x64';
+  }
+
+  return process.arch === 'arm64' ? 'arm64' : 'x64';
+}
+
+export function serializeMacUpdateConfig(arch) {
+  const channel = arch === 'arm64' ? 'latest-arm64-mac' : 'latest-x64-mac';
+
+  return [
+    `provider: ${JSON.stringify('generic')}`,
+    `url: ${JSON.stringify(MAC_UPDATE_BASE_URL)}`,
+    `channel: ${JSON.stringify(channel)}`,
+    `updaterCacheDirName: ${JSON.stringify(MAC_UPDATER_CACHE_DIR_NAME)}`,
+    ''
+  ].join('\n');
+}
+
+export async function writeMacAppUpdateConfig(appPath, arch) {
+  const resourcesPath = join(appPath, 'Contents', 'Resources');
+  const configPath = join(resourcesPath, 'app-update.yml');
+
+  await mkdir(resourcesPath, { recursive: true });
+  await writeFile(configPath, serializeMacUpdateConfig(arch), 'utf8');
+  return configPath;
+}
+
 export default async function afterPack(context) {
   if (context.electronPlatformName !== 'darwin') {
     return;
   }
 
+  if (context.packager?.packagerOptions?.prepackaged != null) {
+    return;
+  }
+
   const appPath = join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`);
+  await writeMacAppUpdateConfig(appPath, inferMacUpdaterArch(appPath));
   await stripSignaturesFromApp(appPath);
 }
