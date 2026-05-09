@@ -157,7 +157,7 @@ export function inferMacUpdaterArch(appPath, archHint) {
 }
 
 export function serializeMacUpdateConfig(arch) {
-  const channel = arch === 'arm64' ? 'latest-arm64-mac' : 'latest-x64-mac';
+  const channel = arch === 'arm64' ? 'latest-arm64' : 'latest-x64';
 
   return [
     `provider: ${JSON.stringify('generic')}`,

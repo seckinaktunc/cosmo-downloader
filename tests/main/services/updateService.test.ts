@@ -155,7 +155,7 @@ describe('UpdateService', () => {
       const configPath = ensureMacUpdateConfigFile(userDataPath, 'arm64');
 
       expect(configPath).toBe(getMacUpdateConfigPath(userDataPath));
-      expect(readFileSync(configPath, 'utf8')).toContain('channel: "latest-arm64-mac"');
+      expect(readFileSync(configPath, 'utf8')).toContain('channel: "latest-arm64"');
       expect(readFileSync(configPath, 'utf8')).toContain(
         'updaterCacheDirName: "cosmo-downloader-updater"'
       );
@@ -179,7 +179,7 @@ describe('UpdateService', () => {
       expect(updater.setFeedURL).toHaveBeenCalledWith({
         provider: 'generic',
         url: 'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/',
-        channel: 'latest-arm64-mac'
+        channel: 'latest-arm64'
       });
       expect(updater.updateConfigPath).toBe(getMacUpdateConfigPath(userDataPath));
     } finally {
@@ -198,7 +198,7 @@ describe('UpdateService', () => {
     expect(updater.setFeedURL).toHaveBeenCalledWith({
       provider: 'generic',
       url: 'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/',
-      channel: 'latest-x64-mac'
+      channel: 'latest-x64'
     });
   });
 

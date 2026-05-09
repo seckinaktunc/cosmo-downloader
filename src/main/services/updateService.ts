@@ -126,7 +126,7 @@ export function shouldRunAutomaticUpdateCheck(
 }
 
 export function getMacUpdateChannel(arch: string): string {
-  return arch === 'arm64' ? 'latest-arm64-mac' : 'latest-x64-mac';
+  return arch === 'arm64' ? 'latest-arm64' : 'latest-x64';
 }
 
 export function getMacUpdateConfig(arch: string): MacUpdateConfig {

@@ -84,7 +84,7 @@ describe('prepare-mac-signing', () => {
     const config = readFileSync(configPath, 'utf8');
 
     expect(config).toContain('provider: "generic"');
-    expect(config).toContain('channel: "latest-arm64-mac"');
+    expect(config).toContain('channel: "latest-arm64"');
     expect(config).toContain('updaterCacheDirName: "cosmo-downloader-updater"');
   });
 

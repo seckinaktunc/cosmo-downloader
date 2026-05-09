@@ -6,6 +6,7 @@
 
 - Fixed a macOS signed release regression that prevented the bundled `yt-dlp` binary from launching.
 - Fixed macOS auto-update packaging so signed builds include the updater config file and resolve the correct architecture-specific release manifest.
+- Fixed a macOS auto-update channel regression that requested the wrong architecture-specific manifest filename.
 
 ## v1.0.7
 
