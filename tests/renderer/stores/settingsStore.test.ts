@@ -1,13 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   AppEnvironment,
   AppSettings,
   CookieBrowserOption,
   IpcResult,
-  MetadataPrefetchCacheSummary
-} from '@shared/types'
-import i18next from '@renderer/i18n'
-import { useSettingsStore } from '@renderer/stores/settingsStore'
+  VideoCacheSummary
+} from '@shared/types';
+import i18next from '@renderer/i18n';
+import { useSettingsStore } from '@renderer/stores/settingsStore';
 
 const baseSettings: AppSettings = {
   hardwareAcceleration: true,
@@ -19,8 +19,15 @@ const baseSettings: AppSettings = {
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
   alwaysOnTop: false,
-  clipboardPrefetchEnabled: true
-}
+  clipboardPrefetchEnabled: true,
+  cacheLimitMb: 50,
+  preferencesSectionsExpanded: {
+    general: true,
+    downloads: true,
+    metadata: true,
+    updates: true
+  }
+};
 
 const environment: AppEnvironment = {
   name: 'Cosmo Downloader',
@@ -28,35 +35,31 @@ const environment: AppEnvironment = {
   isPackaged: false,
   version: '1.0.0',
   hardwareAccelerationAvailable: true
-}
+};
 
-const browsers: CookieBrowserOption[] = [{ id: 'none', label: 'None', exists: true }]
-const prefetchSummary: MetadataPrefetchCacheSummary = {
-  enabled: true,
-  entryCount: 0,
-  successCount: 0,
-  failureCount: 0,
-  inflightCount: 0,
-  sizeBytes: 0
-}
+const browsers: CookieBrowserOption[] = [{ id: 'none', label: 'None', exists: true }];
+const cacheSummary: VideoCacheSummary = {
+  sizeBytes: 0,
+  hasClearableEntries: false
+};
 
 function ok<T>(data: T): IpcResult<T> {
-  return { ok: true, data }
+  return { ok: true, data };
 }
 
 function fail<T>(message: string): IpcResult<T> {
-  return { ok: false, error: { code: 'UNKNOWN', message } }
+  return { ok: false, error: { code: 'UNKNOWN', message } };
 }
 
 function installCosmoMock(initialSettings = baseSettings): {
-  currentSettings: AppSettings
-  updateMock: ReturnType<typeof vi.fn>
+  currentSettings: AppSettings;
+  updateMock: ReturnType<typeof vi.fn>;
 } {
-  const state = { currentSettings: initialSettings }
+  const state = { currentSettings: initialSettings };
   const updateMock = vi.fn(async (update: Partial<AppSettings>) => {
-    state.currentSettings = { ...state.currentSettings, ...update }
-    return ok(state.currentSettings)
-  })
+    state.currentSettings = { ...state.currentSettings, ...update };
+    return ok(state.currentSettings);
+  });
 
   vi.stubGlobal('window', {
     cosmo: {
@@ -73,117 +76,154 @@ function installCosmoMock(initialSettings = baseSettings): {
         getEnvironment: vi.fn(async () => ok(environment))
       },
       video: {
-        getPrefetchCacheSummary: vi.fn(async () => ok(prefetchSummary)),
-        clearPrefetchCache: vi.fn(async () => ok(prefetchSummary))
+        getCacheSummary: vi.fn(async () => ok(cacheSummary)),
+        clearCache: vi.fn(async () => ok(cacheSummary))
       }
     }
-  })
+  });
 
   return {
     get currentSettings() {
-      return state.currentSettings
+      return state.currentSettings;
     },
     updateMock
-  }
+  };
 }
 
 beforeEach(async () => {
-  vi.unstubAllGlobals()
-  await i18next.changeLanguage('en_US')
+  vi.unstubAllGlobals();
+  await i18next.changeLanguage('en_US');
   useSettingsStore.setState({
     settings: null,
     environment: null,
     cookieBrowsers: [{ id: 'none', label: 'None', exists: true }],
     restartRequired: false,
     initialHardwareAcceleration: null,
-    prefetchCacheSummary: null,
+    cacheSummary: null,
     isLoading: false,
     error: undefined
-  })
-})
+  });
+});
 
 describe('useSettingsStore interface language', () => {
   it('applies a saved Turkish language on load', async () => {
-    installCosmoMock({ ...baseSettings, interfaceLanguage: 'tr_TR' })
+    installCosmoMock({ ...baseSettings, interfaceLanguage: 'tr_TR' });
 
-    await useSettingsStore.getState().load()
+    await useSettingsStore.getState().load();
 
-    expect(i18next.language).toBe('tr_TR')
-    expect(i18next.t('preferences.title')).toBe('Tercihler')
-  })
+    expect(i18next.language).toBe('tr_TR');
+    expect(i18next.t('preferences.title')).toBe('Tercihler');
+  });
 
   it('applies a saved Simplified Chinese language on load', async () => {
-    installCosmoMock({ ...baseSettings, interfaceLanguage: 'zh_CN' })
+    installCosmoMock({ ...baseSettings, interfaceLanguage: 'zh_CN' });
 
-    await useSettingsStore.getState().load()
+    await useSettingsStore.getState().load();
 
-    expect(i18next.language).toBe('zh_CN')
-    expect(i18next.t('preferences.title')).toBe('偏好设置')
-  })
+    expect(i18next.language).toBe('zh_CN');
+    expect(i18next.t('preferences.title')).toBe('偏好设置');
+  });
 
   it('persists and applies language updates immediately', async () => {
-    const { updateMock } = installCosmoMock()
-    await useSettingsStore.getState().load()
+    const { updateMock } = installCosmoMock();
+    await useSettingsStore.getState().load();
 
-    await useSettingsStore.getState().update({ interfaceLanguage: 'zh_CN' })
+    await useSettingsStore.getState().update({ interfaceLanguage: 'zh_CN' });
 
-    expect(updateMock).toHaveBeenCalledWith({ interfaceLanguage: 'zh_CN' })
-    expect(useSettingsStore.getState().settings?.interfaceLanguage).toBe('zh_CN')
-    expect(i18next.language).toBe('zh_CN')
-    expect(i18next.t('preferences.title')).toBe('偏好设置')
-  })
-})
+    expect(updateMock).toHaveBeenCalledWith({ interfaceLanguage: 'zh_CN' });
+    expect(useSettingsStore.getState().settings?.interfaceLanguage).toBe('zh_CN');
+    expect(i18next.language).toBe('zh_CN');
+    expect(i18next.t('preferences.title')).toBe('偏好设置');
+  });
+});
 
 describe('useSettingsStore restart warning', () => {
   it('loads the startup hardware acceleration baseline without warning', async () => {
-    installCosmoMock()
+    installCosmoMock();
 
-    await useSettingsStore.getState().load()
+    await useSettingsStore.getState().load();
 
-    expect(useSettingsStore.getState().initialHardwareAcceleration).toBe(true)
-    expect(useSettingsStore.getState().restartRequired).toBe(false)
-  })
+    expect(useSettingsStore.getState().initialHardwareAcceleration).toBe(true);
+    expect(useSettingsStore.getState().restartRequired).toBe(false);
+  });
 
   it('sets restart required when hardware acceleration differs from startup value', async () => {
-    installCosmoMock()
-    await useSettingsStore.getState().load()
+    installCosmoMock();
+    await useSettingsStore.getState().load();
 
-    await useSettingsStore.getState().update({ hardwareAcceleration: false })
+    await useSettingsStore.getState().update({ hardwareAcceleration: false });
 
-    expect(useSettingsStore.getState().settings?.hardwareAcceleration).toBe(false)
-    expect(useSettingsStore.getState().restartRequired).toBe(true)
-  })
+    expect(useSettingsStore.getState().settings?.hardwareAcceleration).toBe(false);
+    expect(useSettingsStore.getState().restartRequired).toBe(true);
+  });
 
   it('clears restart required when hardware acceleration returns to startup value', async () => {
-    installCosmoMock()
-    await useSettingsStore.getState().load()
+    installCosmoMock();
+    await useSettingsStore.getState().load();
 
-    await useSettingsStore.getState().update({ hardwareAcceleration: false })
-    await useSettingsStore.getState().update({ hardwareAcceleration: true })
+    await useSettingsStore.getState().update({ hardwareAcceleration: false });
+    await useSettingsStore.getState().update({ hardwareAcceleration: true });
 
-    expect(useSettingsStore.getState().settings?.hardwareAcceleration).toBe(true)
-    expect(useSettingsStore.getState().restartRequired).toBe(false)
-  })
+    expect(useSettingsStore.getState().settings?.hardwareAcceleration).toBe(true);
+    expect(useSettingsStore.getState().restartRequired).toBe(false);
+  });
 
   it('keeps the warning derived from current saved settings after unrelated updates', async () => {
-    installCosmoMock()
-    await useSettingsStore.getState().load()
+    installCosmoMock();
+    await useSettingsStore.getState().load();
 
-    await useSettingsStore.getState().update({ hardwareAcceleration: false })
-    await useSettingsStore.getState().update({ automaticUpdates: false })
+    await useSettingsStore.getState().update({ hardwareAcceleration: false });
+    await useSettingsStore.getState().update({ automaticUpdates: false });
 
-    expect(useSettingsStore.getState().restartRequired).toBe(true)
-  })
+    expect(useSettingsStore.getState().restartRequired).toBe(true);
+  });
 
   it('does not change restart warning after failed settings updates', async () => {
-    const { updateMock } = installCosmoMock()
-    await useSettingsStore.getState().load()
-    updateMock.mockResolvedValueOnce(fail('Unable to save settings'))
+    const { updateMock } = installCosmoMock();
+    await useSettingsStore.getState().load();
+    updateMock.mockResolvedValueOnce(fail('Unable to save settings'));
 
-    await useSettingsStore.getState().update({ hardwareAcceleration: false })
+    await useSettingsStore.getState().update({ hardwareAcceleration: false });
 
-    expect(useSettingsStore.getState().settings?.hardwareAcceleration).toBe(true)
-    expect(useSettingsStore.getState().restartRequired).toBe(false)
-    expect(useSettingsStore.getState().error).toBe('Unable to save settings')
-  })
-})
+    expect(useSettingsStore.getState().settings?.hardwareAcceleration).toBe(true);
+    expect(useSettingsStore.getState().restartRequired).toBe(false);
+    expect(useSettingsStore.getState().error).toBe('Unable to save settings');
+  });
+
+  it('refreshes the merged cache summary after cache limit updates', async () => {
+    const summaryMock = vi.fn(async () =>
+      ok<VideoCacheSummary>({ sizeBytes: 1024, hasClearableEntries: true })
+    );
+    const { updateMock } = installCosmoMock();
+    vi.stubGlobal('window', {
+      cosmo: {
+        settings: {
+          get: vi.fn(async () => ok(baseSettings)),
+          update: updateMock,
+          chooseDownloadDirectory: vi.fn(),
+          chooseOutputPath: vi.fn()
+        },
+        system: {
+          detectCookieBrowsers: vi.fn(async () => ok(browsers))
+        },
+        app: {
+          getEnvironment: vi.fn(async () => ok(environment))
+        },
+        video: {
+          getCacheSummary: summaryMock,
+          clearCache: vi.fn(async () => ok(cacheSummary))
+        }
+      }
+    });
+
+    await useSettingsStore.getState().load();
+    await useSettingsStore.getState().update({ cacheLimitMb: 25 });
+
+    expect(summaryMock).toHaveBeenCalledTimes(2);
+    expect(useSettingsStore.getState().settings?.cacheLimitMb).toBe(25);
+    expect(useSettingsStore.getState().cacheSummary).toEqual({
+      sizeBytes: 1024,
+      hasClearableEntries: true
+    });
+  });
+});

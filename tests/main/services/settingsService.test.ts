@@ -1,15 +1,15 @@
-import { describe, expect, it } from 'vitest'
-import { createDefaultSettings } from '@shared/defaults'
-import { mergeSettings } from '@main/services/settingsService'
+import { describe, expect, it } from 'vitest';
+import { createDefaultSettings } from '@shared/defaults';
+import { mergeSettings } from '@main/services/settingsService';
 
 describe('mergeSettings', () => {
   it('keeps defaults when saved settings are invalid', () => {
-    const defaults = createDefaultSettings('/downloads')
-    expect(mergeSettings(defaults, null)).toEqual(defaults)
-  })
+    const defaults = createDefaultSettings('/downloads');
+    expect(mergeSettings(defaults, null)).toEqual(defaults);
+  });
 
   it('merges valid persisted values and fills missing fields', () => {
-    const defaults = createDefaultSettings('/downloads')
+    const defaults = createDefaultSettings('/downloads');
     expect(
       mergeSettings(defaults, {
         hardwareAcceleration: false,
@@ -23,22 +23,36 @@ describe('mergeSettings', () => {
       createFolderPerDownload: true,
       alwaysOnTop: true,
       defaultDownloadLocation: '/custom'
-    })
-  })
+    });
+  });
 
   it('defaults create folder per download to off for legacy settings', () => {
-    const defaults = createDefaultSettings('/downloads')
+    const defaults = createDefaultSettings('/downloads');
 
-    expect(mergeSettings(defaults, {}).createFolderPerDownload).toBe(false)
-  })
+    expect(mergeSettings(defaults, {}).createFolderPerDownload).toBe(false);
+  });
+
+  it('defaults cacheLimitMb to 50 for legacy settings', () => {
+    const defaults = createDefaultSettings('/downloads');
+
+    expect(mergeSettings(defaults, {}).cacheLimitMb).toBe(50);
+  });
+
+  it('rounds and clamps cacheLimitMb into the supported range', () => {
+    const defaults = createDefaultSettings('/downloads');
+
+    expect(mergeSettings(defaults, { cacheLimitMb: 24.6 }).cacheLimitMb).toBe(25);
+    expect(mergeSettings(defaults, { cacheLimitMb: 0 }).cacheLimitMb).toBe(1);
+    expect(mergeSettings(defaults, { cacheLimitMb: 900 }).cacheLimitMb).toBe(500);
+  });
 
   it('merges the last automatic update check timestamp', () => {
-    const defaults = createDefaultSettings('/downloads')
-    const timestamp = '2026-04-19T10:00:00.000Z'
+    const defaults = createDefaultSettings('/downloads');
+    const timestamp = '2026-04-19T10:00:00.000Z';
 
     expect(mergeSettings(defaults, { lastAutomaticUpdateCheckAt: timestamp })).toEqual({
       ...defaults,
       lastAutomaticUpdateCheckAt: timestamp
-    })
-  })
-})
+    });
+  });
+});

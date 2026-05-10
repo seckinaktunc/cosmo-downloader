@@ -33,7 +33,8 @@ const settings: AppSettings = {
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
   alwaysOnTop: false,
-  clipboardPrefetchEnabled: true
+  clipboardPrefetchEnabled: true,
+  cacheLimitMb: 50
 };
 
 const exportSettings: ExportSettings = {

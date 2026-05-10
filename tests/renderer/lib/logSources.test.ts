@@ -18,7 +18,8 @@ const settings: AppSettings = {
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
   alwaysOnTop: false,
-  clipboardPrefetchEnabled: true
+  clipboardPrefetchEnabled: true,
+  cacheLimitMb: 50
 };
 
 function metadata(title: string): VideoMetadata {

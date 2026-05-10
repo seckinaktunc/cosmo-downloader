@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import type { AppSettings } from '@shared/types'
-import { getMetadataAutoFetchKey } from '@renderer/lib/metadataAutoFetch'
+import { describe, expect, it } from 'vitest';
+import type { AppSettings } from '@shared/types';
+import { getMetadataAutoFetchKey } from '@renderer/lib/metadataAutoFetch';
 
 const settings: AppSettings = {
   hardwareAcceleration: true,
@@ -12,24 +12,31 @@ const settings: AppSettings = {
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
   alwaysOnTop: false,
-  clipboardPrefetchEnabled: true
-}
+  clipboardPrefetchEnabled: true,
+  cacheLimitMb: 50,
+  preferencesSectionsExpanded: {
+    general: true,
+    downloads: true,
+    metadata: true,
+    updates: true
+  }
+};
 
 describe('getMetadataAutoFetchKey', () => {
   it('returns null without settings or a non-empty URL', () => {
-    expect(getMetadataAutoFetchKey('https://example.com/video', null)).toBeNull()
-    expect(getMetadataAutoFetchKey('', settings)).toBeNull()
-    expect(getMetadataAutoFetchKey('   ', settings)).toBeNull()
-  })
+    expect(getMetadataAutoFetchKey('https://example.com/video', null)).toBeNull();
+    expect(getMetadataAutoFetchKey('', settings)).toBeNull();
+    expect(getMetadataAutoFetchKey('   ', settings)).toBeNull();
+  });
 
   it('changes when the trimmed URL changes', () => {
     expect(getMetadataAutoFetchKey(' https://example.com/one ', settings)).toBe(
       getMetadataAutoFetchKey('https://example.com/one', settings)
-    )
+    );
     expect(getMetadataAutoFetchKey('https://example.com/one', settings)).not.toBe(
       getMetadataAutoFetchKey('https://example.com/two', settings)
-    )
-  })
+    );
+  });
 
   it('changes when the cookie browser changes', () => {
     expect(getMetadataAutoFetchKey('https://example.com/video', settings)).not.toBe(
@@ -37,11 +44,11 @@ describe('getMetadataAutoFetchKey', () => {
         ...settings,
         cookiesBrowser: 'firefox'
       })
-    )
-  })
+    );
+  });
 
   it('ignores settings that metadata fetching does not use', () => {
-    const baseKey = getMetadataAutoFetchKey('https://example.com/video', settings)
+    const baseKey = getMetadataAutoFetchKey('https://example.com/video', settings);
 
     expect(
       getMetadataAutoFetchKey('https://example.com/video', {
@@ -56,6 +63,6 @@ describe('getMetadataAutoFetchKey', () => {
         alwaysOnTop: true,
         clipboardPrefetchEnabled: false
       })
-    ).toBe(baseKey)
-  })
-})
+    ).toBe(baseKey);
+  });
+});

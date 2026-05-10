@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
-import type { QueueItem } from '@shared/types'
-import { DEFAULT_EXPORT_SETTINGS } from '@shared/defaults'
-import { getBottomButtonState } from '@renderer/lib/bottomButtonState'
+import { describe, expect, it } from 'vitest';
+import type { QueueItem } from '@shared/types';
+import { DEFAULT_EXPORT_SETTINGS } from '@shared/defaults';
+import { getBottomButtonState } from '@renderer/lib/bottomButtonState';
 
 const queueItem: QueueItem = {
   id: 'item-1',
@@ -25,12 +25,19 @@ const queueItem: QueueItem = {
     interfaceLanguage: 'en_US',
     cookiesBrowser: 'none',
     alwaysOnTop: false,
-    clipboardPrefetchEnabled: true
+    clipboardPrefetchEnabled: true,
+    cacheLimitMb: 50,
+    preferencesSectionsExpanded: {
+      general: true,
+      downloads: true,
+      metadata: true,
+      updates: true
+    }
   },
   status: 'pending',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z'
-}
+};
 
 describe('getBottomButtonState', () => {
   it('shows cancel progress for active queue work', () => {
@@ -55,8 +62,8 @@ describe('getBottomButtonState', () => {
         currentPreviewCompleted: false,
         hasPendingQueueItems: false
       }).primary
-    ).toBe('Queue 1 of 1 (42%)')
-  })
+    ).toBe('Queue 1 of 1 (42%)');
+  });
 
   it('shows start queue when pending queue items exist', () => {
     expect(
@@ -69,8 +76,8 @@ describe('getBottomButtonState', () => {
         currentPreviewCompleted: false,
         hasPendingQueueItems: true
       })
-    ).toMatchObject({ mode: 'start', primary: 'Start Queue (1)' })
-  })
+    ).toMatchObject({ mode: 'start', primary: 'Start Queue (1)' });
+  });
 
   it('uses the supplied queue start count in the queue button label', () => {
     expect(
@@ -84,8 +91,8 @@ describe('getBottomButtonState', () => {
         hasPendingQueueItems: true,
         queueStartCount: 5
       })
-    ).toMatchObject({ mode: 'start', primary: 'Start Queue (5)' })
-  })
+    ).toMatchObject({ mode: 'start', primary: 'Start Queue (5)' });
+  });
 
   it('lets pending queue items take priority over a completed preview', () => {
     expect(
@@ -98,8 +105,8 @@ describe('getBottomButtonState', () => {
         currentPreviewCompleted: true,
         hasPendingQueueItems: true
       })
-    ).toMatchObject({ mode: 'start', primary: 'Start Queue (1)' })
-  })
+    ).toMatchObject({ mode: 'start', primary: 'Start Queue (1)' });
+  });
 
   it('shows new video only for the current completed preview without pending work', () => {
     expect(
@@ -112,6 +119,6 @@ describe('getBottomButtonState', () => {
         currentPreviewCompleted: true,
         hasPendingQueueItems: false
       })
-    ).toMatchObject({ mode: 'new_video', primary: 'New Video' })
-  })
-})
+    ).toMatchObject({ mode: 'new_video', primary: 'New Video' });
+  });
+});
