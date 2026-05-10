@@ -1,34 +1,34 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 import type {
   AppEnvironment,
   AppSettings,
   CookieBrowserOption,
-  MetadataPrefetchCacheSummary,
   OutputFormat,
-  SettingsUpdate
-} from '../../../shared/types'
-import { changeInterfaceLanguage } from '../i18n'
+  SettingsUpdate,
+  VideoCacheSummary
+} from '../../../shared/types';
+import { changeInterfaceLanguage } from '../i18n';
 
 type SettingsState = {
-  settings: AppSettings | null
-  environment: AppEnvironment | null
-  cookieBrowsers: CookieBrowserOption[]
-  restartRequired: boolean
-  initialHardwareAcceleration: boolean | null
-  prefetchCacheSummary: MetadataPrefetchCacheSummary | null
-  isLoading: boolean
-  error?: string
-  load: () => Promise<void>
-  update: (update: SettingsUpdate) => Promise<void>
-  refreshPrefetchCacheSummary: () => Promise<void>
-  clearPrefetchCache: () => Promise<void>
-  chooseDownloadDirectory: () => Promise<void>
+  settings: AppSettings | null;
+  environment: AppEnvironment | null;
+  cookieBrowsers: CookieBrowserOption[];
+  restartRequired: boolean;
+  initialHardwareAcceleration: boolean | null;
+  cacheSummary: VideoCacheSummary | null;
+  isLoading: boolean;
+  error?: string;
+  load: () => Promise<void>;
+  update: (update: SettingsUpdate) => Promise<void>;
+  refreshCacheSummary: () => Promise<void>;
+  clearCache: () => Promise<void>;
+  chooseDownloadDirectory: () => Promise<void>;
   chooseOutputPath: (request: {
-    title: string
-    outputFormat: OutputFormat
-    currentPath?: string
-  }) => Promise<string | null>
-}
+    title: string;
+    outputFormat: OutputFormat;
+    currentPath?: string;
+  }) => Promise<string | null>;
+};
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: null,
@@ -36,20 +36,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   cookieBrowsers: [{ id: 'none', label: 'None', exists: true }],
   restartRequired: false,
   initialHardwareAcceleration: null,
-  prefetchCacheSummary: null,
+  cacheSummary: null,
   isLoading: false,
 
   load: async () => {
-    set({ isLoading: true, error: undefined })
-    const [settingsResult, browsersResult, environmentResult, prefetchSummaryResult] = await Promise.all([
-      window.cosmo.settings.get(),
-      window.cosmo.system.detectCookieBrowsers(),
-      window.cosmo.app.getEnvironment(),
-      window.cosmo.video.getPrefetchCacheSummary()
-    ])
+    set({ isLoading: true, error: undefined });
+    const [settingsResult, browsersResult, environmentResult, cacheSummaryResult] =
+      await Promise.all([
+        window.cosmo.settings.get(),
+        window.cosmo.system.detectCookieBrowsers(),
+        window.cosmo.app.getEnvironment(),
+        window.cosmo.video.getCacheSummary()
+      ]);
 
     if (settingsResult.ok) {
-      await changeInterfaceLanguage(settingsResult.data.interfaceLanguage)
+      await changeInterfaceLanguage(settingsResult.data.interfaceLanguage);
     }
 
     set({
@@ -63,77 +64,88 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         ? browsersResult.data
         : [{ id: 'none', label: 'None', exists: true }],
       environment: environmentResult.ok ? environmentResult.data : null,
-      prefetchCacheSummary: prefetchSummaryResult.ok ? prefetchSummaryResult.data : null,
+      cacheSummary: cacheSummaryResult.ok ? cacheSummaryResult.data : null,
       error: !settingsResult.ok ? settingsResult.error.message : undefined
-    })
+    });
   },
 
   update: async (update) => {
-    const result = await window.cosmo.settings.update(update)
+    const result = await window.cosmo.settings.update(update);
     if (!result.ok) {
-      set({ error: result.error.message })
-      return
+      set({ error: result.error.message });
+      return;
     }
 
-    const initialHardwareAcceleration = get().initialHardwareAcceleration
+    const initialHardwareAcceleration = get().initialHardwareAcceleration;
     if (update.interfaceLanguage != null) {
-      await changeInterfaceLanguage(result.data.interfaceLanguage)
+      await changeInterfaceLanguage(result.data.interfaceLanguage);
+    }
+
+    let cacheSummary = get().cacheSummary;
+    if (update.cacheLimitMb != null) {
+      const cacheSummaryResult = await window.cosmo.video.getCacheSummary();
+      if (cacheSummaryResult.ok) {
+        cacheSummary = cacheSummaryResult.data;
+      } else {
+        set({ error: cacheSummaryResult.error.message });
+      }
     }
 
     set({
       settings: result.data,
+      cacheSummary,
       restartRequired:
         initialHardwareAcceleration != null &&
         result.data.hardwareAcceleration !== initialHardwareAcceleration
-    })
+    });
   },
 
-  refreshPrefetchCacheSummary: async () => {
-    const result = await window.cosmo.video.getPrefetchCacheSummary()
+  refreshCacheSummary: async () => {
+    const result = await window.cosmo.video.getCacheSummary();
     if (!result.ok) {
-      set({ error: result.error.message })
-      return
+      set({ error: result.error.message });
+      return;
     }
 
-    set({ prefetchCacheSummary: result.data })
+    set({ cacheSummary: result.data });
   },
 
-  clearPrefetchCache: async () => {
-    const result = await window.cosmo.video.clearPrefetchCache()
+  clearCache: async () => {
+    const result = await window.cosmo.video.clearCache();
     if (!result.ok) {
-      set({ error: result.error.message })
-      return
+      set({ error: result.error.message });
+      return;
     }
 
-    set({ prefetchCacheSummary: result.data })
+    set({ cacheSummary: result.data });
   },
 
   chooseDownloadDirectory: async () => {
-    const result = await window.cosmo.settings.chooseDownloadDirectory()
+    const result = await window.cosmo.settings.chooseDownloadDirectory();
     if (result.ok && result.data) {
-      await get().update({ defaultDownloadLocation: result.data })
+      await get().update({ defaultDownloadLocation: result.data });
     }
   },
 
   chooseOutputPath: async ({ title, outputFormat, currentPath }) => {
-    const settings = get().settings
+    const settings = get().settings;
     const result = await window.cosmo.settings.chooseOutputPath({
       title,
       outputFormat,
       currentPath,
       defaultDirectory: settings?.lastDownloadDirectory ?? settings?.defaultDownloadLocation
-    })
+    });
 
     if (!result.ok || !result.data) {
       if (result.ok) {
-        return null
+        return null;
       }
 
-      set({ error: result.error.message })
-      return null
+      set({ error: result.error.message });
+      return null;
     }
 
-    await get().update({ lastDownloadDirectory: result.data.directory })
-    return result.data.filePath
+    await get().update({ lastDownloadDirectory: result.data.directory });
+    return result.data.filePath;
   }
-}))
+}));

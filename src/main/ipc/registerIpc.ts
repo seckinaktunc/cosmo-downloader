@@ -20,9 +20,11 @@ import type {
   DownloadLogReadRequest,
   DownloadStartRequest,
   FetchMetadataRequest,
+  IpcResult,
   RecordFetchHistoryRequest,
   SettingsUpdate,
   ThumbnailRequest,
+  VideoCacheSummary,
   WindowAction
 } from '../../shared/types';
 import { detectCookieBrowsers } from '../services/browserDetector';
@@ -36,12 +38,13 @@ import { UpdateService } from '../services/updateService';
 import { createUniquePath } from '../services/filename';
 import { readDownloadLogTail } from '../services/logService';
 import { VideoMetadataCoordinator } from '../services/videoMetadataCoordinator';
+import { CacheBudgetCoordinator } from '../services/cacheBudgetCoordinator';
 import {
   copyThumbnailImage,
   downloadThumbnail,
   openThumbnailExternal
 } from '../services/thumbnailService';
-import { fetchScrubPreviewFragment } from '../services/scrubPreviewService';
+import { ScrubPreviewService } from '../services/scrubPreviewService';
 import { fail, ok } from '../utils/ipcResult';
 
 function getOpenablePath(targetPath: string): string | null {
@@ -55,14 +58,21 @@ function getOpenablePath(targetPath: string): string | null {
 
 export function registerIpcHandlers(): void {
   const settingsService = new SettingsService();
+  const cacheBudgetCoordinator = new CacheBudgetCoordinator(
+    settingsService.get().cacheLimitMb * 1024 * 1024
+  );
   const binaryService = new BinaryService();
   const logsDirectory = join(app.getPath('userData'), 'logs');
   const metadataService = new VideoMetadataService(binaryService, logsDirectory);
   const metadataCoordinator = new VideoMetadataCoordinator(
     metadataService,
     () => settingsService.get(),
-    logsDirectory
+    logsDirectory,
+    500,
+    600,
+    cacheBudgetCoordinator
   );
+  const scrubPreviewService = new ScrubPreviewService(cacheBudgetCoordinator);
   const downloadService = new DownloadService(binaryService);
   const historyService = new HistoryService();
   const queueService = new QueueService(downloadService, historyService);
@@ -89,6 +99,9 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.settings.update, (_event, update: SettingsUpdate) => {
     const settings = settingsService.update(update);
+    if (update.cacheLimitMb != null) {
+      cacheBudgetCoordinator.setLimitBytes(settings.cacheLimitMb * 1024 * 1024);
+    }
     if (update.automaticUpdates === true) {
       void updateService.checkAutomatic();
     }
@@ -182,16 +195,25 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.video.fetchScrubPreviewFragment, (_event, request) =>
-    fetchScrubPreviewFragment(request)
+    scrubPreviewService.fetchScrubPreviewFragment(request)
   );
 
-  ipcMain.handle(IPC_CHANNELS.video.getPrefetchCacheSummary, () =>
-    ok(metadataCoordinator.getPrefetchCacheSummary())
-  );
+  const getCacheSummary = (): IpcResult<VideoCacheSummary> =>
+    ok({
+      sizeBytes:
+        metadataCoordinator.getClearableCacheSizeBytes() +
+        scrubPreviewService.getRetainedSizeBytes(),
+      hasClearableEntries:
+        metadataCoordinator.hasClearableCacheEntries() || scrubPreviewService.hasClearableEntries()
+    });
 
-  ipcMain.handle(IPC_CHANNELS.video.clearPrefetchCache, () =>
-    ok(metadataCoordinator.clearPrefetchCache())
-  );
+  ipcMain.handle(IPC_CHANNELS.video.getCacheSummary, () => getCacheSummary());
+
+  ipcMain.handle(IPC_CHANNELS.video.clearCache, () => {
+    metadataCoordinator.clearCacheEntries();
+    scrubPreviewService.clearCompleted();
+    return getCacheSummary();
+  });
 
   ipcMain.handle(IPC_CHANNELS.download.start, (event, request: DownloadStartRequest) =>
     downloadService.start(event.sender, request)

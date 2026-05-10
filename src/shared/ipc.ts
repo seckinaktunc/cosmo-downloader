@@ -28,8 +28,8 @@ export const IPC_CHANNELS = {
     cancelMetadata: 'video:cancel-metadata',
     fetchLifecycle: 'video:fetch-lifecycle',
     fetchScrubPreviewFragment: 'video:fetch-scrub-preview-fragment',
-    getPrefetchCacheSummary: 'video:get-prefetch-cache-summary',
-    clearPrefetchCache: 'video:clear-prefetch-cache'
+    getCacheSummary: 'video:get-cache-summary',
+    clearCache: 'video:clear-cache'
   },
   download: {
     start: 'download:start',

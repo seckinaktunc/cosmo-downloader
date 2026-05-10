@@ -10,9 +10,9 @@ import type {
   IpcError,
   IpcResult,
   MetadataFetchLifecycleEvent,
-  MetadataPrefetchCacheSummary,
   VideoMetadata
 } from '../../shared/types';
+import type { CacheBudgetCoordinator } from './cacheBudgetCoordinator';
 import { VideoMetadataService } from './videoMetadataService';
 
 type SharedFetchOperation = {
@@ -140,7 +140,8 @@ export class VideoMetadataCoordinator {
     private readonly getSettings: () => AppSettings,
     private readonly logsDirectory: string = join(app.getPath('userData'), 'logs'),
     private readonly clipboardPollMs: number = 500,
-    private readonly prefetchDebounceMs: number = 600
+    private readonly prefetchDebounceMs: number = 600,
+    private readonly cacheBudgetCoordinator?: CacheBudgetCoordinator
   ) {}
 
   startClipboardWatcher(): void {
@@ -212,44 +213,39 @@ export class VideoMetadataCoordinator {
     );
   }
 
-  getPrefetchCacheSummary(): MetadataPrefetchCacheSummary {
-    let successCount = 0;
-    let failureCount = 0;
-    let inflightCount = 0;
+  hasClearableCacheEntries(): boolean {
+    for (const entry of this.cache.values()) {
+      if (entry.state === 'inflight') {
+        if (entry.operation.hiddenOwner && !entry.operation.visibleAdopted) {
+          return true;
+        }
+        continue;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  getClearableCacheSizeBytes(): number {
     let sizeBytes = 0;
 
     for (const entry of this.cache.values()) {
       if (entry.state === 'inflight') {
-        inflightCount += 1;
-        if (entry.operation.logOwnedByCache) {
+        if (entry.operation.hiddenOwner && !entry.operation.visibleAdopted) {
           sizeBytes += getFileSize(entry.operation.logPath);
         }
         continue;
       }
 
-      if (entry.state === 'succeeded') {
-        successCount += 1;
-      } else {
-        failureCount += 1;
-      }
-
-      sizeBytes += getSerializedResultSize(entry.result);
-      if (entry.logOwnedByCache) {
-        sizeBytes += getFileSize(entry.logPath);
-      }
+      sizeBytes += this.getSettledEntrySize(entry);
     }
 
-    return {
-      enabled: this.getSettings().clipboardPrefetchEnabled,
-      entryCount: this.cache.size,
-      successCount,
-      failureCount,
-      inflightCount,
-      sizeBytes
-    };
+    return sizeBytes;
   }
 
-  clearPrefetchCache(): MetadataPrefetchCacheSummary {
+  clearCacheEntries(): void {
     if (this.clipboardDebounceTimer) {
       clearTimeout(this.clipboardDebounceTimer);
       this.clipboardDebounceTimer = null;
@@ -272,13 +268,8 @@ export class VideoMetadataCoordinator {
         continue;
       }
 
-      if (entry.logOwnedByCache) {
-        removeFile(entry.logPath);
-      }
-      this.cache.delete(cacheKey);
+      this.deleteSettledCacheEntry(cacheKey, entry);
     }
-
-    return this.getPrefetchCacheSummary();
   }
 
   dispose(): void {
@@ -304,10 +295,7 @@ export class VideoMetadataCoordinator {
         continue;
       }
 
-      if (entry.logOwnedByCache) {
-        removeFile(entry.logPath);
-      }
-      this.cache.delete(cacheKey);
+      this.deleteSettledCacheEntry(cacheKey, entry);
     }
 
     this.operations.clear();
@@ -358,7 +346,7 @@ export class VideoMetadataCoordinator {
     if (!forceRefresh) {
       const cached = this.cache.get(cacheKey);
       if (cached) {
-        return this.consumeCachedEntry(requestId, cached);
+        return this.consumeCachedEntry(requestId, cacheKey, cached);
       }
     } else {
       const existing = this.cache.get(cacheKey);
@@ -374,7 +362,7 @@ export class VideoMetadataCoordinator {
           return this.attachToOperation(requestId, existing.operation);
         }
       } else if (existing) {
-        this.cache.delete(cacheKey);
+        this.deleteSettledCacheEntry(cacheKey, existing);
       }
     }
 
@@ -383,12 +371,14 @@ export class VideoMetadataCoordinator {
         ok: false,
         error: localFailure
       };
-      this.cache.set(cacheKey, {
+      const settledEntry: SettledCacheEntry = {
         state: 'failed',
         normalizedUrl,
         result,
         logOwnedByCache: false
-      });
+      };
+      this.cache.set(cacheKey, settledEntry);
+      this.registerSettledCacheEntry(cacheKey, settledEntry);
       return {
         requestId,
         source: 'fresh',
@@ -412,6 +402,7 @@ export class VideoMetadataCoordinator {
 
   private consumeCachedEntry(
     requestId: string,
+    cacheKey: string,
     entry: CacheEntry
   ): Promise<FetchMetadataResponse> | FetchMetadataResponse {
     if (entry.state === 'inflight') {
@@ -419,6 +410,7 @@ export class VideoMetadataCoordinator {
     }
 
     entry.logOwnedByCache = false;
+    this.registerSettledCacheEntry(cacheKey, entry);
     return {
       requestId,
       source: 'prefetch_cache',
@@ -522,13 +514,15 @@ export class VideoMetadataCoordinator {
         }
 
         const logPath = existsSync(operation.logPath) ? operation.logPath : undefined;
-        this.cache.set(cacheKey, {
+        const settledEntry: SettledCacheEntry = {
           state: result.ok ? 'succeeded' : 'failed',
           normalizedUrl,
           result,
           logPath,
           logOwnedByCache: operation.logOwnedByCache
-        });
+        };
+        this.cache.set(cacheKey, settledEntry);
+        this.registerSettledCacheEntry(cacheKey, settledEntry);
         return result;
       });
 
@@ -604,7 +598,7 @@ export class VideoMetadataCoordinator {
     }
 
     if (localFailure) {
-      this.cache.set(cacheKey, {
+      const settledEntry: SettledCacheEntry = {
         state: 'failed',
         normalizedUrl,
         result: {
@@ -612,7 +606,9 @@ export class VideoMetadataCoordinator {
           error: localFailure
         },
         logOwnedByCache: false
-      });
+      };
+      this.cache.set(cacheKey, settledEntry);
+      this.registerSettledCacheEntry(cacheKey, settledEntry);
       return;
     }
 
@@ -637,5 +633,43 @@ export class VideoMetadataCoordinator {
       timestamp: now()
     };
     broadcast(IPC_CHANNELS.video.fetchLifecycle, event);
+  }
+
+  private getCacheBudgetEntryId(cacheKey: string): string {
+    return `metadataPrefetch:${cacheKey}`;
+  }
+
+  private getSettledEntrySize(entry: SettledCacheEntry): number {
+    let sizeBytes = getSerializedResultSize(entry.result);
+    if (entry.logOwnedByCache) {
+      sizeBytes += getFileSize(entry.logPath);
+    }
+    return sizeBytes;
+  }
+
+  private registerSettledCacheEntry(cacheKey: string, entry: SettledCacheEntry): void {
+    this.cacheBudgetCoordinator?.upsertEntry({
+      id: this.getCacheBudgetEntryId(cacheKey),
+      kind: 'metadataPrefetch',
+      sizeBytes: this.getSettledEntrySize(entry),
+      evict: () => {
+        const currentEntry = this.cache.get(cacheKey);
+        if (currentEntry?.state === 'inflight') {
+          return;
+        }
+
+        if (currentEntry) {
+          this.deleteSettledCacheEntry(cacheKey, currentEntry);
+        }
+      }
+    });
+  }
+
+  private deleteSettledCacheEntry(cacheKey: string, entry: SettledCacheEntry): void {
+    if (entry.logOwnedByCache) {
+      removeFile(entry.logPath);
+    }
+    this.cache.delete(cacheKey);
+    this.cacheBudgetCoordinator?.removeEntry(this.getCacheBudgetEntryId(cacheKey));
   }
 }

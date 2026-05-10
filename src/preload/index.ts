@@ -21,7 +21,6 @@ import type {
   HistoryItemRequest,
   IpcResult,
   MetadataFetchLifecycleEvent,
-  MetadataPrefetchCacheSummary,
   OpenPathRequest,
   QueueAddRequest,
   QueueBulkRequest,
@@ -34,6 +33,7 @@ import type {
   RecordFetchHistoryRequest,
   SettingsUpdate,
   ThumbnailRequest,
+  VideoCacheSummary,
   UpdateState,
   WindowAction
 } from '../shared/types';
@@ -73,8 +73,8 @@ export type CosmoApi = {
     fetchScrubPreviewFragment: (
       request: FetchScrubPreviewFragmentRequest
     ) => Promise<IpcResult<FetchScrubPreviewFragmentResult>>;
-    getPrefetchCacheSummary: () => Promise<IpcResult<MetadataPrefetchCacheSummary>>;
-    clearPrefetchCache: () => Promise<IpcResult<MetadataPrefetchCacheSummary>>;
+    getCacheSummary: () => Promise<IpcResult<VideoCacheSummary>>;
+    clearCache: () => Promise<IpcResult<VideoCacheSummary>>;
     onFetchLifecycle: (listener: (event: MetadataFetchLifecycleEvent) => void) => Unsubscribe;
   };
   download: {
@@ -179,14 +179,18 @@ const api: CosmoApi = {
   },
   video: {
     fetchMetadata: (request) =>
-      ipcRenderer.invoke(IPC_CHANNELS.video.fetchMetadata, request) as Promise<FetchMetadataResponse>,
+      ipcRenderer.invoke(
+        IPC_CHANNELS.video.fetchMetadata,
+        request
+      ) as Promise<FetchMetadataResponse>,
     cancelMetadata: (request) => invoke<null>(IPC_CHANNELS.video.cancelMetadata, request),
     fetchScrubPreviewFragment: (request) =>
-      invoke<FetchScrubPreviewFragmentResult>(IPC_CHANNELS.video.fetchScrubPreviewFragment, request),
-    getPrefetchCacheSummary: () =>
-      invoke<MetadataPrefetchCacheSummary>(IPC_CHANNELS.video.getPrefetchCacheSummary),
-    clearPrefetchCache: () =>
-      invoke<MetadataPrefetchCacheSummary>(IPC_CHANNELS.video.clearPrefetchCache),
+      invoke<FetchScrubPreviewFragmentResult>(
+        IPC_CHANNELS.video.fetchScrubPreviewFragment,
+        request
+      ),
+    getCacheSummary: () => invoke<VideoCacheSummary>(IPC_CHANNELS.video.getCacheSummary),
+    clearCache: () => invoke<VideoCacheSummary>(IPC_CHANNELS.video.clearCache),
     onFetchLifecycle: (listener) =>
       subscribe<MetadataFetchLifecycleEvent>(IPC_CHANNELS.video.fetchLifecycle, listener)
   },

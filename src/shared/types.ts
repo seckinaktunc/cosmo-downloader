@@ -65,6 +65,7 @@ export type AppSettings = {
   cookiesBrowser: CookieBrowser;
   alwaysOnTop: boolean;
   clipboardPrefetchEnabled: boolean;
+  cacheLimitMb: number;
   preferencesSectionsExpanded: PreferencesSectionsExpanded;
 };
 
@@ -186,13 +187,9 @@ export type MetadataFetchLifecycleEvent = {
   timestamp: string;
 };
 
-export type MetadataPrefetchCacheSummary = {
-  enabled: boolean;
-  entryCount: number;
-  successCount: number;
-  failureCount: number;
-  inflightCount: number;
+export type VideoCacheSummary = {
   sizeBytes: number;
+  hasClearableEntries: boolean;
 };
 
 export type DownloadProgress = {

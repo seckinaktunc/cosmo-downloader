@@ -1,4 +1,4 @@
-import type { AppSettings, ExportSettings, PreferencesSectionsExpanded } from './types'
+import type { AppSettings, ExportSettings, PreferencesSectionsExpanded } from './types';
 
 export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
   outputFormat: 'mp4',
@@ -11,15 +11,15 @@ export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
   videoCodec: 'auto',
   audioCodec: 'auto',
   savePath: undefined
-}
+};
 
 function isRecord(value: unknown): value is Partial<ExportSettings> {
-  return typeof value === 'object' && value != null && !Array.isArray(value)
+  return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
 export function mergeExportSettings(value: unknown): ExportSettings {
   if (!isRecord(value)) {
-    return { ...DEFAULT_EXPORT_SETTINGS }
+    return { ...DEFAULT_EXPORT_SETTINGS };
   }
 
   return {
@@ -37,7 +37,7 @@ export function mergeExportSettings(value: unknown): ExportSettings {
       typeof value.savePath === 'string' && value.savePath.trim().length > 0
         ? value.savePath
         : undefined
-  }
+  };
 }
 
 export function createDefaultPreferencesSectionsExpanded(): PreferencesSectionsExpanded {
@@ -46,7 +46,7 @@ export function createDefaultPreferencesSectionsExpanded(): PreferencesSectionsE
     downloads: true,
     metadata: true,
     updates: true
-  }
+  };
 }
 
 export function createDefaultSettings(downloadsPath: string): AppSettings {
@@ -62,6 +62,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     cookiesBrowser: 'none',
     alwaysOnTop: false,
     clipboardPrefetchEnabled: true,
+    cacheLimitMb: 50,
     preferencesSectionsExpanded: createDefaultPreferencesSectionsExpanded()
-  }
+  };
 }
