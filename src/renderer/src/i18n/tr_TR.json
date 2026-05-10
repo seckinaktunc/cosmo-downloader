@@ -41,7 +41,7 @@
     "sections": {
       "general": "Genel",
       "downloads": "İndirmeler",
-      "metadata": "Meta Veri",
+      "metadata": "Gelişmiş",
       "updates": "Güncellemeler"
     },
     "hardwareAcceleration": "Donanım hızlandırma",
@@ -57,10 +57,11 @@
     "downloadLocation": "Varsayılan indirme konumu",
     "language": "Arayüz dili",
     "restartRequired": "Donanım hızlandırma değişiklikleri için yeniden başlatma gerekir.",
-    "prefetchCache": "Ön getirme önbelleği",
-    "prefetchCacheEmpty": "Henüz önbelleğe alınmış meta veri yok.",
-    "prefetchCacheSummary": "{{count}} kayıt · {{inflight}} işlem sürüyor · {{size}}",
-    "clearPrefetchCache": "Önbelleği temizle"
+    "cacheLimit": "Önbellek sınırı",
+    "cacheLimitDescription": "Meta veri ön getirme ve kaydırma önizleme önbelleği için paylaşılan sınır.",
+    "cache": "Önbellek",
+    "cacheEmpty": "Henüz önbelleğe alınmış veri yok.",
+    "clearCache": "Önbelleği temizle"
   },
   "updates": {
     "checkNow": "Güncellemeleri denetle",

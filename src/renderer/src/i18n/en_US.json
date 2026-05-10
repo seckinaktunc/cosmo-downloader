@@ -41,7 +41,7 @@
     "sections": {
       "general": "General",
       "downloads": "Downloads",
-      "metadata": "Metadata",
+      "metadata": "Advanced",
       "updates": "Updates"
     },
     "hardwareAcceleration": "Hardware acceleration",
@@ -57,10 +57,11 @@
     "downloadLocation": "Default download location",
     "language": "Interface language",
     "restartRequired": "Restart required for hardware acceleration changes.",
-    "prefetchCache": "Prefetch cache",
-    "prefetchCacheEmpty": "No cached metadata yet.",
-    "prefetchCacheSummary": "{{count}} entries · {{inflight}} in progress · {{size}}",
-    "clearPrefetchCache": "Clear cache"
+    "cacheLimit": "Cache limit",
+    "cacheLimitDescription": "Shared limit for metadata prefetch and scrub preview cache data.",
+    "cache": "Cache",
+    "cacheEmpty": "No cached data yet.",
+    "clearCache": "Clear cache"
   },
   "updates": {
     "checkNow": "Check for updates",

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CookieBrowser, PreferencesSection } from '../../../../shared/types';
 import { SUPPORTED_LOCALES, resolveSupportedLocale } from '../../i18n';
@@ -42,26 +42,49 @@ export function PreferencesPanel(): React.JSX.Element {
   const environment = useSettingsStore((state) => state.environment);
   const cookieBrowsers = useSettingsStore((state) => state.cookieBrowsers);
   const restartRequired = useSettingsStore((state) => state.restartRequired);
-  const prefetchCacheSummary = useSettingsStore((state) => state.prefetchCacheSummary);
+  const cacheSummary = useSettingsStore((state) => state.cacheSummary);
   const update = useSettingsStore((state) => state.update);
-  const refreshPrefetchCacheSummary = useSettingsStore(
-    (state) => state.refreshPrefetchCacheSummary
-  );
-  const clearPrefetchCache = useSettingsStore((state) => state.clearPrefetchCache);
+  const refreshCacheSummary = useSettingsStore((state) => state.refreshCacheSummary);
+  const clearCache = useSettingsStore((state) => state.clearCache);
   const chooseDownloadDirectory = useSettingsStore((state) => state.chooseDownloadDirectory);
   const updateState = useUpdateStore((state) => state.state);
   const checkForUpdates = useUpdateStore((state) => state.checkNow);
   const downloadUpdate = useUpdateStore((state) => state.download);
   const installUpdate = useUpdateStore((state) => state.install);
+  const [cacheLimitInput, setCacheLimitInput] = useState<string | null>(null);
+
+  const commitCacheLimitInput = (): void => {
+    if (!settings) {
+      return;
+    }
+
+    const nextInput = cacheLimitInput ?? String(settings.cacheLimitMb);
+    const parsed = Number(nextInput);
+    if (!Number.isFinite(parsed)) {
+      setCacheLimitInput(null);
+      return;
+    }
+
+    const nextValue = Math.min(500, Math.max(1, Math.round(parsed)));
+    if (nextValue !== settings.cacheLimitMb) {
+      setCacheLimitInput(String(nextValue));
+      void update({ cacheLimitMb: nextValue }).finally(() => {
+        setCacheLimitInput(null);
+      });
+      return;
+    }
+
+    setCacheLimitInput(null);
+  };
 
   useEffect(() => {
-    void refreshPrefetchCacheSummary();
+    void refreshCacheSummary();
     const timer = window.setInterval(() => {
-      void refreshPrefetchCacheSummary();
+      void refreshCacheSummary();
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [refreshPrefetchCacheSummary]);
+  }, [refreshCacheSummary]);
 
   if (!settings) {
     return <div className="text-white/60">{t('preferences.loading')}</div>;
@@ -231,25 +254,56 @@ export function PreferencesPanel(): React.JSX.Element {
           <div className="p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <span className="text-white/50">{t('preferences.prefetchCache')}</span>
+                <span className="text-white/50">{t('preferences.cacheLimit')}</span>
                 <p className="min-w-0 text-sm text-white/25">
-                  {prefetchCacheSummary == null
+                  {t('preferences.cacheLimitDescription')}
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-white/60">
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  step={1}
+                  inputMode="numeric"
+                  value={cacheLimitInput ?? String(settings.cacheLimitMb)}
+                  onFocus={() => {
+                    if (cacheLimitInput == null) {
+                      setCacheLimitInput(String(settings.cacheLimitMb));
+                    }
+                  }}
+                  onChange={(event) => setCacheLimitInput(event.target.value)}
+                  onBlur={commitCacheLimitInput}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      commitCacheLimitInput();
+                      event.currentTarget.blur();
+                    }
+                  }}
+                  className="w-20 rounded-none border border-white/15 bg-transparent px-2 py-1 text-right text-white outline-none transition focus:border-white/40"
+                />
+                <span>MB</span>
+              </label>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <span className="text-white/50">{t('preferences.cache')}</span>
+                <p className="min-w-0 text-sm text-white/25">
+                  {cacheSummary == null
                     ? t('preferences.loading')
-                    : prefetchCacheSummary.entryCount === 0
-                      ? t('preferences.prefetchCacheEmpty')
-                      : t('preferences.prefetchCacheSummary', {
-                          count: prefetchCacheSummary.entryCount,
-                          inflight: prefetchCacheSummary.inflightCount,
-                          size: formatBytes(prefetchCacheSummary.sizeBytes)
-                        })}
+                    : !cacheSummary.hasClearableEntries
+                      ? t('preferences.cacheEmpty')
+                      : formatBytes(cacheSummary.sizeBytes)}
                 </p>
               </div>
               <Button
-                label={t('preferences.clearPrefetchCache')}
+                label={t('preferences.clearCache')}
                 size="sm"
                 className="rounded-none"
-                disabled={prefetchCacheSummary == null || prefetchCacheSummary.entryCount === 0}
-                onClick={() => void clearPrefetchCache()}
+                disabled={cacheSummary == null || !cacheSummary.hasClearableEntries}
+                onClick={() => void clearCache()}
               />
             </div>
           </div>

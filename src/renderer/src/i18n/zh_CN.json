@@ -41,7 +41,7 @@
     "sections": {
       "general": "常规",
       "downloads": "下载",
-      "metadata": "元数据",
+      "metadata": "高级",
       "updates": "更新"
     },
     "hardwareAcceleration": "硬件加速",
@@ -57,10 +57,11 @@
     "downloadLocation": "默认下载位置",
     "language": "界面语言",
     "restartRequired": "硬件加速更改需要重启。",
-    "prefetchCache": "预取缓存",
-    "prefetchCacheEmpty": "还没有缓存的元数据。",
-    "prefetchCacheSummary": "{{count}} 条记录 · {{inflight}} 个进行中 · {{size}}",
-    "clearPrefetchCache": "清除缓存"
+    "cacheLimit": "缓存上限",
+    "cacheLimitDescription": "元数据预取和拖动预览缓存共享的容量上限。",
+    "cache": "缓存",
+    "cacheEmpty": "还没有缓存的数据。",
+    "clearCache": "清除缓存"
   },
   "updates": {
     "checkNow": "检查更新",
