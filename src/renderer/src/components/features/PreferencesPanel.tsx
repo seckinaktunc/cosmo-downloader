@@ -7,6 +7,7 @@ import { useUpdateStore } from '../../stores/updateStore';
 import type { IconName } from '../miscellaneous/Icon';
 import { Button } from '../ui/Button';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { InputField } from '../ui/InputField';
 import { LocationSelector } from '../ui/LocationSelector';
 import { SelectField } from '../ui/SelectField';
 import { Switch } from '../ui/Switch';
@@ -259,31 +260,34 @@ export function PreferencesPanel(): React.JSX.Element {
                   {t('preferences.cacheLimitDescription')}
                 </p>
               </div>
-              <label className="flex items-center gap-2 text-sm text-white/60">
-                <input
-                  type="number"
-                  min={1}
-                  max={500}
-                  step={1}
-                  inputMode="numeric"
-                  value={cacheLimitInput ?? String(settings.cacheLimitMb)}
-                  onFocus={() => {
-                    if (cacheLimitInput == null) {
-                      setCacheLimitInput(String(settings.cacheLimitMb));
-                    }
-                  }}
-                  onChange={(event) => setCacheLimitInput(event.target.value)}
-                  onBlur={commitCacheLimitInput}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      commitCacheLimitInput();
-                      event.currentTarget.blur();
-                    }
-                  }}
-                  className="w-20 rounded-none border border-white/15 bg-transparent px-2 py-1 text-right text-white outline-none transition focus:border-white/40"
-                />
-                <span>MB</span>
-              </label>
+              <InputField
+                mode="input"
+                type="number"
+                size="xs"
+                numberControls="custom"
+                numberStepFallbackValue={settings.cacheLimitMb}
+                min={1}
+                max={500}
+                step={1}
+                inputMode="numeric"
+                value={cacheLimitInput ?? String(settings.cacheLimitMb)}
+                endAdornment={<span className="text-[10px] uppercase tracking-wide">MB</span>}
+                className="w-24"
+                contentClassName="text-right text-white"
+                onFocus={() => {
+                  if (cacheLimitInput == null) {
+                    setCacheLimitInput(String(settings.cacheLimitMb));
+                  }
+                }}
+                onChange={(event) => setCacheLimitInput(event.target.value)}
+                onBlur={commitCacheLimitInput}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    commitCacheLimitInput();
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
             </div>
           </div>
           <div className="p-4">

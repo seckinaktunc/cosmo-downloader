@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   coerceExportSettingsForFormat,
@@ -17,7 +17,13 @@ import {
 import { normalizeTrimRange } from '../../../../shared/trim';
 import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types';
 import { useActiveExportSettings } from '../../hooks/useActiveExportSettings';
-import { getEffectiveSavePath, replaceOutputExtension } from '../../lib/outputPath';
+import {
+  getEditableSavePathParts,
+  getEffectiveSavePath,
+  replaceOutputBasename,
+  replaceOutputExtension,
+  sanitizeOutputFilename
+} from '../../lib/outputPath';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { LocationSelector } from '../ui/LocationSelector';
 import { RadioBoxes } from '../ui/RadioBoxes';
@@ -29,6 +35,10 @@ export function ExportSettingsPanel(): React.JSX.Element {
   const { metadata, exportSettings, readOnly, updateExportSettings } = useActiveExportSettings();
   const settings = useSettingsStore((state) => state.settings);
   const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath);
+  const [savePathBasenameDraft, setSavePathBasenameDraft] = useState<{
+    sourcePath: string;
+    value: string;
+  } | null>(null);
   const audioOnly = isAudioOnlyFormat(exportSettings.outputFormat);
   const controlsDisabled = readOnly || metadata == null;
   const showSavePath = Boolean(settings?.alwaysAskDownloadLocation);
@@ -43,6 +53,15 @@ export function ExportSettingsPanel(): React.JSX.Element {
     exportSettings.outputFormat,
     Boolean(settings?.createFolderPerDownload)
   );
+  const savePathParts = getEditableSavePathParts(
+    exportSettings.savePath,
+    exportSettings.outputFormat,
+    Boolean(settings?.createFolderPerDownload)
+  );
+  const activeSavePathBasenameDraft =
+    exportSettings.savePath != null && savePathBasenameDraft?.sourcePath === exportSettings.savePath
+      ? savePathBasenameDraft.value
+      : null;
   const disabledCodecs = getDisabledCodecOptions({ outputFormat: exportSettings.outputFormat });
   const disabledVideoCodecs = new Set(disabledCodecs.video);
   const disabledAudioCodecs = new Set(disabledCodecs.audio);
@@ -147,6 +166,29 @@ export function ExportSettingsPanel(): React.JSX.Element {
       });
     }
   }, [controlsDisabled, exportSettings, updateExportSettings]);
+
+  const commitSavePathBasename = (): void => {
+    if (controlsDisabled || !exportSettings.savePath || !savePathParts) {
+      setSavePathBasenameDraft(null);
+      return;
+    }
+
+    const nextDraft = activeSavePathBasenameDraft ?? savePathParts.basename;
+    const nextBasename = sanitizeOutputFilename(nextDraft, savePathParts.basename);
+
+    if (nextBasename === savePathParts.basename) {
+      setSavePathBasenameDraft(null);
+      return;
+    }
+
+    setSavePathBasenameDraft({
+      sourcePath: exportSettings.savePath,
+      value: nextBasename
+    });
+    void updateExportSettings({
+      savePath: replaceOutputBasename(exportSettings.savePath, nextBasename)
+    });
+  };
 
   const chooseSavePath = async (): Promise<void> => {
     if (!metadata || controlsDisabled) {
@@ -362,6 +404,26 @@ export function ExportSettingsPanel(): React.JSX.Element {
                   mode="file"
                   label={t('exportSettings.savePath')}
                   value={displaySavePath}
+                  editableFilePath={
+                    savePathParts
+                      ? {
+                          leadingPath: savePathParts.leadingPath,
+                          editableBasename: activeSavePathBasenameDraft ?? savePathParts.basename,
+                          trailingSuffix: savePathParts.trailingSuffix,
+                          onEditableBasenameChange: (value) => {
+                            if (!exportSettings.savePath) {
+                              return;
+                            }
+
+                            setSavePathBasenameDraft({
+                              sourcePath: exportSettings.savePath,
+                              value
+                            });
+                          },
+                          onEditableBasenameCommit: commitSavePathBasename
+                        }
+                      : undefined
+                  }
                   labelClassName="text-sm font-medium"
                   placeholder={t('exportSettings.noSavePath')}
                   chooseLabel={t('actions.choose')}

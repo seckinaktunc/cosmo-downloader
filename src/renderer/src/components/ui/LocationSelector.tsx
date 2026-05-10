@@ -1,8 +1,19 @@
+import type { KeyboardEvent } from 'react';
 import Icon, { type IconName } from '../miscellaneous/Icon';
 import { Button } from './Button';
 import { cn } from '../../lib/utils';
+import { InputField } from './InputField';
+import { getInputFieldRootClassName } from './inputFieldStyles';
 
 type LocationSelectorMode = 'directory' | 'file';
+
+type EditableFilePathProps = {
+  leadingPath: string;
+  editableBasename: string;
+  trailingSuffix: string;
+  onEditableBasenameChange: (value: string) => void;
+  onEditableBasenameCommit: () => void;
+};
 
 type LocationSelectorProps = {
   mode: LocationSelectorMode;
@@ -17,9 +28,13 @@ type LocationSelectorProps = {
   pathClassName?: string;
   layout?: 'inline' | 'stacked';
   buttonSize?: 'xs' | 'sm' | 'lg';
+  editableFilePath?: EditableFilePathProps;
   onChoose: () => void;
   onOpen: () => void;
 };
+
+const leadingPathClasses =
+  'block min-w-0 overflow-hidden whitespace-nowrap text-left text-ellipsis [direction:rtl] [unicode-bidi:plaintext]';
 
 export function LocationSelector({
   mode,
@@ -34,30 +49,86 @@ export function LocationSelector({
   pathClassName,
   layout = 'inline',
   buttonSize = 'sm',
+  editableFilePath,
   onChoose,
   onOpen
 }: LocationSelectorProps): React.JSX.Element {
-  const pathButton = (
-    <button
-      type="button"
-      className={cn(
-        'flex flex-1 min-w-0 items-center h-10 gap-2 bg-dark px-3 py-2 text-left text-sm text-white/50 outline-none transition hover:ring-1 hover:ring-white/25 focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed cursor-pointer',
-        pathClassName
-      )}
-      disabled={disabled || !value}
-      onClick={onOpen}
+  const pathDisabled = disabled || !value;
+  const hasEditableFilePath = mode === 'file' && value != null && editableFilePath != null;
+
+  const handleEditableBasenameKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.currentTarget.blur();
+    }
+  };
+
+  const pathButton = hasEditableFilePath ? (
+    <div
+      className={getInputFieldRootClassName({
+        size: 'md',
+        disabled: pathDisabled,
+        className: cn('flex-1 border-r-0 cursor-pointer', pathClassName)
+      })}
     >
       <Icon name={icon} className="shrink-0" />
-      <span className="min-w-0 truncate whitespace-nowrap">{value ?? placeholder}</span>
-    </button>
+      {editableFilePath.leadingPath.length > 0 ? (
+        <button
+          type="button"
+          disabled={pathDisabled}
+          title={value}
+          className="min-w-0 cursor-pointer text-left text-inherit outline-none disabled:cursor-not-allowed"
+          onClick={onOpen}
+        >
+          <span className={leadingPathClasses}>{editableFilePath.leadingPath}</span>
+        </button>
+      ) : (
+        <span className="min-w-0 flex-1" />
+      )}
+      <input
+        type="text"
+        disabled={pathDisabled}
+        value={editableFilePath.editableBasename}
+        aria-label={label ?? placeholder}
+        className="min-w-[4ch] shrink-0 bg-white/20 text-white outline-none disabled:cursor-not-allowed"
+        onChange={(event) => editableFilePath.onEditableBasenameChange(event.target.value)}
+        onBlur={editableFilePath.onEditableBasenameCommit}
+        onKeyDown={handleEditableBasenameKeyDown}
+        dir="rtl"
+      />
+      {editableFilePath.trailingSuffix.length > 0 ? (
+        <button
+          type="button"
+          disabled={pathDisabled}
+          title={value}
+          className="shrink-0 cursor-pointer text-white/50 outline-none transition hover:text-white disabled:cursor-not-allowed disabled:text-white/25"
+          onClick={onOpen}
+        >
+          {editableFilePath.trailingSuffix}
+        </button>
+      ) : null}
+    </div>
+  ) : (
+    <InputField
+      mode="trigger"
+      size="md"
+      disabled={pathDisabled}
+      truncate="start"
+      startAdornment={<Icon name={icon} className="shrink-0" />}
+      className={cn('flex-1 border-r-0', pathClassName)}
+      onClick={onOpen}
+    >
+      {value ?? placeholder}
+    </InputField>
   );
+
   const chooseButton = (
     <Button
       type="button"
       size={buttonSize}
       icon="folder"
       label={chooseLabel}
-      className="rounded-none border-none"
+      className="rounded-none border-l-0"
       active={false}
       disabled={disabled}
       onClick={onChoose}
@@ -68,7 +139,7 @@ export function LocationSelector({
     return (
       <div className={cn('flex flex-col gap-1', className, disabled && 'opacity-40')}>
         {label && <legend className={cn('text-sm text-white/50', labelClassName)}>{label}</legend>}
-        <div className="flex border border-white/10 divide-x divide-white/10">
+        <div className="flex">
           {pathButton}
           {chooseButton}
         </div>
@@ -85,7 +156,7 @@ export function LocationSelector({
       )}
     >
       {label && <legend className={cn('text-sm text-white/50', labelClassName)}>{label}</legend>}
-      <div className="flex min-w-0 flex-1 items-center border border-white/10 divide-x divide-white/10">
+      <div className="flex min-w-0 flex-1 items-center">
         {pathButton}
         {chooseButton}
       </div>
