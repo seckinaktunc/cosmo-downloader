@@ -18,6 +18,14 @@ function normalizeCacheLimitMb(value: unknown, fallback: number): number {
   return Math.min(500, Math.max(1, Math.round(value)));
 }
 
+function normalizeHistoryLimitItems(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(5000, Math.max(1, Math.round(value)));
+}
+
 function mergePreferencesSectionsExpanded(
   defaults: PreferencesSectionsExpanded,
   saved: unknown
@@ -83,6 +91,10 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
         ? saved.clipboardPrefetchEnabled
         : defaults.clipboardPrefetchEnabled,
     cacheLimitMb: normalizeCacheLimitMb(saved.cacheLimitMb, defaults.cacheLimitMb),
+    historyLimitItems: normalizeHistoryLimitItems(
+      saved.historyLimitItems,
+      defaults.historyLimitItems
+    ),
     preferencesSectionsExpanded: mergePreferencesSectionsExpanded(
       defaults.preferencesSectionsExpanded,
       saved.preferencesSectionsExpanded

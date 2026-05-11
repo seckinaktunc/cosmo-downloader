@@ -13,6 +13,8 @@ import { LocationSelector } from '../ui/LocationSelector';
 import { SelectField } from '../ui/SelectField';
 import { Switch } from '../ui/Switch';
 import { COOKIE_BROWSER_ICONS } from '@renderer/lib/constants';
+import { Tooltip } from '../ui/Tooltip';
+import Icon from '../miscellaneous/Icon';
 
 export function PreferencesPanel(): React.JSX.Element {
   const { t } = useTranslation();
@@ -30,6 +32,7 @@ export function PreferencesPanel(): React.JSX.Element {
   const downloadUpdate = useUpdateStore((state) => state.download);
   const installUpdate = useUpdateStore((state) => state.install);
   const [cacheLimitInput, setCacheLimitInput] = useState<string | null>(null);
+  const [historyLimitInput, setHistoryLimitInput] = useState<string | null>(null);
 
   const commitCacheLimitInput = (): void => {
     if (!settings) {
@@ -53,6 +56,30 @@ export function PreferencesPanel(): React.JSX.Element {
     }
 
     setCacheLimitInput(null);
+  };
+
+  const commitHistoryLimitInput = (): void => {
+    if (!settings) {
+      return;
+    }
+
+    const nextInput = historyLimitInput ?? String(settings.historyLimitItems);
+    const parsed = Number(nextInput);
+    if (!Number.isFinite(parsed)) {
+      setHistoryLimitInput(null);
+      return;
+    }
+
+    const nextValue = Math.min(5000, Math.max(1, Math.round(parsed)));
+    if (nextValue !== settings.historyLimitItems) {
+      setHistoryLimitInput(String(nextValue));
+      void update({ historyLimitItems: nextValue }).finally(() => {
+        setHistoryLimitInput(null);
+      });
+      return;
+    }
+
+    setHistoryLimitInput(null);
   };
 
   useEffect(() => {
@@ -229,6 +256,43 @@ export function PreferencesPanel(): React.JSX.Element {
               onChange={(clipboardPrefetchEnabled) => void update({ clipboardPrefetchEnabled })}
               description={t('preferences.clipboardPrefetchDescription')}
             />
+          </div>
+          <div className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-1">
+                <span className="text-white/50">{t('preferences.historyLimit')}</span>
+                <Tooltip label={t('preferences.historyLimitDescription')}>
+                  <Icon name="info" className="opacity-50" />
+                </Tooltip>
+              </span>
+              <InputField
+                mode="input"
+                type="number"
+                size="md"
+                numberControls="custom"
+                numberStepFallbackValue={settings.historyLimitItems}
+                min={1}
+                max={5000}
+                step={1}
+                inputMode="numeric"
+                value={historyLimitInput ?? String(settings.historyLimitItems)}
+                className="w-28"
+                contentClassName="text-right text-white"
+                onFocus={() => {
+                  if (historyLimitInput == null) {
+                    setHistoryLimitInput(String(settings.historyLimitItems));
+                  }
+                }}
+                onChange={(event) => setHistoryLimitInput(event.target.value)}
+                onBlur={commitHistoryLimitInput}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    commitHistoryLimitInput();
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
+            </div>
           </div>
           <div className="p-4">
             <div className="flex items-center justify-between gap-3">

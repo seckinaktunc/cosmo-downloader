@@ -41,8 +41,7 @@
     "sections": {
       "general": "Genel",
       "downloads": "İndirmeler",
-      "metadata": "Gelişmiş",
-      "updates": "Güncellemeler"
+      "metadata": "Gelişmiş"
     },
     "hardwareAcceleration": "Donanım hızlandırma",
     "hardwareAccelerationDescription": "Daha iyi işleme performansı için GPU kullanır (önerilir).",
@@ -60,7 +59,9 @@
     "cacheLimit": "Önbellek sınırı",
     "cacheCurrent": "Şu anda önbellekte:",
     "cacheEmpty": "Henüz önbelleğe alınmış veri yok.",
-    "clearCache": "Önbelleği temizle"
+    "clearCache": "Önbelleği temizle",
+    "historyLimit": "Maksimum geçmiş öğesi",
+    "historyLimitDescription": "Bu sınır aşıldığında en eski geçmiş öğeleri otomatik olarak kaldırılır."
   },
   "updates": {
     "checkNow": "Güncellemeleri denetle",

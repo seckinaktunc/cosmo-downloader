@@ -41,8 +41,7 @@
     "sections": {
       "general": "常规",
       "downloads": "下载",
-      "metadata": "高级",
-      "updates": "更新"
+      "metadata": "高级"
     },
     "hardwareAcceleration": "硬件加速",
     "hardwareAccelerationDescription": "使用 GPU 提升处理性能（推荐）。",
@@ -60,7 +59,9 @@
     "cacheLimit": "缓存上限",
     "cacheCurrent": "当前已缓存：",
     "cacheEmpty": "还没有缓存的数据。",
-    "clearCache": "清除缓存"
+    "clearCache": "清除缓存",
+    "historyLimit": "最大历史记录数量",
+    "historyLimitDescription": "超过此限制时，最旧的历史记录会被自动移除。"
   },
   "updates": {
     "checkNow": "检查更新",

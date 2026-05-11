@@ -63,6 +63,7 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     alwaysOnTop: false,
     clipboardPrefetchEnabled: true,
     cacheLimitMb: 50,
+    historyLimitItems: 500,
     preferencesSectionsExpanded: createDefaultPreferencesSectionsExpanded()
   };
 }

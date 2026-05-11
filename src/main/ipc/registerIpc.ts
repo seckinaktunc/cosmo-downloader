@@ -7,6 +7,7 @@ import type {
   CancelMetadataRequest,
   ChooseOutputPathRequest,
   ChooseOutputPathResult,
+  HistoryListRequest,
   HistoryBulkRequest,
   HistoryItemRequest,
   OpenPathRequest,
@@ -74,7 +75,10 @@ export function registerIpcHandlers(): void {
   );
   const scrubPreviewService = new ScrubPreviewService(cacheBudgetCoordinator);
   const downloadService = new DownloadService(binaryService);
-  const historyService = new HistoryService();
+  const historyService = new HistoryService(
+    undefined,
+    () => settingsService.get().historyLimitItems
+  );
   const queueService = new QueueService(downloadService, historyService);
   const updateService = new UpdateService(settingsService, {
     isMediaBusy: () => downloadService.isActive() || queueService.hasActiveItem()
@@ -101,6 +105,9 @@ export function registerIpcHandlers(): void {
     const settings = settingsService.update(update);
     if (update.cacheLimitMb != null) {
       cacheBudgetCoordinator.setLimitBytes(settings.cacheLimitMb * 1024 * 1024);
+    }
+    if (update.historyLimitItems != null) {
+      historyService.enforceLimit();
     }
     if (update.automaticUpdates === true) {
       void updateService.checkAutomatic();
@@ -273,17 +280,24 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.queue.clear, () => queueService.clear());
 
-  ipcMain.handle(IPC_CHANNELS.history.get, () => ok(historyService.get()));
-
-  ipcMain.handle(IPC_CHANNELS.history.remove, (_event, request: HistoryItemRequest) =>
-    ok(historyService.remove(request.entryId))
+  ipcMain.handle(IPC_CHANNELS.history.get, (_event, request: HistoryListRequest) =>
+    ok(historyService.list(request))
   );
 
-  ipcMain.handle(IPC_CHANNELS.history.removeMany, (_event, request: HistoryBulkRequest) =>
-    ok(historyService.removeMany(request.entryIds))
-  );
+  ipcMain.handle(IPC_CHANNELS.history.remove, (_event, request: HistoryItemRequest) => {
+    historyService.remove(request.entryId);
+    return ok(null);
+  });
 
-  ipcMain.handle(IPC_CHANNELS.history.clear, () => ok(historyService.clear()));
+  ipcMain.handle(IPC_CHANNELS.history.removeMany, (_event, request: HistoryBulkRequest) => {
+    historyService.removeMany(request.entryIds);
+    return ok(null);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.history.clear, () => {
+    historyService.clear();
+    return ok(null);
+  });
 
   ipcMain.handle(IPC_CHANNELS.history.recordFetch, (_event, request: RecordFetchHistoryRequest) =>
     ok(historyService.recordFetch(request))

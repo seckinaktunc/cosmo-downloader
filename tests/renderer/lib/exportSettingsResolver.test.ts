@@ -46,6 +46,7 @@ function queueItem(id: string, status: QueueItemStatus, exportSettings = setting
       alwaysOnTop: false,
       clipboardPrefetchEnabled: true,
       cacheLimitMb: 50,
+      historyLimitItems: 500,
       preferencesSectionsExpanded: {
         general: true,
         downloads: true,

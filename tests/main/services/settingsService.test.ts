@@ -38,12 +38,26 @@ describe('mergeSettings', () => {
     expect(mergeSettings(defaults, {}).cacheLimitMb).toBe(50);
   });
 
+  it('defaults historyLimitItems to 500 for legacy settings', () => {
+    const defaults = createDefaultSettings('/downloads');
+
+    expect(mergeSettings(defaults, {}).historyLimitItems).toBe(500);
+  });
+
   it('rounds and clamps cacheLimitMb into the supported range', () => {
     const defaults = createDefaultSettings('/downloads');
 
     expect(mergeSettings(defaults, { cacheLimitMb: 24.6 }).cacheLimitMb).toBe(25);
     expect(mergeSettings(defaults, { cacheLimitMb: 0 }).cacheLimitMb).toBe(1);
     expect(mergeSettings(defaults, { cacheLimitMb: 900 }).cacheLimitMb).toBe(500);
+  });
+
+  it('rounds and clamps historyLimitItems into the supported range', () => {
+    const defaults = createDefaultSettings('/downloads');
+
+    expect(mergeSettings(defaults, { historyLimitItems: 249.6 }).historyLimitItems).toBe(250);
+    expect(mergeSettings(defaults, { historyLimitItems: 0 }).historyLimitItems).toBe(1);
+    expect(mergeSettings(defaults, { historyLimitItems: 9000 }).historyLimitItems).toBe(5000);
   });
 
   it('merges the last automatic update check timestamp', () => {

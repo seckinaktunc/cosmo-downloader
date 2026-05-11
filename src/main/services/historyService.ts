@@ -4,6 +4,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import type {
   DownloadHistoryEntry,
+  HistoryChangedEvent,
+  HistoryListRequest,
+  HistoryListResult,
   DownloadHistoryStatus,
   QueueItem,
   RecordFetchHistoryRequest
@@ -48,12 +51,26 @@ function readEntries(filePath: string): DownloadHistoryEntry[] {
 export class HistoryService {
   private entries: DownloadHistoryEntry[];
 
-  constructor(private readonly filePath: string = join(app.getPath('userData'), HISTORY_FILE)) {
+  constructor(
+    private readonly filePath: string = join(app.getPath('userData'), HISTORY_FILE),
+    private readonly getHistoryLimitItems: () => number = () => Number.POSITIVE_INFINITY
+  ) {
     this.entries = readEntries(filePath);
   }
 
   get(): DownloadHistoryEntry[] {
     return [...this.entries].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  list(request: HistoryListRequest): HistoryListResult {
+    const offset = Math.max(0, Math.trunc(request.offset));
+    const limit = Math.max(0, Math.trunc(request.limit));
+    const entries = this.get();
+
+    return {
+      entries: entries.slice(offset, offset + limit),
+      totalCount: entries.length
+    };
   }
 
   addStarted(item: QueueItem): DownloadHistoryEntry {
@@ -73,7 +90,7 @@ export class HistoryService {
           error: undefined,
           updatedAt: now()
         });
-        this.writeAndBroadcast();
+        this.writeTrimmedAndBroadcast();
         return reusableEntry;
       }
     }
@@ -91,7 +108,7 @@ export class HistoryService {
     };
 
     this.entries = [entry, ...this.entries];
-    this.writeAndBroadcast();
+    this.writeTrimmedAndBroadcast();
     return entry;
   }
 
@@ -110,7 +127,7 @@ export class HistoryService {
     };
 
     this.entries = [entry, ...this.entries];
-    this.writeAndBroadcast();
+    this.writeTrimmedAndBroadcast();
     return entry;
   }
 
@@ -129,23 +146,20 @@ export class HistoryService {
     return entry;
   }
 
-  remove(entryId: string): DownloadHistoryEntry[] {
+  remove(entryId: string): void {
     this.entries = this.entries.filter((entry) => entry.id !== entryId);
     this.writeAndBroadcast();
-    return this.get();
   }
 
-  removeMany(entryIds: string[]): DownloadHistoryEntry[] {
+  removeMany(entryIds: string[]): void {
     const selectedIds = new Set(entryIds);
     this.entries = this.entries.filter((entry) => !selectedIds.has(entry.id));
     this.writeAndBroadcast();
-    return this.get();
   }
 
-  clear(): DownloadHistoryEntry[] {
+  clear(): void {
     this.entries = [];
     this.writeAndBroadcast();
-    return [];
   }
 
   find(entryId: string): DownloadHistoryEntry | undefined {
@@ -198,16 +212,46 @@ export class HistoryService {
     return true;
   }
 
+  enforceLimit(): boolean {
+    const trimmed = this.trimToLimit();
+    if (trimmed) {
+      this.writeAndBroadcast();
+    }
+
+    return trimmed;
+  }
+
   private write(): void {
     mkdirSync(dirname(this.filePath), { recursive: true });
     writeFileSync(this.filePath, `${JSON.stringify(this.entries, null, 2)}\n`, 'utf8');
   }
 
+  private trimToLimit(): boolean {
+    const limit = Math.max(0, Math.trunc(this.getHistoryLimitItems()));
+    if (!Number.isFinite(limit) || limit < 0) {
+      return false;
+    }
+
+    const sortedEntries = this.get();
+    if (sortedEntries.length <= limit) {
+      return false;
+    }
+
+    this.entries = sortedEntries.slice(0, limit);
+    return true;
+  }
+
+  private writeTrimmedAndBroadcast(): void {
+    this.trimToLimit();
+    this.writeAndBroadcast();
+  }
+
   private writeAndBroadcast(): void {
     this.write();
+    const event: HistoryChangedEvent = { totalCount: this.entries.length };
     for (const contents of webContents.getAllWebContents()) {
       if (!contents.isDestroyed()) {
-        contents.send(IPC_CHANNELS.history.changed, this.get());
+        contents.send(IPC_CHANNELS.history.changed, event);
       }
     }
   }

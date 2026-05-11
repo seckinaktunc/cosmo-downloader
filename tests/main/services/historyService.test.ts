@@ -30,11 +30,19 @@ const settings: AppSettings = {
   alwaysAskDownloadLocation: false,
   createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
+  lastDownloadDirectory: '/downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
   alwaysOnTop: false,
   clipboardPrefetchEnabled: true,
-  cacheLimitMb: 50
+  cacheLimitMb: 50,
+  historyLimitItems: 500,
+  preferencesSectionsExpanded: {
+    general: true,
+    downloads: true,
+    metadata: true,
+    updates: true
+  }
 };
 
 const exportSettings: ExportSettings = {
@@ -74,10 +82,14 @@ function queueItem(id: string): QueueItem {
   };
 }
 
-function createHistoryService(): HistoryService {
+function createHistoryService(getLimit: () => number = () => Number.POSITIVE_INFINITY): {
+  service: HistoryService;
+  filePath: string;
+} {
   const directory = mkdtempSync(join(tmpdir(), 'cosmo-history-'));
   tempDirs.push(directory);
-  return new HistoryService(join(directory, 'history.json'));
+  const filePath = join(directory, 'history.json');
+  return { service: new HistoryService(filePath, getLimit), filePath };
 }
 
 afterEach(() => {
@@ -125,27 +137,41 @@ describe('HistoryService', () => {
     expect(service.get()[0].exportSettings.trimEndSeconds).toBeUndefined();
   });
 
+  it('returns paged history entries with the total count', () => {
+    const { service } = createHistoryService();
+    const one = service.addStarted(queueItem('one'));
+    const two = service.addStarted(queueItem('two'));
+    service.addStarted(queueItem('three'));
+
+    expect(service.list({ offset: 1, limit: 1 })).toEqual({
+      entries: [two],
+      totalCount: 3
+    });
+    expect(service.list({ offset: 2, limit: 1 }).entries[0]?.id).toBe(one.id);
+  });
+
   it('removes many selected entries in one update', () => {
-    const service = createHistoryService();
+    const { service } = createHistoryService();
     const one = service.addStarted(queueItem('one'));
     const two = service.addStarted(queueItem('two'));
     const three = service.addStarted(queueItem('three'));
 
-    const remainingEntries = service.removeMany([one.id, three.id]);
+    service.removeMany([one.id, three.id]);
 
-    expect(remainingEntries.map((entry) => entry.id)).toEqual([two.id]);
     expect(service.get().map((entry) => entry.id)).toEqual([two.id]);
   });
 
   it('ignores missing ids when removing many entries', () => {
-    const service = createHistoryService();
+    const { service } = createHistoryService();
     const one = service.addStarted(queueItem('one'));
 
-    expect(service.removeMany(['missing']).map((entry) => entry.id)).toEqual([one.id]);
+    service.removeMany(['missing']);
+
+    expect(service.get().map((entry) => entry.id)).toEqual([one.id]);
   });
 
   it('records settled fetches with log paths', () => {
-    const service = createHistoryService();
+    const { service } = createHistoryService();
 
     const entry = service.recordFetch({
       metadata: metadata('fetched'),
@@ -161,7 +187,7 @@ describe('HistoryService', () => {
   });
 
   it('reuses fetched entries when a matching request starts downloading', () => {
-    const service = createHistoryService();
+    const { service } = createHistoryService();
     const fetchedEntry = service.recordFetch({
       metadata: metadata('fetched'),
       exportSettings,
@@ -183,6 +209,34 @@ describe('HistoryService', () => {
     expect(reusedEntry.queueItemId).toBe('queued');
     expect(reusedEntry.logPath).toBeUndefined();
     expect(service.get()).toHaveLength(1);
+  });
+
+  it('trims the oldest entries when the limit is exceeded', () => {
+    const historyLimitItems = 2;
+    const { service } = createHistoryService(() => historyLimitItems);
+
+    const one = service.addStarted(queueItem('one'));
+    const two = service.addStarted(queueItem('two'));
+    const three = service.addStarted(queueItem('three'));
+
+    expect(service.get().map((entry) => entry.id)).toEqual([three.id, two.id]);
+    expect(service.get().some((entry) => entry.id === one.id)).toBe(false);
+  });
+
+  it('trims immediately when the saved limit is lowered and persists the reduced history', () => {
+    let historyLimitItems = 3;
+    const { service, filePath } = createHistoryService(() => historyLimitItems);
+
+    service.addStarted(queueItem('one'));
+    service.addStarted(queueItem('two'));
+    const three = service.addStarted(queueItem('three'));
+
+    historyLimitItems = 1;
+    expect(service.enforceLimit()).toBe(true);
+    expect(service.get().map((entry) => entry.id)).toEqual([three.id]);
+
+    const reloaded = new HistoryService(filePath);
+    expect(reloaded.get().map((entry) => entry.id)).toEqual([three.id]);
   });
 
   it('opens downloaded media with the OS default app', async () => {

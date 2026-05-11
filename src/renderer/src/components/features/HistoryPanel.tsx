@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useUiStore } from '@renderer/stores/uiStore';
 import { useTranslation } from 'react-i18next';
 import type { DownloadHistoryEntry } from '../../../../shared/types';
@@ -9,9 +10,18 @@ import type { ActionMenuItem } from '../ui/ActionMenu';
 import { InteractiveItemPanel } from '../ui/InteractiveItemPanel';
 import type { ThumbnailAction } from '../ui/Thumbnail';
 
-export function HistoryPanel(): React.JSX.Element {
+type HistoryPanelProps = {
+  isActive: boolean;
+};
+
+export function HistoryPanel({ isActive }: HistoryPanelProps): React.JSX.Element {
   const { t } = useTranslation();
   const entries = useHistoryStore((state) => state.entries);
+  const totalCount = useHistoryStore((state) => state.totalCount);
+  const isLoadingMore = useHistoryStore((state) => state.isLoadingMore);
+  const hasOpenedPanel = useHistoryStore((state) => state.hasOpenedPanel);
+  const loadMore = useHistoryStore((state) => state.loadMore);
+  const markOpened = useHistoryStore((state) => state.markOpened);
   const remove = useHistoryStore((state) => state.remove);
   const removeMany = useHistoryStore((state) => state.removeMany);
   const clear = useHistoryStore((state) => state.clear);
@@ -24,6 +34,12 @@ export function HistoryPanel(): React.JSX.Element {
   const setActiveExportTarget = useUiStore((state) => state.setActiveExportTarget);
   const setActiveContent = useUiStore((state) => state.setActiveContent);
   const closeMediaPanel = useUiStore((state) => state.closeMediaPanel);
+
+  useEffect(() => {
+    if (isActive && !hasOpenedPanel) {
+      markOpened();
+    }
+  }, [hasOpenedPanel, isActive, markOpened]);
 
   const getActions = (entry: DownloadHistoryEntry): ActionMenuItem[] => {
     const queueAction = getHistoryQueueAction(entry.status);
@@ -105,9 +121,7 @@ export function HistoryPanel(): React.JSX.Element {
     <InteractiveItemPanel
       title={t('history.title')}
       subtitle={
-        entries.length === 0
-          ? t('history.empty')
-          : t('history.itemCount', { count: entries.length })
+        totalCount === 0 ? t('history.empty') : t('history.itemCount', { count: totalCount })
       }
       items={entries}
       getId={(entry) => entry.id}
@@ -133,6 +147,10 @@ export function HistoryPanel(): React.JSX.Element {
       }}
       onClear={() => void clear()}
       onClose={closeMediaPanel}
+      hasMore={entries.length < totalCount}
+      isLoadingMore={isLoadingMore}
+      onLoadMore={() => loadMore()}
+      loadMoreEnabled={isActive}
       emptyDetail={t('common.noDetails')}
       clearLabel={t('actions.clear')}
       deleteLabel={(count) => t('actions.deleteCount', { count })}

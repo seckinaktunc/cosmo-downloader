@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DownloadHistoryStatus, QueueItem, QueueItemStatus } from '../../../../shared/types';
 import { cn } from '../../lib/utils';
-import { type IconName } from '../miscellaneous/Icon';
+import Icon, { type IconName } from '../miscellaneous/Icon';
 import { ActionMenu, type ActionMenuAnchor, type ActionMenuItem } from './ActionMenu';
 import { Button } from './Button';
 import { Thumbnail, type ThumbnailAction } from './Thumbnail';
@@ -68,6 +68,10 @@ export type InteractiveItemPanelProps<TItem> = {
   onClearSelection?: () => void;
   onClear?: () => void | Promise<void>;
   onClose?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void | Promise<void>;
+  loadMoreEnabled?: boolean;
   emptyDetail?: string;
   clearLabel?: string;
   deleteLabel?: (count: number) => string;
@@ -147,6 +151,10 @@ export function InteractiveItemPanel<TItem>({
   onClearSelection,
   onClear,
   onClose,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
+  loadMoreEnabled = true,
   clearLabel = 'Clear',
   deleteLabel = (count) => `Delete (${count})`,
   closeLabel = 'Close',
@@ -160,6 +168,7 @@ export function InteractiveItemPanel<TItem>({
   const [draggingItemIds, setDraggingItemIds] = useState<string[]>([]);
   const [autoScrollDirection, setAutoScrollDirection] = useState<-1 | 0 | 1>(0);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
   const displayItems = dragItems ?? items;
 
@@ -197,6 +206,37 @@ export function InteractiveItemPanel<TItem>({
 
     return () => window.clearInterval(timer);
   }, [autoScrollDirection, draggingItemIds.length]);
+
+  useEffect(() => {
+    const listElement = listRef.current;
+    const loadMoreElement = loadMoreRef.current;
+    if (
+      !hasMore ||
+      !onLoadMore ||
+      !loadMoreEnabled ||
+      isLoadingMore ||
+      !listElement ||
+      !loadMoreElement ||
+      typeof IntersectionObserver === 'undefined'
+    ) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void onLoadMore();
+        }
+      },
+      {
+        root: listElement,
+        threshold: 0
+      }
+    );
+
+    observer.observe(loadMoreElement);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, loadMoreEnabled, onLoadMore, displayItems.length]);
 
   const activateItem = (item: TItem): void => {
     if (isActivatable(item)) {
@@ -555,6 +595,7 @@ export function InteractiveItemPanel<TItem>({
                           variant="ghost"
                           icon={topRightAction.icon}
                           size="icon-xs"
+                          tooltip={topRightAction.label}
                           className={cn(
                             'absolute -right-3 -top-2 transition-none',
                             showPersistentTopRightAction
@@ -609,6 +650,15 @@ export function InteractiveItemPanel<TItem>({
               </article>
             );
           })}
+          {(hasMore || isLoadingMore) && (
+            <div
+              ref={loadMoreRef}
+              className="flex items-center justify-center px-4 py-3 text-white/40"
+              aria-hidden={!isLoadingMore}
+            >
+              {isLoadingMore ? <Icon name="spinner" className="opacity-60" /> : null}
+            </div>
+          )}
         </div>
       </div>
 
@@ -628,7 +678,7 @@ export function InteractiveItemPanel<TItem>({
             <Button
               variant="secondary"
               icon="trash"
-              aria-label={clearLabel}
+              label={clearLabel}
               size="full-lg"
               className="border-none"
               onClick={() => void onClear()}

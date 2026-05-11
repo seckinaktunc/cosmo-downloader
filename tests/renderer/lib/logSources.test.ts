@@ -15,11 +15,19 @@ const settings: AppSettings = {
   alwaysAskDownloadLocation: false,
   createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
+  lastDownloadDirectory: '/downloads',
   interfaceLanguage: 'en_US',
   cookiesBrowser: 'none',
   alwaysOnTop: false,
   clipboardPrefetchEnabled: true,
-  cacheLimitMb: 50
+  cacheLimitMb: 50,
+  historyLimitItems: 500,
+  preferencesSectionsExpanded: {
+    general: true,
+    downloads: true,
+    metadata: true,
+    updates: true
+  }
 };
 
 function metadata(title: string): VideoMetadata {

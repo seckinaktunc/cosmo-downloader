@@ -66,6 +66,7 @@ export type AppSettings = {
   alwaysOnTop: boolean;
   clipboardPrefetchEnabled: boolean;
   cacheLimitMb: number;
+  historyLimitItems: number;
   preferencesSectionsExpanded: PreferencesSectionsExpanded;
 };
 
@@ -327,6 +328,20 @@ export type HistoryItemRequest = {
 
 export type HistoryBulkRequest = {
   entryIds: string[];
+};
+
+export type HistoryListRequest = {
+  offset: number;
+  limit: number;
+};
+
+export type HistoryListResult = {
+  entries: DownloadHistoryEntry[];
+  totalCount: number;
+};
+
+export type HistoryChangedEvent = {
+  totalCount: number;
 };
 
 export type RecordFetchHistoryRequest = {

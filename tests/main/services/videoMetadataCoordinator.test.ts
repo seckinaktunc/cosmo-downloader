@@ -37,7 +37,14 @@ const settings: AppSettings = {
   cookiesBrowser: 'none',
   alwaysOnTop: false,
   clipboardPrefetchEnabled: true,
-  cacheLimitMb: 50
+  cacheLimitMb: 50,
+  historyLimitItems: 500,
+  preferencesSectionsExpanded: {
+    general: true,
+    downloads: true,
+    metadata: true,
+    updates: true
+  }
 };
 
 function metadata(requestId: string, url = 'https://example.com/video'): VideoMetadata {

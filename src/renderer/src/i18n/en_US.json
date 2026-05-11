@@ -41,8 +41,7 @@
     "sections": {
       "general": "General",
       "downloads": "Downloads",
-      "metadata": "Advanced",
-      "updates": "Updates"
+      "metadata": "Advanced"
     },
     "hardwareAcceleration": "Hardware acceleration",
     "hardwareAccelerationDescription": "Uses GPU for better processing performance (recommended).",
@@ -60,7 +59,9 @@
     "cacheLimit": "Cache limit",
     "cacheCurrent": "Currently cached:",
     "cacheEmpty": "No cached data yet.",
-    "clearCache": "Clear cache"
+    "clearCache": "Clear cache",
+    "historyLimit": "Maximum history items",
+    "historyLimitDescription": "Oldest history items are removed automatically when this limit is exceeded."
   },
   "updates": {
     "checkNow": "Check for updates",
