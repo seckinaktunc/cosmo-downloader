@@ -2,7 +2,6 @@ import { useRef } from 'react';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
 import Icon from '../miscellaneous/Icon';
 import { cn } from '../../lib/utils';
-import { getInputFieldRootClassName } from './inputFieldStyles';
 
 export type InputFieldSize = 'xs' | 'sm' | 'md';
 type InputFieldTruncation = 'start' | 'end' | 'none';
@@ -32,6 +31,12 @@ type TriggerModeProps = InputFieldBaseProps &
 
 export type InputFieldProps = InputModeProps | TriggerModeProps;
 
+const sizeClasses: Record<InputFieldSize, string> = {
+  xs: 'h-8 px-2 text-xs',
+  sm: 'h-9 px-2.5 text-sm',
+  md: 'h-10 px-3 py-2 text-sm'
+};
+
 const triggerTextClasses: Record<InputFieldTruncation, string> = {
   start:
     'block min-w-0 overflow-hidden whitespace-nowrap text-left text-ellipsis [direction:rtl] [unicode-bidi:plaintext]',
@@ -40,39 +45,33 @@ const triggerTextClasses: Record<InputFieldTruncation, string> = {
 };
 
 function parseNumericValue(value: unknown): number | undefined {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined;
-  }
-
-  if (typeof value !== 'string') {
-    return undefined;
-  }
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== 'string') return undefined;
 
   const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    return undefined;
-  }
+  if (trimmed.length === 0) return undefined;
 
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function clampNumber(value: number, min?: number, max?: number): number {
-  if (min != null) {
-    value = Math.max(min, value);
-  }
-
-  if (max != null) {
-    value = Math.min(max, value);
-  }
-
+  if (min != null) value = Math.max(min, value);
+  if (max != null) value = Math.min(max, value);
   return value;
 }
 
 export function InputField(props: InputFieldProps): React.JSX.Element {
   const { mode, size = 'md', disabled = false, startAdornment, endAdornment, className } = props;
+
   const contentClassName = props.contentClassName;
-  const rootClassName = getInputFieldRootClassName({ size, disabled, className });
+  const rootClassName = cn(
+    'flex min-w-0 items-center gap-2 rounded-none border border-white/10 bg-dark text-white/50 transition focus-within:ring-2 focus-within:ring-white/70',
+    sizeClasses[size],
+    !disabled && 'hover:ring-1 hover:ring-white/25',
+    disabled && 'cursor-not-allowed',
+    className
+  );
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   if (mode === 'input') {
@@ -91,9 +90,7 @@ export function InputField(props: InputFieldProps): React.JSX.Element {
 
     const stepNumber = (direction: 1 | -1): void => {
       const element = inputRef.current;
-      if (!element || disabled || readOnly) {
-        return;
-      }
+      if (!element || disabled || readOnly) return;
 
       const minValue = parseNumericValue(props.min);
       const maxValue = parseNumericValue(props.max);
@@ -134,7 +131,7 @@ export function InputField(props: InputFieldProps): React.JSX.Element {
           className={cn(
             'min-w-0 flex-1 bg-transparent text-inherit outline-none placeholder:text-white/50 disabled:cursor-not-allowed',
             showCustomNumberControls &&
-            '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+              '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
             contentClassName
           )}
         />
