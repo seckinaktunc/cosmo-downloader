@@ -1,6 +1,6 @@
-import { icons as flags } from '@iconify-json/flag'
-import { icons as logos } from '@iconify-json/logos'
-import { Icon as IconifyIcon, addCollection } from '@iconify/react'
+import { icons as flags } from '@iconify-json/flag';
+import { icons as logos } from '@iconify-json/logos';
+import { Icon as IconifyIcon, addCollection } from '@iconify/react';
 import {
   IconAdjustmentsHorizontal,
   IconAdjustmentsHorizontalFilled,
@@ -49,21 +49,21 @@ import {
   IconVideoFilled,
   IconWorld,
   IconX
-} from '@tabler/icons-react'
-import AppIcon from './AppIcon'
-import { cn } from '@renderer/lib/utils'
+} from '@tabler/icons-react';
+import AppIcon from './AppIcon';
+import { cn } from '@renderer/lib/utils';
 
-addCollection(logos)
-addCollection(flags)
+addCollection(logos);
+addCollection(flags);
 
 export interface IconProps {
-  name: IconName
-  size?: number
-  thickness?: number
-  color?: string
-  className?: string
-  style?: React.CSSProperties
-  filled?: boolean
+  name: IconName;
+  size?: number;
+  thickness?: number;
+  color?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  filled?: boolean;
 }
 
 const iconMap = {
@@ -115,13 +115,13 @@ const iconMap = {
   folderOpen: IconFolderOpen,
   none: IconCircleOff,
   logs: IconLogs
-} as const
+} as const;
 
-export type TablerIconName = keyof typeof iconMap
-export type LogoIconName = `logos:${string}`
-export type FlagIconName = `flag:${string}`
+export type TablerIconName = keyof typeof iconMap;
+export type LogoIconName = `logos:${string}`;
+export type FlagIconName = `flag:${string}`;
 
-export type IconName = TablerIconName | LogoIconName | FlagIconName
+export type IconName = TablerIconName | LogoIconName | FlagIconName;
 
 export default function Icon({
   name,
@@ -144,29 +144,29 @@ export default function Icon({
           ...style
         }}
       />
-    )
+    );
   }
 
-  const filledName = `${name}Filled` as TablerIconName
-  const resolvedName = filled && filledName in iconMap ? filledName : name
+  const filledName = `${name}Filled` as TablerIconName;
+  const resolvedName = filled && filledName in iconMap ? filledName : name;
 
-  const IconComponent = iconMap[resolvedName as TablerIconName]
+  const IconComponent = iconMap[resolvedName as TablerIconName];
 
   if (!IconComponent) {
-    console.warn(`Icon "${name}" not found in iconMap.`)
-    return null
+    console.warn(`Icon "${name}" not found in iconMap.`);
+    return null;
   }
 
   return (
     <IconComponent
       stroke={thickness}
       color={color}
-      className={cn(resolvedName === 'spinner' && 'animate-spin', className)}
+      className={cn('shrink-0', resolvedName === 'spinner' && 'animate-spin', className)}
       style={{
         width: `${size / 16}rem`,
         height: `${size / 16}rem`,
         ...style
       }}
     />
-  )
+  );
 }

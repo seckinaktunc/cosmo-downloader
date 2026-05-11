@@ -1,9 +1,9 @@
 type AppIconProps = {
-  color?: string
-  className?: string
-  style?: React.CSSProperties
-  stroke?: number
-}
+  color?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  stroke?: number;
+};
 
 export default function AppIcon({ color, className, style }: AppIconProps): React.JSX.Element {
   return (
@@ -20,5 +20,5 @@ export default function AppIcon({ color, className, style }: AppIconProps): Reac
         fill={color ?? 'currentColor'}
       />
     </svg>
-  )
+  );
 }

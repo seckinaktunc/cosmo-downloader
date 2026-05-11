@@ -1,15 +1,15 @@
-import { cn } from '../../lib/utils'
+import { cn } from '../../lib/utils';
 
-type SliderValue = string | number
+type SliderValue = string | number;
 
 type SnapSliderProps<T extends SliderValue> = {
-  label: string
-  value: T
-  options: readonly T[]
-  formatLabel: (value: T) => string
-  onChange: (value: T) => void
-  disabled?: boolean
-}
+  label: string;
+  value: T;
+  options: readonly T[];
+  formatLabel: (value: T) => string;
+  onChange: (value: T) => void;
+  disabled?: boolean;
+};
 
 export function SnapSlider<T extends SliderValue>({
   label,
@@ -22,9 +22,9 @@ export function SnapSlider<T extends SliderValue>({
   const currentIndex = Math.max(
     0,
     options.findIndex((option) => option === value)
-  )
-  const maxIndex = Math.max(0, options.length - 1)
-  const progress = maxIndex === 0 ? 0 : (currentIndex / maxIndex) * 100
+  );
+  const maxIndex = Math.max(0, options.length - 1);
+  const progress = maxIndex === 0 ? 0 : (currentIndex / maxIndex) * 100;
 
   return (
     <div className={cn('flex flex-col gap-2', disabled && 'opacity-40')}>
@@ -58,17 +58,17 @@ export function SnapSlider<T extends SliderValue>({
       />
       <div className="relative h-4 w-full text-xs text-white/40">
         {options.map((option, index) => {
-          let translateClass = '-translate-x-1/2'
+          let translateClass = '-translate-x-1/2';
 
-          if (index === 0) translateClass = '-translate-x-0'
-          if (index === maxIndex) translateClass = '-translate-x-full'
+          if (index === 0) translateClass = '-translate-x-0';
+          if (index === maxIndex) translateClass = '-translate-x-full';
 
           return (
             <span
               key={String(option)}
               onClick={() => {
                 if (!disabled) {
-                  onChange(option)
+                  onChange(option);
                 }
               }}
               className={`
@@ -81,9 +81,9 @@ export function SnapSlider<T extends SliderValue>({
             >
               {formatLabel(option)}
             </span>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }

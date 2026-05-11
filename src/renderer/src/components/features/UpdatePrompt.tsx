@@ -1,17 +1,17 @@
-import { useTranslation } from 'react-i18next'
-import { useUpdateStore } from '../../stores/updateStore'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { useTranslation } from 'react-i18next';
+import { useUpdateStore } from '../../stores/updateStore';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 export function UpdatePrompt(): React.JSX.Element | null {
-  const { t } = useTranslation()
-  const updateState = useUpdateStore((state) => state.state)
-  const dismissedAvailableVersion = useUpdateStore((state) => state.dismissedAvailableVersion)
-  const dismissedDownloadedVersion = useUpdateStore((state) => state.dismissedDownloadedVersion)
-  const download = useUpdateStore((state) => state.download)
-  const install = useUpdateStore((state) => state.install)
-  const dismissAvailable = useUpdateStore((state) => state.dismissAvailable)
-  const dismissDownloaded = useUpdateStore((state) => state.dismissDownloaded)
-  const version = updateState.updateInfo?.version
+  const { t } = useTranslation();
+  const updateState = useUpdateStore((state) => state.state);
+  const dismissedAvailableVersion = useUpdateStore((state) => state.dismissedAvailableVersion);
+  const dismissedDownloadedVersion = useUpdateStore((state) => state.dismissedDownloadedVersion);
+  const download = useUpdateStore((state) => state.download);
+  const install = useUpdateStore((state) => state.install);
+  const dismissAvailable = useUpdateStore((state) => state.dismissAvailable);
+  const dismissDownloaded = useUpdateStore((state) => state.dismissDownloaded);
+  const version = updateState.updateInfo?.version;
 
   if (updateState.status === 'available' && version !== dismissedAvailableVersion) {
     return (
@@ -23,7 +23,7 @@ export function UpdatePrompt(): React.JSX.Element | null {
         onConfirm={() => void download()}
         onCancel={dismissAvailable}
       />
-    )
+    );
   }
 
   if (updateState.status === 'downloaded' && version !== dismissedDownloadedVersion) {
@@ -36,8 +36,8 @@ export function UpdatePrompt(): React.JSX.Element | null {
         onConfirm={() => void install()}
         onCancel={dismissDownloaded}
       />
-    )
+    );
   }
 
-  return null
+  return null;
 }

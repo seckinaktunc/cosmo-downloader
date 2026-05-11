@@ -1,14 +1,14 @@
-import { cn } from '../../lib/utils'
-import Icon from '../miscellaneous/Icon'
-import { Tooltip } from './Tooltip'
+import { cn } from '../../lib/utils';
+import Icon from '../miscellaneous/Icon';
+import { Tooltip } from './Tooltip';
 
 type SwitchProps = {
-  label: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-  description?: string
-  error?: string
-}
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  description?: string;
+  error?: string;
+};
 
 export function Switch({
   label,
@@ -53,5 +53,5 @@ export function Switch({
         />
       </span>
     </label>
-  )
+  );
 }
