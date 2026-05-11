@@ -1,36 +1,43 @@
-import { useEffect, useMemo, useState, type MouseEvent } from 'react'
-import { useTranslation } from 'react-i18next'
-import { formatDuration } from '../../lib/formatters'
-import { cn } from '../../lib/utils'
-import Icon, { type IconName } from '../miscellaneous/Icon'
-import { Button } from './Button'
-
-type ThumbnailActionSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs'
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatDuration } from '../../lib/formatters';
+import { cn } from '../../lib/utils';
+import Icon, { type IconName } from '../miscellaneous/Icon';
+import { Button, ButtonSize } from './Button';
+import { ComponentSize } from '@renderer/types/component.types';
 
 type ThumbnailProps = {
-  src?: string
-  title?: string
-  duration?: number
-  badge?: string
-  className?: string
-  imageClassName?: string
-  placeholderClassName?: string
-  actionSize?: ThumbnailActionSize
-  showPlaceholderIcon?: boolean
-  actions?: ThumbnailAction[]
-  actionsEnabled?: boolean
-  onClick?: (event: MouseEvent<HTMLDivElement>) => void
-}
+  src?: string;
+  title?: string;
+  duration?: number;
+  badge?: string;
+  className?: string;
+  imageClassName?: string;
+  placeholderClassName?: string;
+  actionSize?: ComponentSize;
+  showPlaceholderIcon?: boolean;
+  actions?: ThumbnailAction[];
+  actionsEnabled?: boolean;
+  onClick?: (event: MouseEvent<HTMLDivElement>) => void;
+};
 
 export type ThumbnailAction = {
-  id: string
-  label: string
-  icon: IconName
-  disabled?: boolean
-  feedbackLabel?: string
-  failureLabel?: string
-  onSelect: () => boolean | void | Promise<boolean | void>
-}
+  id: string;
+  label: string;
+  icon: IconName;
+  disabled?: boolean;
+  feedbackLabel?: string;
+  failureLabel?: string;
+  onSelect: () => boolean | void | Promise<boolean | void>;
+};
+
+const thumbnailActionSizeMap = {
+  xs: 'icon-xs',
+  sm: 'icon-sm',
+  md: 'icon',
+  lg: 'icon-lg',
+  xl: 'icon-xl'
+} satisfies Record<ComponentSize, ButtonSize>;
 
 export function Thumbnail({
   src,
@@ -46,21 +53,21 @@ export function Thumbnail({
   actionsEnabled = true,
   onClick
 }: ThumbnailProps): React.JSX.Element {
-  const { t } = useTranslation()
-  const [feedback, setFeedback] = useState<{ actionId: string; label: string } | null>(null)
+  const { t } = useTranslation();
+  const [feedback, setFeedback] = useState<{ actionId: string; label: string } | null>(null);
 
   useEffect(() => {
     if (!feedback) {
-      return undefined
+      return undefined;
     }
 
-    const timer = window.setTimeout(() => setFeedback(null), 1500)
-    return () => window.clearTimeout(timer)
-  }, [feedback])
+    const timer = window.setTimeout(() => setFeedback(null), 1500);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
 
   const defaultActions = useMemo<ThumbnailAction[]>(() => {
     if (!src) {
-      return []
+      return [];
     }
 
     return [
@@ -70,8 +77,8 @@ export function Thumbnail({
         label: t('thumbnail.download'),
         feedbackLabel: t('thumbnail.saved'),
         onSelect: async () => {
-          const result = await window.cosmo.thumbnail.download({ url: src, title })
-          return result.ok && result.data != null
+          const result = await window.cosmo.thumbnail.download({ url: src, title });
+          return result.ok && result.data != null;
         }
       },
       {
@@ -80,8 +87,8 @@ export function Thumbnail({
         label: t('thumbnail.copyImage'),
         feedbackLabel: t('thumbnail.copied'),
         onSelect: async () => {
-          const result = await window.cosmo.thumbnail.copyImage({ url: src, title })
-          return result.ok
+          const result = await window.cosmo.thumbnail.copyImage({ url: src, title });
+          return result.ok;
         }
       },
       {
@@ -90,33 +97,33 @@ export function Thumbnail({
         label: t('thumbnail.openBrowser'),
         feedbackLabel: t('thumbnail.opened'),
         onSelect: async () => {
-          const result = await window.cosmo.thumbnail.openExternal({ url: src, title })
-          return result.ok
+          const result = await window.cosmo.thumbnail.openExternal({ url: src, title });
+          return result.ok;
         }
       }
-    ]
-  }, [src, t, title])
+    ];
+  }, [src, t, title]);
 
-  const resolvedActions = actions ?? defaultActions
+  const resolvedActions = actions ?? defaultActions;
 
   const runThumbnailAction = async (action: ThumbnailAction): Promise<void> => {
     if (action.disabled) {
-      return
+      return;
     }
 
-    setFeedback(null)
-    let successful = false
+    setFeedback(null);
+    let successful = false;
     try {
-      const result = await action.onSelect()
-      successful = result !== false
+      const result = await action.onSelect();
+      successful = result !== false;
     } catch {
-      successful = false
+      successful = false;
     }
     const label = successful
       ? (action.feedbackLabel ?? t('thumbnail.done'))
-      : (action.failureLabel ?? t('thumbnail.failed'))
-    setFeedback({ actionId: action.id, label })
-  }
+      : (action.failureLabel ?? t('thumbnail.failed'));
+    setFeedback({ actionId: action.id, label });
+  };
 
   return (
     <div
@@ -144,23 +151,23 @@ export function Thumbnail({
             placeholderClassName
           )}
         >
-          {showPlaceholderIcon ? <Icon name="video" size={64} className="opacity-50" /> : null}
+          {showPlaceholderIcon && <Icon name="video" size={64} className="opacity-50" />}
         </div>
       )}
 
-      {duration ? (
+      {duration && (
         <span className="absolute bottom-1 right-1 bg-black/50 px-1 py-0.5 rounded-sm text-sm font-bold">
           {formatDuration(duration)}
         </span>
-      ) : null}
+      )}
 
-      {badge ? (
+      {badge && (
         <span className="absolute bottom-1 right-1 rounded-sm bg-black/60 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white">
           {badge}
         </span>
-      ) : null}
+      )}
 
-      {src && actionsEnabled && resolvedActions.length > 0 ? (
+      {src && actionsEnabled && resolvedActions.length > 0 && (
         <div
           className="opacity-0 hover:opacity-100 absolute flex inset-0 w-full h-full justify-center items-center bg-black/90"
           onPointerDown={(event) => event.stopPropagation()}
@@ -168,22 +175,21 @@ export function Thumbnail({
         >
           {resolvedActions.map((action) => (
             <Button
+              variant="ghost"
               key={action.id}
               icon={action.icon}
-              onlyIcon
-              ghost
               label={action.label}
               tooltip={feedback?.actionId === action.id ? feedback.label : action.label}
-              size={actionSize}
+              size={thumbnailActionSizeMap[actionSize]}
               disabled={action.disabled}
               onClick={(event) => {
-                event.stopPropagation()
-                void runThumbnailAction(action)
+                event.stopPropagation();
+                void runThumbnailAction(action);
               }}
             />
           ))}
         </div>
-      ) : null}
+      )}
     </div>
-  )
+  );
 }

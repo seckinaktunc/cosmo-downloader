@@ -414,11 +414,11 @@ export function InteractiveItemPanel<TItem>({
         {onClose ? (
           <div className="flex shrink-0">
             <Button
+              variant="ghost"
               icon="close"
-              label={closeLabel}
+              aria-label={closeLabel}
               className="absolute top-0 right-0"
-              onlyIcon
-              ghost
+              size="icon"
               onClick={onClose}
             />
           </div>
@@ -508,6 +508,7 @@ export function InteractiveItemPanel<TItem>({
                 ) : null}
 
                 <Button
+                  variant="ghost"
                   type="button"
                   icon="move"
                   className={cn(
@@ -526,14 +527,13 @@ export function InteractiveItemPanel<TItem>({
                       current?.itemId === itemId
                         ? null
                         : {
-                          itemId,
-                          anchor: { type: 'element', element: currentTarget }
-                        }
+                            itemId,
+                            anchor: { type: 'element', element: currentTarget }
+                          }
                     );
                   }}
                   onKeyDown={(event) => event.stopPropagation()}
-                  onlyIcon
-                  ghost
+                  size="icon"
                 />
 
                 <div className="flex min-w-0 gap-2 p-2 pl-0">
@@ -552,18 +552,15 @@ export function InteractiveItemPanel<TItem>({
                       ) : null}
                       {topRightAction ? (
                         <Button
+                          variant="ghost"
                           icon={topRightAction.icon}
-                          label={topRightAction.label}
-                          tooltip={topRightAction.label}
-                          size="xs"
-                          onlyIcon
-                          ghost
+                          size="icon-xs"
                           className={cn(
+                            'absolute -right-3 -top-2 transition-none',
                             showPersistentTopRightAction
                               ? 'pointer-events-auto opacity-100'
                               : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100'
                           )}
-                          tooltipClassName="absolute -right-2 -top-2"
                           onPointerDown={(event) => event.stopPropagation()}
                           onMouseDown={(event) => event.stopPropagation()}
                           onClick={(event) => {
@@ -594,7 +591,7 @@ export function InteractiveItemPanel<TItem>({
                           (itemStatus === 'pending' ||
                             itemStatus === 'paused' ||
                             itemStatus === 'fetched') &&
-                          'bg-yellow',
+                            'bg-yellow',
                           itemStatus === 'active' && 'bg-green animate-pulse',
                           itemStatus === 'completed' && 'bg-blue'
                         )}
@@ -619,19 +616,23 @@ export function InteractiveItemPanel<TItem>({
         <div className="flex shrink-0 divide-x divide-white/10">
           {selectedCount > 0 && onDeleteSelected ? (
             <Button
+              variant="secondary"
               icon="trash"
               label={deleteLabel(selectedCount)}
-              size="lg"
-              className="w-full rounded-none border-none"
+              size="full-lg"
+              className="border-none"
               onClick={() => void deleteSelected()}
+              ripple
             />
           ) : onClear ? (
             <Button
+              variant="secondary"
               icon="trash"
-              label={clearLabel}
-              size="lg"
-              className="w-full rounded-none border-none"
+              aria-label={clearLabel}
+              size="full-lg"
+              className="border-none"
               onClick={() => void onClear()}
+              ripple
             />
           ) : null}
         </div>

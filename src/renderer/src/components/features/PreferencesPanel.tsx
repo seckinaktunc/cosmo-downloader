@@ -113,7 +113,7 @@ export function PreferencesPanel(): React.JSX.Element {
             <AppIcon className="w-12" />
             <div className="flex flex-col">
               <span className="font-bold">{appIdentity}</span>
-              <span className="text-sm text-white/50">
+              <span className="text-sm text-white/50 select-text">
                 {updateState.error ??
                   updateState.unavailableReason ??
                   t(`updates.status.${updateState.status}`, {
@@ -124,26 +124,27 @@ export function PreferencesPanel(): React.JSX.Element {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {updateState.status === 'available' ? (
+            {updateState.status === 'available' && (
               <Button
+                variant="secondary"
                 label={t('updates.download')}
                 size="sm"
-                className="rounded-none"
                 onClick={() => void downloadUpdate()}
               />
-            ) : null}
-            {updateState.status === 'downloaded' ? (
+            )}
+            {updateState.status === 'downloaded' && (
               <Button
+                variant="secondary"
                 label={t('updates.restartNow')}
                 size="sm"
-                className="rounded-none"
                 onClick={() => void installUpdate()}
               />
-            ) : null}
+            )}
             <Button
+              variant="secondary"
+              icon={updateState.status === 'checking' ? 'spinner' : 'reload'}
               label={t('updates.checkNow')}
               size="sm"
-              className="rounded-none"
               disabled={updateState.status === 'checking' || updateState.status === 'downloading'}
               onClick={() => void checkForUpdates()}
             />
@@ -257,58 +258,50 @@ export function PreferencesPanel(): React.JSX.Element {
               <div>
                 <span className="text-white/50">{t('preferences.cacheLimit')}</span>
                 <p className="min-w-0 text-sm text-white/25">
-                  {t('preferences.cacheLimitDescription')}
-                </p>
-              </div>
-              <InputField
-                mode="input"
-                type="number"
-                size="xs"
-                numberControls="custom"
-                numberStepFallbackValue={settings.cacheLimitMb}
-                min={1}
-                max={500}
-                step={1}
-                inputMode="numeric"
-                value={cacheLimitInput ?? String(settings.cacheLimitMb)}
-                endAdornment={<span className="text-[10px] uppercase tracking-wide">MB</span>}
-                className="w-24"
-                contentClassName="text-right text-white"
-                onFocus={() => {
-                  if (cacheLimitInput == null) {
-                    setCacheLimitInput(String(settings.cacheLimitMb));
-                  }
-                }}
-                onChange={(event) => setCacheLimitInput(event.target.value)}
-                onBlur={commitCacheLimitInput}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    commitCacheLimitInput();
-                    event.currentTarget.blur();
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <div className="p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <span className="text-white/50">{t('preferences.cache')}</span>
-                <p className="min-w-0 text-sm text-white/25">
+                  {t('preferences.cacheCurrent')}{' '}
                   {cacheSummary == null
                     ? t('preferences.loading')
-                    : !cacheSummary.hasClearableEntries
-                      ? t('preferences.cacheEmpty')
-                      : formatBytes(cacheSummary.sizeBytes)}
+                    : formatBytes(cacheSummary.sizeBytes)}
                 </p>
               </div>
-              <Button
-                label={t('preferences.clearCache')}
-                size="sm"
-                className="rounded-none"
-                disabled={cacheSummary == null || !cacheSummary.hasClearableEntries}
-                onClick={() => void clearCache()}
-              />
+              <div className="flex gap-2">
+                <InputField
+                  mode="input"
+                  type="number"
+                  size="xs"
+                  numberControls="custom"
+                  numberStepFallbackValue={settings.cacheLimitMb}
+                  min={1}
+                  max={500}
+                  step={1}
+                  inputMode="numeric"
+                  value={cacheLimitInput ?? String(settings.cacheLimitMb)}
+                  endAdornment={<span className="text-[10px] uppercase tracking-wide">MB</span>}
+                  className="w-24"
+                  contentClassName="text-right text-white"
+                  onFocus={() => {
+                    if (cacheLimitInput == null) {
+                      setCacheLimitInput(String(settings.cacheLimitMb));
+                    }
+                  }}
+                  onChange={(event) => setCacheLimitInput(event.target.value)}
+                  onBlur={commitCacheLimitInput}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      commitCacheLimitInput();
+                      event.currentTarget.blur();
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  icon="trash"
+                  label={t('preferences.clearCache')}
+                  size="sm"
+                  disabled={cacheSummary == null || !cacheSummary.hasClearableEntries}
+                  onClick={() => void clearCache()}
+                />
+              </div>
             </div>
           </div>
         </>

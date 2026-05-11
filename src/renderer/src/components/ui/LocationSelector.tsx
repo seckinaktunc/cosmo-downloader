@@ -3,7 +3,6 @@ import Icon, { type IconName } from '../miscellaneous/Icon';
 import { Button } from './Button';
 import { cn } from '../../lib/utils';
 import { InputField } from './InputField';
-import { getInputFieldRootClassName } from './inputFieldStyles';
 
 type LocationSelectorMode = 'directory' | 'file';
 
@@ -65,11 +64,15 @@ export function LocationSelector({
 
   const pathButton = hasEditableFilePath ? (
     <div
-      className={getInputFieldRootClassName({
-        size: 'md',
-        disabled: pathDisabled,
-        className: cn('flex-1 border-r-0 cursor-pointer', pathClassName)
-      })}
+      className={cn(
+        'flex min-w-0 items-center gap-2 rounded-none border border-white/10 bg-dark text-white/50 transition focus-within:ring-2 focus-within:ring-white/70',
+        'h-10 px-3 py-2 text-sm',
+        !pathDisabled && 'hover:ring-1 hover:ring-white/25',
+        pathDisabled && 'cursor-not-allowed',
+        className,
+        'flex-1 border-r-0 cursor-pointer',
+        pathClassName
+      )}
     >
       <Icon name={icon} className="shrink-0" />
       {editableFilePath.leadingPath.length > 0 ? (
@@ -124,14 +127,16 @@ export function LocationSelector({
 
   const chooseButton = (
     <Button
+      variant="secondary"
       type="button"
       size={buttonSize}
       icon="folder"
       label={chooseLabel}
       className="rounded-none border-l-0"
-      active={false}
+      isActive={false}
       disabled={disabled}
       onClick={onChoose}
+      ripple
     />
   );
 

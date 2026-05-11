@@ -68,8 +68,8 @@ export function BottomBar(): React.JSX.Element {
   const completedPreviewItem =
     currentSourceUrl && currentPreviewCompleted
       ? queueItems.find(
-        (item) => item.status === 'completed' && getSourceUrl(item.metadata) === currentSourceUrl
-      )
+          (item) => item.status === 'completed' && getSourceUrl(item.metadata) === currentSourceUrl
+        )
       : undefined;
   const buttonText = getBottomButtonState({
     activeItem,
@@ -227,30 +227,34 @@ export function BottomBar(): React.JSX.Element {
                   : 'appIcon'
           }
           label={buttonText.primary}
-          active={activeContent === 'exportSettings'}
+          isActive={activeContent === 'exportSettings'}
           disabled={buttonText.mode === 'disabled'}
           onClick={handleMainClick}
           size="xl"
           aria-label={buttonText.primary}
           className="min-w-48"
+          rounded
+          ripple
         >
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate">{buttonText.primary}</span>
-            {buttonText.secondary ? (
+            {buttonText.secondary && (
               <span className="truncate text-xs font-normal opacity-70">
                 {buttonText.secondary}
               </span>
-            ) : null}
+            )}
           </span>
         </Button>
         <Button
+          variant="secondary"
           icon="list"
           label={t('queue.title')}
           tooltip={t('queue.title')}
-          onlyIcon
-          active={activePanel === 'queue'}
+          isActive={activePanel === 'queue'}
           onClick={() => toggleMediaPanel('queue')}
-          size="xl"
+          size="icon-xl"
+          rounded
+          ripple
         />
       </div>
 

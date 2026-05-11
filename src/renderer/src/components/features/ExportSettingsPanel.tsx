@@ -30,7 +30,18 @@ import { RadioBoxes } from '../ui/RadioBoxes';
 import { RangeSlider } from '../ui/RangeSlider';
 import { SnapSlider } from '../ui/SnapSlider';
 
-export function ExportSettingsPanel(): React.JSX.Element {
+type ExportSettingsPanelMetrics = {
+  contentHeight: number;
+  viewportHeight: number;
+};
+
+type ExportSettingsPanelProps = {
+  onMetricsChange?: (metrics: ExportSettingsPanelMetrics) => void;
+};
+
+export function ExportSettingsPanel({
+  onMetricsChange
+}: ExportSettingsPanelProps = {}): React.JSX.Element {
   const { t } = useTranslation();
   const { metadata, exportSettings, readOnly, updateExportSettings } = useActiveExportSettings();
   const settings = useSettingsStore((state) => state.settings);
@@ -66,6 +77,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
   const disabledVideoCodecs = new Set(disabledCodecs.video);
   const disabledAudioCodecs = new Set(disabledCodecs.audio);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const resolutionOptions = useMemo(() => {
     const maxResolution = metadata?.maxResolution ?? 2160;
@@ -166,6 +178,57 @@ export function ExportSettingsPanel(): React.JSX.Element {
       });
     }
   }, [controlsDisabled, exportSettings, updateExportSettings]);
+
+  useEffect(() => {
+    if (!onMetricsChange) {
+      return undefined;
+    }
+
+    const emitMetrics = (): void => {
+      const viewport = scrollRef.current;
+      const content = contentRef.current;
+      if (!viewport || !content) {
+        return;
+      }
+
+      onMetricsChange({
+        contentHeight: content.scrollHeight,
+        viewportHeight: viewport.clientHeight
+      });
+    };
+
+    emitMetrics();
+
+    const viewportObserver =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => emitMetrics());
+    const contentObserver =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => emitMetrics());
+
+    if (scrollRef.current && viewportObserver) {
+      viewportObserver.observe(scrollRef.current);
+    }
+
+    if (contentRef.current && contentObserver) {
+      contentObserver.observe(contentRef.current);
+    }
+
+    window.addEventListener('resize', emitMetrics);
+
+    return () => {
+      viewportObserver?.disconnect();
+      contentObserver?.disconnect();
+      window.removeEventListener('resize', emitMetrics);
+    };
+  }, [
+    audioOnly,
+    controlsDisabled,
+    durationSeconds,
+    exportSettings,
+    frameRateOptions,
+    onMetricsChange,
+    resolutionOptions,
+    showSavePath
+  ]);
 
   const commitSavePathBasename = (): void => {
     if (controlsDisabled || !exportSettings.savePath || !savePathParts) {
@@ -293,7 +356,7 @@ export function ExportSettingsPanel(): React.JSX.Element {
     <section className="flex h-full min-h-0 flex-col text-white">
       <div className="relative min-h-0 flex-1">
         <div ref={scrollRef} className="h-full min-h-0 overflow-hidden">
-          <div className="grid divide-y divide-white/10 border-b border-white/10">
+          <div ref={contentRef} className="grid divide-y divide-white/10 border-b border-white/10">
             <div className="p-2">
               <RadioBoxes<OutputFormat>
                 value={exportSettings.outputFormat}

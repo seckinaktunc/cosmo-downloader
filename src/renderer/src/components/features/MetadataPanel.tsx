@@ -58,6 +58,7 @@ export function MetadataPanel(): React.JSX.Element {
               <p className="max-w-xl text-sm text-white/50">{error}</p>
               {stage === 'failed' ? (
                 <Button
+                  variant="secondary"
                   icon="reload"
                   label={t('queue.actions.retry')}
                   size="sm"
@@ -182,12 +183,14 @@ export function MetadataPanel(): React.JSX.Element {
         ) : activeExportTarget?.type === 'queue' ? null : previewMetadata ? (
           <div className="shrink-0">
             <Button
+              variant="secondary"
               icon="add"
               label={t('queue.add')}
-              size="lg"
-              className="w-full rounded-none border-none"
+              size="full-lg"
+              className="border-none"
               disabled={!settings}
               onClick={requestAddToQueue}
+              ripple
             />
           </div>
         ) : null}

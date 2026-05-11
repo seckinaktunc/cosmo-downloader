@@ -223,12 +223,12 @@ export function LogsPanel(): React.JSX.Element {
                 {showScrollToBottom ? (
                   <div className="absolute flex items-end justify-center bottom-0 -left-3 w-full h-32 pl-6 bg-linear-to-b from-transparent to-gray to-95% pointer-events-none">
                     <Button
+                      variant="ghost"
                       icon="chevronsDown"
                       label={t('actions.scrollToBottom')}
                       className="w-full rounded-none border-none pointer-events-auto"
                       onClick={scrollToBottom}
-                      onlyIcon
-                      ghost
+                      size="icon"
                     />
                   </div>
                 ) : null}
@@ -243,22 +243,23 @@ export function LogsPanel(): React.JSX.Element {
       <div className="grid grid-cols-2 min-w-0 divide-x divide-white/10">
         <div className="w-full">
           <Button
+            variant="secondary"
             icon="folderOpen"
             label={t('logs.actions.openFolder')}
-            size="lg"
-            className="w-full rounded-none border-none"
+            size="full-lg"
+            className="border-none"
             disabled={!selectedLogPath}
             onClick={() => void revealLog()}
           />
         </div>
         <div className="w-full">
           <Button
+            variant="secondary"
             icon="copy"
             label={t('logs.actions.copyLogs')}
             tooltip={copyFeedback ?? t('logs.actions.copyLogs')}
-            size="lg"
-            className="w-full rounded-none border-none"
-            tooltipClassName="w-full"
+            size="full-lg"
+            className="border-none"
             disabled={!selectedLogResult?.content}
             onClick={() => void copyText(selectedLogResult?.content ?? '')}
           />
