@@ -7,7 +7,7 @@
 A high-performance video downloader for power users who value speed and aesthetics.
 
 [![Latest release](https://img.shields.io/github/v/release/seckinaktunc/cosmo-downloader?style=flat-square)](https://github.com/seckinaktunc/cosmo-downloader/releases)
-[![Platform](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=flat-square)](#installation)
+[![Platform](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=flat-square)](#installation)
 [![License](https://img.shields.io/badge/license-Non--Commercial-orange?style=flat-square)](LICENSE)
 
 <p align="center">
