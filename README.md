@@ -17,7 +17,7 @@ A high-performance video downloader for power users who value speed and aestheti
 </p>
 </div>
 
-> **Available on Windows and Linux x64.** macOS support is still on the way (very soon).
+> **Now available on all operating systems!**
 
 Cosmo Downloader wraps the raw power of **yt-dlp** and **FFmpeg** in a modern UI, giving you fine-grained control over codecs, bitrate, resolution, and more. Behind the scenes it also bundles **Deno** as yt-dlp's local JavaScript runtime and **ffprobe** for media inspection. No pay-walls, no ads; just a powerful, user-friendly and sexy downloader.
 
