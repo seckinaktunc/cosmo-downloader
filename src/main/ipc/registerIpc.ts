@@ -365,5 +365,29 @@ export function registerIpcHandlers(): void {
     return ok(null);
   });
 
+  ipcMain.handle(IPC_CHANNELS.window.setMinimumHeight, (event, height: number) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window == null) {
+      return fail('NOT_FOUND', 'Window not found.');
+    }
+
+    const normalizedHeight = Math.max(1, Math.round(height));
+    const [currentMinWidth, currentMinHeight] = window.getMinimumSize();
+    if (currentMinHeight === normalizedHeight) {
+      return ok(null);
+    }
+
+    window.setMinimumSize(currentMinWidth, normalizedHeight);
+
+    if (!window.isMaximized() && !window.isFullScreen()) {
+      const [currentWidth, currentHeight] = window.getSize();
+      if (currentHeight < normalizedHeight) {
+        window.setSize(currentWidth, normalizedHeight);
+      }
+    }
+
+    return ok(null);
+  });
+
   updateService.scheduleAutomaticChecks();
 }

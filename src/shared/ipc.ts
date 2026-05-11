@@ -81,6 +81,7 @@ export const IPC_CHANNELS = {
   },
   window: {
     action: 'window:action',
-    setAlwaysOnTop: 'window:set-always-on-top'
+    setAlwaysOnTop: 'window:set-always-on-top',
+    setMinimumHeight: 'window:set-minimum-height'
   }
 } as const;

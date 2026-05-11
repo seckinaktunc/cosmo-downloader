@@ -132,6 +132,7 @@ export type CosmoApi = {
     toggleMaximize: () => Promise<IpcResult<null>>;
     close: () => Promise<IpcResult<null>>;
     setAlwaysOnTop: (enabled: boolean) => Promise<IpcResult<null>>;
+    setMinimumHeight: (height: number) => Promise<IpcResult<null>>;
   };
 };
 
@@ -250,7 +251,8 @@ const api: CosmoApi = {
     minimize: () => windowAction('minimize'),
     toggleMaximize: () => windowAction('toggleMaximize'),
     close: () => windowAction('close'),
-    setAlwaysOnTop: (enabled) => invoke<null>(IPC_CHANNELS.window.setAlwaysOnTop, enabled)
+    setAlwaysOnTop: (enabled) => invoke<null>(IPC_CHANNELS.window.setAlwaysOnTop, enabled),
+    setMinimumHeight: (height) => invoke<null>(IPC_CHANNELS.window.setMinimumHeight, height)
   }
 };
 

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   MEDIA_OVERVIEW_MAX_WIDTH,
@@ -15,15 +15,49 @@ import { LogsPanel } from '../features/LogsPanel';
 export function MainContent(): React.JSX.Element {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLElement | null>(null);
+  const latestMinHeightRef = useRef(827);
   const mediaOverviewWidthPercent = useUiStore((state) => state.mediaOverviewWidthPercent);
   const setMediaOverviewWidthPercent = useUiStore((state) => state.setMediaOverviewWidthPercent);
+
+  const updateMinimumWindowHeight = useCallback(
+    ({
+      contentHeight,
+      viewportHeight
+    }: {
+      contentHeight: number;
+      viewportHeight: number;
+    }): void => {
+      if (viewportHeight <= 0 || contentHeight <= 0) {
+        return;
+      }
+
+      const chromeDelta = window.innerHeight - viewportHeight;
+      const nextMinHeight = Math.round(chromeDelta + contentHeight);
+      if (!Number.isFinite(nextMinHeight) || nextMinHeight <= 0) {
+        return;
+      }
+
+      if (latestMinHeightRef.current === nextMinHeight) {
+        return;
+      }
+
+      latestMinHeightRef.current = nextMinHeight;
+      void window.cosmo.window.setMinimumHeight(nextMinHeight);
+    },
+    []
+  );
+
+  useEffect(() => {
+    void window.cosmo.window.setMinimumHeight(latestMinHeightRef.current);
+  }, []);
 
   const tabs: ContentTabItem[] = [
     {
       id: 'exportSettings',
       title: t('exportSettings.title'),
       icon: 'adjustments',
-      content: <ExportSettingsPanel />
+      keepMounted: true,
+      content: <ExportSettingsPanel onMetricsChange={updateMinimumWindowHeight} />
     },
     {
       id: 'preferences',
