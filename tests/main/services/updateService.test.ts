@@ -8,7 +8,7 @@ import type { SettingsService } from '@main/services/settingsService';
 import {
   ensureMacUpdateConfigFile,
   getMacUpdateConfigPath,
-  shouldRunAutomaticUpdateCheck,
+  getReleasePageUrl,
   UpdateService
 } from '@main/services/updateService';
 
@@ -123,8 +123,6 @@ function createService({
     isPackaged: () => isPackaged,
     isMediaBusy: () => isMediaBusy,
     now: () => now,
-    startupDelayMs: 1,
-    intervalMs: 24 * 60 * 60 * 1000,
     platform,
     arch,
     userDataPath
@@ -137,21 +135,11 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('shouldRunAutomaticUpdateCheck', () => {
-  it('runs when there is no previous check or the timestamp is stale', () => {
-    const now = new Date('2026-04-19T10:00:00.000Z');
-
-    expect(shouldRunAutomaticUpdateCheck(undefined, now)).toBe(true);
-    expect(shouldRunAutomaticUpdateCheck('2026-04-17T10:00:00.000Z', now)).toBe(true);
-  });
-
-  it('skips when the previous check is recent', () => {
-    expect(
-      shouldRunAutomaticUpdateCheck(
-        '2026-04-19T09:00:00.000Z',
-        new Date('2026-04-19T10:00:00.000Z')
-      )
-    ).toBe(false);
+describe('getReleasePageUrl', () => {
+  it('builds the GitHub tag URL for a version', () => {
+    expect(getReleasePageUrl('1.2.3')).toBe(
+      'https://github.com/seckinaktunc/cosmo-downloader/releases/tag/v1.2.3'
+    );
   });
 });
 
@@ -231,17 +219,28 @@ describe('UpdateService', () => {
     expect(updater.checkForUpdates).not.toHaveBeenCalled();
   });
 
-  it('respects the automatic check throttle', async () => {
-    const { service, updater } = createService({
-      settings: { lastAutomaticUpdateCheckAt: '2026-04-19T09:00:00.000Z' }
-    });
+  it('returns early when automaticUpdates is off without invoking the updater', async () => {
+    const { service, updater } = createService({ settings: { automaticUpdates: false } });
 
-    await service.checkAutomatic();
+    await service.checkOnLaunch();
 
     expect(updater.checkForUpdates).not.toHaveBeenCalled();
   });
 
-  it('lets manual checks bypass the automatic throttle', async () => {
+  it('runs launch checks regardless of the previous timestamp', async () => {
+    const { service, updater } = createService({
+      settings: {
+        automaticUpdates: true,
+        lastAutomaticUpdateCheckAt: '2026-04-19T09:59:59.000Z'
+      }
+    });
+
+    await service.checkOnLaunch();
+
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets manual checks bypass any throttle', async () => {
     const { service, updater } = createService({
       settings: { lastAutomaticUpdateCheckAt: '2026-04-19T09:00:00.000Z' }
     });
@@ -251,12 +250,12 @@ describe('UpdateService', () => {
     expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
   });
 
-  it('logs automatic check failures without surfacing an error state', async () => {
+  it('logs launch check failures without surfacing an error state', async () => {
     const updater = new FakeUpdater();
     updater.checkForUpdates.mockRejectedValueOnce(new Error('Network failed'));
     const { service } = createService({ updater });
 
-    await service.checkAutomatic();
+    await service.checkOnLaunch();
 
     expect(service.getState().status).toBe('idle');
     expect(service.getState().error).toBeUndefined();
@@ -275,6 +274,16 @@ describe('UpdateService', () => {
     expect(service.getState().error).toBe('Network failed');
   });
 
+  it('install calls quitAndInstall with isSilent=true and isForceRunAfter=true', () => {
+    const updater = new FakeUpdater();
+    const { service } = createService({ updater });
+    updater.emit('update-downloaded', { version: '1.2.3' });
+
+    service.install();
+
+    expect(updater.quitAndInstall).toHaveBeenCalledWith(true, true);
+  });
+
   it('blocks install while media work is active', () => {
     const updater = new FakeUpdater();
     const { service } = createService({ updater, isMediaBusy: true });
@@ -284,5 +293,32 @@ describe('UpdateService', () => {
 
     expect(result.ok).toBe(false);
     expect(updater.quitAndInstall).not.toHaveBeenCalled();
+  });
+
+  it('retryDownload invokes downloadUpdate exactly once', async () => {
+    const updater = new FakeUpdater();
+    const { service } = createService({ updater });
+
+    await service.retryDownload();
+
+    expect(updater.downloadUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifies state-change listeners when state transitions', () => {
+    const updater = new FakeUpdater();
+    const { service } = createService({ updater });
+    const listener = vi.fn();
+    const unsubscribe = service.onStateChange(listener);
+
+    updater.emit('update-available', { version: '1.2.3' });
+
+    expect(listener).toHaveBeenCalled();
+    const lastCall = listener.mock.calls.at(-1)?.[0];
+    expect(lastCall?.status).toBe('available');
+
+    unsubscribe();
+    listener.mockClear();
+    updater.emit('update-not-available', { version: '1.2.4' });
+    expect(listener).not.toHaveBeenCalled();
   });
 });

@@ -77,7 +77,10 @@ export const IPC_CHANNELS = {
     checkNow: 'updates:check-now',
     download: 'updates:download',
     install: 'updates:install',
-    state: 'updates:state'
+    state: 'updates:state',
+    splashEvent: 'updates:splash-event',
+    continueWithoutUpdate: 'updates:continue-without-update',
+    openReleasePage: 'updates:open-release-page'
   },
   window: {
     action: 'window:action',

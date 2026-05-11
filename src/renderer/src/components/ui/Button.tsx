@@ -112,6 +112,7 @@ type ButtonProps = React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
     icon?: IconName;
+    iconPosition?: 'start' | 'end';
     label?: React.ReactNode;
     tooltip?: string;
     rounded?: boolean;
@@ -127,6 +128,7 @@ function Button({
   size = 'default',
   asChild = false,
   icon,
+  iconPosition = 'start',
   label,
   tooltip,
   rounded = false,
@@ -231,7 +233,12 @@ function Button({
           ))}
         </span>
       ) : null}
-      <span className="relative z-10 inline-flex items-center justify-center gap-[inherit]">
+      <span
+        className={cn(
+          iconPosition === 'start' ? 'flex-row' : 'flex-row-reverse',
+          'relative z-10 inline-flex items-center justify-center gap-[inherit]'
+        )}
+      >
         {icon && (
           <span data-slot="icon">
             <Icon name={icon} size={iconSize} />
@@ -242,9 +249,7 @@ function Button({
     </Comp>
   );
 
-  if (!tooltip) {
-    return button;
-  }
+  if (!tooltip) return button;
 
   return isDisabled ? (
     <Tooltip label={tooltip}>{button}</Tooltip>

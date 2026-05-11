@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Cosmo Downloader"
+    "title": "Cosmo Downloader",
+    "loading": "Yükleniyor..."
   },
   "search": {
     "placeholder": "Bir video bağlantısı yapıştır",
@@ -46,6 +47,7 @@
     "hardwareAcceleration": "Donanım hızlandırma",
     "hardwareAccelerationDescription": "Daha iyi işleme performansı için GPU kullanır (önerilir).",
     "automaticUpdates": "Güncellemeleri otomatik denetle",
+    "automaticUpdatesDescription": "Her başlatmada küçük bir güncelleyici pencere ile güncellemeleri denetler.",
     "clipboardPrefetch": "Pano meta veri önbelleklemesi",
     "clipboardPrefetchDescription": "Kopyalanan web bağlantılarının meta verilerini sessizce önceden getirir ve aynı URL'yi önizlediğinizde sonucu anında yeniden kullanır.",
     "cookiesBrowser": "Çerezler için kullanılacak tarayıcı",
@@ -81,6 +83,14 @@
       "downloaded": "Güncelleme indirildi. Hazır olduğunuzda yeniden başlatın.",
       "error": "Güncelleme denetimi başarısız.",
       "unavailable": "Güncellemeler kullanılamıyor."
+    },
+    "splash": {
+      "downloading": "Güncelleme indiriliyor {{version}}",
+      "progress": "{{transferred}} / {{total}}",
+      "installing": "Kuruluyor...",
+      "continueLink": "Atla",
+      "errorStarting": "Güncelleme başarısız — Cosmo başlatılıyor...",
+      "viewChangelog": "Değişiklik Günlüğü"
     }
   },
   "layout": {

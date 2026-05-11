@@ -13,13 +13,12 @@ import type {
 import { fail, ok } from '../utils/ipcResult';
 import type { SettingsService } from './settingsService';
 
-const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
-const STARTUP_UPDATE_CHECK_DELAY_MS = 5_000;
 const MAC_UPDATE_BASE_URL =
   'https://github.com/seckinaktunc/cosmo-downloader/releases/latest/download/';
 const MAC_UPDATER_CACHE_DIR_NAME = 'cosmo-downloader-updater';
+const RELEASE_PAGE_BASE_URL = 'https://github.com/seckinaktunc/cosmo-downloader/releases/tag/v';
 
-type UpdateCheckMode = 'automatic' | 'manual';
+type UpdateCheckMode = 'launch' | 'manual';
 
 type MinimalUpdateInfo = {
   version?: string;
@@ -54,8 +53,6 @@ type UpdateServiceOptions = {
   isPackaged?: () => boolean;
   isMediaBusy?: () => boolean;
   now?: () => Date;
-  startupDelayMs?: number;
-  intervalMs?: number;
   platform?: NodeJS.Platform;
   arch?: string;
   userDataPath?: string;
@@ -112,19 +109,6 @@ function summarizeProgress(info: MinimalProgressInfo): UpdateDownloadProgress {
   };
 }
 
-export function shouldRunAutomaticUpdateCheck(
-  lastCheckAt: string | undefined,
-  now: Date,
-  intervalMs = UPDATE_CHECK_INTERVAL_MS
-): boolean {
-  if (!lastCheckAt) {
-    return true;
-  }
-
-  const timestamp = Date.parse(lastCheckAt);
-  return Number.isNaN(timestamp) || now.getTime() - timestamp >= intervalMs;
-}
-
 export function getMacUpdateChannel(arch: string): string {
   return arch === 'arm64' ? 'latest-arm64' : 'latest-x64';
 }
@@ -167,20 +151,21 @@ export function shouldUseArchSpecificMacFeed(
   return platform === 'darwin' && isPackaged;
 }
 
+export function getReleasePageUrl(version: string): string {
+  return `${RELEASE_PAGE_BASE_URL}${version}`;
+}
+
 export class UpdateService {
   private readonly updater: UpdaterClient;
   private readonly isPackaged: () => boolean;
   private readonly isMediaBusy: () => boolean;
   private readonly now: () => Date;
-  private readonly startupDelayMs: number;
-  private readonly intervalMs: number;
   private readonly platform: NodeJS.Platform;
   private readonly arch: string;
   private readonly userDataPath: string;
   private state: UpdateState = { status: 'idle' };
   private activeCheckMode: UpdateCheckMode | null = null;
-  private automaticInterval: NodeJS.Timeout | null = null;
-  private automaticTimeout: NodeJS.Timeout | null = null;
+  private readonly stateListeners = new Set<(state: UpdateState) => void>();
 
   constructor(
     private readonly settingsService: SettingsService,
@@ -190,8 +175,6 @@ export class UpdateService {
     this.isPackaged = options.isPackaged ?? (() => app.isPackaged);
     this.isMediaBusy = options.isMediaBusy ?? (() => false);
     this.now = options.now ?? (() => new Date());
-    this.startupDelayMs = options.startupDelayMs ?? STARTUP_UPDATE_CHECK_DELAY_MS;
-    this.intervalMs = options.intervalMs ?? UPDATE_CHECK_INTERVAL_MS;
     this.platform = options.platform ?? process.platform;
     this.arch = options.arch ?? process.arch;
     this.userDataPath = options.userDataPath ?? app.getPath?.('userData') ?? process.cwd();
@@ -208,45 +191,19 @@ export class UpdateService {
     return this.state;
   }
 
-  scheduleAutomaticChecks(): void {
-    this.clearScheduledChecks();
-    this.automaticTimeout = setTimeout(() => {
-      void this.checkAutomatic();
-      this.automaticInterval = setInterval(() => {
-        void this.checkAutomatic();
-      }, this.intervalMs);
-    }, this.startupDelayMs);
+  onStateChange(listener: (state: UpdateState) => void): () => void {
+    this.stateListeners.add(listener);
+    return () => {
+      this.stateListeners.delete(listener);
+    };
   }
 
-  clearScheduledChecks(): void {
-    if (this.automaticTimeout) {
-      clearTimeout(this.automaticTimeout);
-      this.automaticTimeout = null;
-    }
-
-    if (this.automaticInterval) {
-      clearInterval(this.automaticInterval);
-      this.automaticInterval = null;
-    }
-  }
-
-  async checkAutomatic(): Promise<IpcResult<UpdateState>> {
-    const settings = this.settingsService.get();
-    if (!settings.automaticUpdates) {
+  async checkOnLaunch(): Promise<IpcResult<UpdateState>> {
+    if (!this.settingsService.get().automaticUpdates) {
       return ok(this.state);
     }
 
-    if (
-      !shouldRunAutomaticUpdateCheck(
-        settings.lastAutomaticUpdateCheckAt,
-        this.now(),
-        this.intervalMs
-      )
-    ) {
-      return ok(this.state);
-    }
-
-    return this.checkForUpdates('automatic');
+    return this.checkForUpdates('launch');
   }
 
   async checkNow(): Promise<IpcResult<UpdateState>> {
@@ -262,7 +219,23 @@ export class UpdateService {
       return fail('VALIDATION_ERROR', 'No update is ready to download.');
     }
 
-    this.activeCheckMode = 'manual';
+    this.setState({
+      ...this.state,
+      status: 'downloading',
+      progress: { percent: 0 },
+      error: undefined
+    });
+
+    try {
+      await this.updater.downloadUpdate();
+      return ok(this.state);
+    } catch (error) {
+      this.handleError(error);
+      return fail('PROCESS_FAILED', this.errorMessage(error));
+    }
+  }
+
+  async retryDownload(): Promise<IpcResult<UpdateState>> {
     this.setState({
       ...this.state,
       status: 'downloading',
@@ -288,7 +261,7 @@ export class UpdateService {
       return fail('BUSY', 'Finish active downloads before restarting to install the update.');
     }
 
-    this.updater.quitAndInstall(false, true);
+    this.updater.quitAndInstall(true, true);
     return ok(this.state);
   }
 
@@ -309,9 +282,6 @@ export class UpdateService {
     }
 
     this.activeCheckMode = mode;
-    if (mode === 'automatic') {
-      this.settingsService.update({ lastAutomaticUpdateCheckAt: this.now().toISOString() });
-    }
 
     this.setState({
       status: 'checking',
@@ -422,7 +392,7 @@ export class UpdateService {
     const message = this.errorMessage(error);
     log.error('[updates]', message);
 
-    if (this.activeCheckMode === 'automatic') {
+    if (this.activeCheckMode === 'launch') {
       this.setState({ status: 'idle' });
       return;
     }
@@ -441,6 +411,9 @@ export class UpdateService {
   private setState(state: UpdateState): void {
     this.state = state;
     this.broadcast();
+    for (const listener of this.stateListeners) {
+      listener(state);
+    }
   }
 
   private broadcast(): void {

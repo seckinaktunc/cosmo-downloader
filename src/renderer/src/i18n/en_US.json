@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Cosmo Downloader"
+    "title": "Cosmo Downloader",
+    "loading": "Loading..."
   },
   "search": {
     "placeholder": "Paste a video link",
@@ -46,6 +47,7 @@
     "hardwareAcceleration": "Hardware acceleration",
     "hardwareAccelerationDescription": "Uses GPU for better processing performance (recommended).",
     "automaticUpdates": "Check for updates automatically",
+    "automaticUpdatesDescription": "Check for updates on every launch through a small updater window.",
     "clipboardPrefetch": "Clipboard metadata prefetch",
     "clipboardPrefetchDescription": "Silently prefetch metadata for copied web links and reuse the result instantly when you preview the same URL.",
     "cookiesBrowser": "Browser to use for cookies",
@@ -81,6 +83,14 @@
       "downloaded": "Update downloaded. Restart when ready.",
       "error": "Update check failed.",
       "unavailable": "Updates are unavailable."
+    },
+    "splash": {
+      "downloading": "Downloading update {{version}}",
+      "progress": "{{transferred}} / {{total}}",
+      "installing": "Installing...",
+      "continueLink": "Skip",
+      "errorStarting": "Update failed — starting Cosmo...",
+      "viewChangelog": "View Changelog"
     }
   },
   "layout": {

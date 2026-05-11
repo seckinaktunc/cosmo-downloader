@@ -57,6 +57,7 @@ export type AppSettings = {
   hardwareAcceleration: boolean;
   automaticUpdates: boolean;
   lastAutomaticUpdateCheckAt?: string;
+  lastNotifiedAppVersion?: string;
   alwaysAskDownloadLocation: boolean;
   createFolderPerDownload: boolean;
   defaultDownloadLocation: string;
@@ -406,3 +407,7 @@ export type UpdateState = {
   checkedAt?: string;
   unavailableReason?: string;
 };
+
+export type SplashEvent =
+  | { kind: 'show-continue-link' }
+  | { kind: 'auto-close-soon'; reason: 'error'; delayMs: number };

@@ -69,4 +69,19 @@ describe('mergeSettings', () => {
       lastAutomaticUpdateCheckAt: timestamp
     });
   });
+
+  it('merges the last notified app version', () => {
+    const defaults = createDefaultSettings('/downloads');
+
+    expect(mergeSettings(defaults, { lastNotifiedAppVersion: '1.0.8' })).toEqual({
+      ...defaults,
+      lastNotifiedAppVersion: '1.0.8'
+    });
+  });
+
+  it('keeps lastNotifiedAppVersion undefined for legacy settings', () => {
+    const defaults = createDefaultSettings('/downloads');
+
+    expect(mergeSettings(defaults, {}).lastNotifiedAppVersion).toBeUndefined();
+  });
 });

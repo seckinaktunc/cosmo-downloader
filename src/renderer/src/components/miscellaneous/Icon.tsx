@@ -48,7 +48,9 @@ import {
   IconVideo,
   IconVideoFilled,
   IconWorld,
-  IconX
+  IconX,
+  IconChevronRight,
+  IconChevronsRight
 } from '@tabler/icons-react';
 import AppIcon from './AppIcon';
 import { cn } from '@renderer/lib/utils';
@@ -97,6 +99,8 @@ const iconMap = {
   browser: IconBrowser,
   chevronDown: IconChevronDown,
   chevronsDown: IconChevronsDown,
+  chevronRight: IconChevronRight,
+  chevronsRight: IconChevronsRight,
   adjustments: IconAdjustmentsHorizontal,
   adjustmentsFilled: IconAdjustmentsHorizontalFilled,
   history: IconHistory,

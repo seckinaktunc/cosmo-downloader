@@ -35,6 +35,7 @@ import type {
   QueueSnapshot,
   RecordFetchHistoryRequest,
   SettingsUpdate,
+  SplashEvent,
   ThumbnailRequest,
   VideoCacheSummary,
   UpdateState,
@@ -129,6 +130,9 @@ export type CosmoApi = {
     download: () => Promise<IpcResult<UpdateState>>;
     install: () => Promise<IpcResult<UpdateState>>;
     onState: (listener: (state: UpdateState) => void) => Unsubscribe;
+    onSplashEvent: (listener: (event: SplashEvent) => void) => Unsubscribe;
+    continueWithoutUpdate: () => Promise<IpcResult<null>>;
+    openReleasePage: (version: string) => Promise<IpcResult<null>>;
   };
   window: {
     minimize: () => Promise<IpcResult<null>>;
@@ -246,7 +250,10 @@ const api: CosmoApi = {
     checkNow: () => invoke<UpdateState>(IPC_CHANNELS.updates.checkNow),
     download: () => invoke<UpdateState>(IPC_CHANNELS.updates.download),
     install: () => invoke<UpdateState>(IPC_CHANNELS.updates.install),
-    onState: (listener) => subscribe<UpdateState>(IPC_CHANNELS.updates.state, listener)
+    onState: (listener) => subscribe<UpdateState>(IPC_CHANNELS.updates.state, listener),
+    onSplashEvent: (listener) => subscribe<SplashEvent>(IPC_CHANNELS.updates.splashEvent, listener),
+    continueWithoutUpdate: () => invoke<null>(IPC_CHANNELS.updates.continueWithoutUpdate),
+    openReleasePage: (version) => invoke<null>(IPC_CHANNELS.updates.openReleasePage, version)
   },
   window: {
     minimize: () => windowAction('minimize'),

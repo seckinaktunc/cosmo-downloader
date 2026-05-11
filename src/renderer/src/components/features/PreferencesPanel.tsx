@@ -199,6 +199,7 @@ export function PreferencesPanel(): React.JSX.Element {
               label={t('preferences.automaticUpdates')}
               checked={settings.automaticUpdates}
               onChange={(automaticUpdates) => void update({ automaticUpdates })}
+              description={t('preferences.automaticUpdatesDescription')}
             />
           </div>
         </>

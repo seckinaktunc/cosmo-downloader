@@ -35,7 +35,8 @@ import { VideoMetadataService } from '../services/videoMetadataService';
 import { DownloadService } from '../services/downloadService';
 import { HistoryService } from '../services/historyService';
 import { QueueService } from '../services/queueService';
-import { UpdateService } from '../services/updateService';
+import { getReleasePageUrl, UpdateService } from '../services/updateService';
+import { requestContinueWithoutUpdate } from '../services/splashController';
 import { createUniquePath } from '../services/filename';
 import { readDownloadLogTail } from '../services/logService';
 import { VideoMetadataCoordinator } from '../services/videoMetadataCoordinator';
@@ -57,7 +58,12 @@ function getOpenablePath(targetPath: string): string | null {
   return existsSync(parent) ? parent : null;
 }
 
-export function registerIpcHandlers(): void {
+export type RegisteredServices = {
+  settingsService: SettingsService;
+  updateService: UpdateService;
+};
+
+export function registerIpcHandlers(): RegisteredServices {
   const settingsService = new SettingsService();
   const cacheBudgetCoordinator = new CacheBudgetCoordinator(
     settingsService.get().cacheLimitMb * 1024 * 1024
@@ -110,7 +116,7 @@ export function registerIpcHandlers(): void {
       historyService.enforceLimit();
     }
     if (update.automaticUpdates === true) {
-      void updateService.checkAutomatic();
+      void updateService.checkOnLaunch();
     }
     return ok(settings);
   });
@@ -348,6 +354,19 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.updates.install, () => updateService.install());
 
+  ipcMain.handle(IPC_CHANNELS.updates.continueWithoutUpdate, () => {
+    requestContinueWithoutUpdate();
+    return ok(null);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.updates.openReleasePage, async (_event, version: string) => {
+    if (typeof version !== 'string' || version.length === 0) {
+      return fail('VALIDATION_ERROR', 'A version string is required.');
+    }
+    await shell.openExternal(getReleasePageUrl(version));
+    return ok(null);
+  });
+
   ipcMain.handle(IPC_CHANNELS.window.action, (event, action: WindowAction) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (window == null) {
@@ -403,5 +422,5 @@ export function registerIpcHandlers(): void {
     return ok(null);
   });
 
-  updateService.scheduleAutomaticChecks();
+  return { settingsService, updateService };
 }

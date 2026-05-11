@@ -127,8 +127,18 @@ Var InstallerNewStartMenuLink
 !macroend
 
 !macro customInit
-  StrCpy $ShouldCreateDesktopShortcut ${BST_CHECKED}
-  StrCpy $ShouldCreateStartMenuShortcut ${BST_CHECKED}
+  ClearErrors
+  ReadRegDWORD $ShouldCreateDesktopShortcut SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "DesktopShortcut"
+  ${If} ${Errors}
+    StrCpy $ShouldCreateDesktopShortcut ${BST_CHECKED}
+  ${EndIf}
+
+  ClearErrors
+  ReadRegDWORD $ShouldCreateStartMenuShortcut SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "StartMenuShortcut"
+  ${If} ${Errors}
+    StrCpy $ShouldCreateStartMenuShortcut ${BST_CHECKED}
+  ${EndIf}
+
   Call SetShortcutPaths
 !macroend
 
@@ -205,10 +215,16 @@ Var InstallerNewStartMenuLink
     ${EndIf}
   ${EndIf}
 
+  WriteRegDWORD SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "DesktopShortcut" $ShouldCreateDesktopShortcut
+  WriteRegDWORD SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "StartMenuShortcut" $ShouldCreateStartMenuShortcut
+
   System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 !macroend
 
 !macro customUnInstall
+  DeleteRegValue SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "DesktopShortcut"
+  DeleteRegValue SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "StartMenuShortcut"
+
   WinShell::UninstShortcut "$InstallerOldDesktopLink"
   Delete "$InstallerOldDesktopLink"
   ${If} $InstallerOldDesktopLink != $InstallerNewDesktopLink

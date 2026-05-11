@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Cosmo Downloader"
+    "title": "Cosmo Downloader",
+    "loading": "正在加载..."
   },
   "search": {
     "placeholder": "粘贴视频链接",
@@ -46,6 +47,7 @@
     "hardwareAcceleration": "硬件加速",
     "hardwareAccelerationDescription": "使用 GPU 提升处理性能（推荐）。",
     "automaticUpdates": "自动检查更新",
+    "automaticUpdatesDescription": "每次启动时通过一个小型更新窗口检查更新。",
     "clipboardPrefetch": "剪贴板元数据预取",
     "clipboardPrefetchDescription": "静默预取已复制网页链接的元数据，并在预览相同 URL 时立即复用结果。",
     "cookiesBrowser": "用于读取 Cookie 的浏览器",
@@ -81,6 +83,14 @@
       "downloaded": "更新已下载。准备好后重启。",
       "error": "更新检查失败。",
       "unavailable": "更新不可用。"
+    },
+    "splash": {
+      "downloading": "正在下载更新 {{version}}",
+      "progress": "{{transferred}} / {{total}}",
+      "installing": "正在安装...",
+      "continueLink": "跳过",
+      "errorStarting": "更新失败 — 正在启动 Cosmo...",
+      "viewChangelog": "查看更新日志"
     }
   },
   "layout": {
