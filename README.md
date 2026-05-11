@@ -7,7 +7,7 @@
 A high-performance video downloader for power users who value speed and aesthetics.
 
 [![Latest release](https://img.shields.io/github/v/release/seckinaktunc/cosmo-downloader?style=flat-square)](https://github.com/seckinaktunc/cosmo-downloader/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue?style=flat-square)](#installation)
+[![Platform](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=flat-square)](#installation)
 [![License](https://img.shields.io/badge/license-Non--Commercial-orange?style=flat-square)](LICENSE)
 
 <p align="center">
@@ -220,15 +220,19 @@ Older shipped Mac builds that still expect `latest-mac.yml` will need a one-time
 - [x] Multi-platform downloader
 - [x] Audio extraction
 - [x] Thumbnail downloader
+- [x] Trimming with scrub previews
 - [x] Queueing
 - [x] Download history
 - [x] Clipboard detection
+- [x] Metadata prefetch
 - [x] Multi-language support
+- [x] Logs viewer
+- [x] Caching
 - [x] Windows build
 - [x] Linux build
+- [x] macOS build
 - [ ] Playlist support
 - [ ] Subtitle support
-- [ ] macOS build
 - [ ] Automated tasks
 
 ## Contributing
