@@ -1,3 +1,4 @@
+import { Slot } from '@radix-ui/react-slot';
 import { useCallback, useEffect, useLayoutEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -7,7 +8,7 @@ import {
   type FloatingPosition,
   type FloatingTailSide
 } from '../../lib/floatingPosition';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { cn } from '@renderer/lib/utils';
 
 const TAIL_SIZE_PX = 12;
@@ -128,17 +129,31 @@ function getTailBridgeStyle(side: FloatingTailSide, offset: number): CSSProperti
   };
 }
 
-type TooltipProps = {
+type TooltipSharedProps = {
   open?: boolean;
   label?: string;
   type?: 'default' | 'error';
-  className?: string;
-  style?: CSSProperties;
-  children?: ReactNode;
   placement?: FloatingPlacement;
 };
 
+type TooltipWrapperProps = TooltipSharedProps & {
+  asChild?: false;
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+};
+
+type TooltipAsChildProps = TooltipSharedProps & {
+  asChild: true;
+  children: ReactElement;
+  className?: never;
+  style?: never;
+};
+
+type TooltipProps = TooltipWrapperProps | TooltipAsChildProps;
+
 export function Tooltip({
+  asChild = false,
   open = false,
   label,
   type = 'default',
@@ -148,7 +163,7 @@ export function Tooltip({
   placement = 'top'
 }: TooltipProps): React.JSX.Element {
   const tooltipId = useId();
-  const anchorRef = useRef<HTMLSpanElement | null>(null);
+  const anchorRef = useRef<HTMLElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState<FloatingPosition | null>(null);
@@ -223,18 +238,29 @@ export function Tooltip({
     };
   }, [isOpen, label, updatePosition]);
 
+  const anchorProps = {
+    ref: (node: HTMLElement | null): void => {
+      anchorRef.current = node;
+    },
+    'aria-describedby': isOpen && label ? tooltipId : undefined,
+    onMouseEnter: (): void => setVisible(true),
+    onMouseLeave: (): void => setVisible(false),
+    onFocus: (): void => setVisible(true),
+    onBlur: (): void => setVisible(false)
+  };
+
+  const anchor =
+    asChild && children ? (
+      <Slot {...anchorProps}>{children}</Slot>
+    ) : (
+      <span {...anchorProps} className={cn('inline-flex', className)} style={style}>
+        {children}
+      </span>
+    );
+
   return (
-    <span
-      ref={anchorRef}
-      className={cn('inline-flex', className)}
-      aria-describedby={isOpen && label ? tooltipId : undefined}
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-      onFocus={() => setVisible(true)}
-      onBlur={() => setVisible(false)}
-      style={style}
-    >
-      {children}
+    <>
+      {anchor}
       {isOpen && label
         ? createPortal(
             <div
@@ -295,6 +321,6 @@ export function Tooltip({
             document.body
           )
         : null}
-    </span>
+    </>
   );
 }
