@@ -58,8 +58,7 @@
     "language": "界面语言",
     "restartRequired": "硬件加速更改需要重启。",
     "cacheLimit": "缓存上限",
-    "cacheLimitDescription": "元数据预取和拖动预览缓存共享的容量上限。",
-    "cache": "缓存",
+    "cacheCurrent": "当前已缓存：",
     "cacheEmpty": "还没有缓存的数据。",
     "clearCache": "清除缓存"
   },

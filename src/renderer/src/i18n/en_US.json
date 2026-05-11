@@ -58,8 +58,7 @@
     "language": "Interface language",
     "restartRequired": "Restart required for hardware acceleration changes.",
     "cacheLimit": "Cache limit",
-    "cacheLimitDescription": "Shared limit for metadata prefetch and scrub preview cache data.",
-    "cache": "Cache",
+    "cacheCurrent": "Currently cached:",
     "cacheEmpty": "No cached data yet.",
     "clearCache": "Clear cache"
   },

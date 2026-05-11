@@ -58,8 +58,7 @@
     "language": "Arayüz dili",
     "restartRequired": "Donanım hızlandırma değişiklikleri için yeniden başlatma gerekir.",
     "cacheLimit": "Önbellek sınırı",
-    "cacheLimitDescription": "Meta veri ön getirme ve kaydırma önizleme önbelleği için paylaşılan sınır.",
-    "cache": "Önbellek",
+    "cacheCurrent": "Şu anda önbellekte:",
     "cacheEmpty": "Henüz önbelleğe alınmış veri yok.",
     "clearCache": "Önbelleği temizle"
   },
