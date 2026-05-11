@@ -1,17 +1,6 @@
+import { PLATFORM_ICONS } from '@renderer/lib/constants';
 import { cn } from '@renderer/lib/utils';
-import Icon, { type IconName } from './Icon';
-
-const PLATFORM_ICON_MAP: Record<string, IconName> = {
-  youtube: 'logos:youtube-icon',
-  tiktok: 'logos:tiktok-icon',
-  instagram: 'logos:instagram-icon',
-  x: 'logos:twitter',
-  vimeo: 'logos:vimeo-icon',
-  twitch: 'logos:twitch',
-  facebook: 'logos:facebook',
-  reddit: 'logos:reddit-icon',
-  soundcloud: 'logos:soundcloud'
-};
+import Icon from './Icon';
 
 type PlatformBadgeProps = {
   platform?: string;
@@ -36,7 +25,7 @@ export function PlatformBadge({
     return null;
   }
 
-  const iconName = PLATFORM_ICON_MAP[normalizePlatform(label)];
+  const iconName = PLATFORM_ICONS[normalizePlatform(label)];
 
   return (
     <span className={cn('inline-flex min-w-0 items-center', iconName && 'gap-2', className)}>

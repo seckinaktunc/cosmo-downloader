@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { VideoMetadata } from '../../../../shared/types';
 import { useDisplayMetadata } from '../../hooks/useDisplayMetadata';
 import { getBottomButtonState } from '../../lib/bottomButtonState';
 import { useDownloadStore } from '../../stores/downloadStore';
@@ -11,10 +10,7 @@ import { useVideoStore } from '../../stores/videoStore';
 import { PlatformBadge } from '../miscellaneous/PlatformBadge';
 import { Button } from '../ui/Button';
 import { Thumbnail } from '../ui/Thumbnail';
-
-function getSourceUrl(metadata: VideoMetadata): string {
-  return metadata.webpageUrl ?? metadata.url;
-}
+import { getSourceUrl } from '@renderer/lib/utils';
 
 export function BottomBar(): React.JSX.Element {
   const { t } = useTranslation();

@@ -1,41 +1,18 @@
+import { formatBytes } from '@renderer/lib/formatters';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CookieBrowser, PreferencesSection } from '../../../../shared/types';
 import { SUPPORTED_LOCALES, resolveSupportedLocale } from '../../i18n';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUpdateStore } from '../../stores/updateStore';
-import type { IconName } from '../miscellaneous/Icon';
+import AppIcon from '../miscellaneous/AppIcon';
 import { Button } from '../ui/Button';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { InputField } from '../ui/InputField';
 import { LocationSelector } from '../ui/LocationSelector';
 import { SelectField } from '../ui/SelectField';
 import { Switch } from '../ui/Switch';
-import AppIcon from '../miscellaneous/AppIcon';
-
-const COOKIE_BROWSER_ICONS: Record<CookieBrowser, IconName> = {
-  none: 'none',
-  chrome: 'logos:chrome',
-  chromium: 'logos:chrome',
-  edge: 'logos:microsoft-edge',
-  firefox: 'logos:firefox',
-  brave: 'logos:brave',
-  opera: 'logos:opera',
-  vivaldi: 'logos:vivaldi',
-  safari: 'logos:safari',
-  whale: 'browser'
-};
-
-function formatBytes(bytes: number): string {
-  if (bytes <= 0) {
-    return '0 B';
-  }
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** exponent;
-  return `${value >= 10 || exponent === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[exponent]}`;
-}
+import { COOKIE_BROWSER_ICONS } from '@renderer/lib/constants';
 
 export function PreferencesPanel(): React.JSX.Element {
   const { t } = useTranslation();
@@ -268,7 +245,7 @@ export function PreferencesPanel(): React.JSX.Element {
                 <InputField
                   mode="input"
                   type="number"
-                  size="xs"
+                  size="md"
                   numberControls="custom"
                   numberStepFallbackValue={settings.cacheLimitMb}
                   min={1}
