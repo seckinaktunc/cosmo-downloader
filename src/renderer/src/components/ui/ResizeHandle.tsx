@@ -155,7 +155,7 @@ export function ResizeHandle({
     >
       <span
         className={cn(
-          'my-2 w-0.5 rounded-full bg-white/0 transition-colors group-hover:bg-white/40 group-focus-visible:bg-white/70',
+          'my-2 w-0.5 rounded-full bg-white/0 group-hover:bg-white/50 group-active:bg-white duration-300 group-hover:duration-0',
           dragging && 'bg-white/70'
         )}
       />
