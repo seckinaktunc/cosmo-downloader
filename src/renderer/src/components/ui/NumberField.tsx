@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, InputAddon, InputField, InputText } from './InputGroup';
+import { Input, InputGroup, InputField, InputText } from './Input';
 import Button from './Button';
 
 const DRAG_ACTIVATION_PX = 6;
@@ -145,7 +145,7 @@ export default function NumberField({
 
   return (
     <Input size="sm" className="gap-0 divide-x divide-white/10">
-      <InputAddon align="inline-start" className="pr-2 gap-0">
+      <InputGroup align="inline-start" className="pr-2 gap-0">
         <InputField
           ref={inputRef}
           className="[&::-webkit-inner-spin-button]:appearance-none text-right pr-2"
@@ -179,8 +179,8 @@ export default function NumberField({
           {...props}
         />
         {suffix && <InputText>{suffix}</InputText>}
-      </InputAddon>
-      <InputAddon align="inline-end" className="flex-col gap-0">
+      </InputGroup>
+      <InputGroup align="inline-end" className="flex-col gap-0">
         <Button
           variant="secondary"
           icon="chevronUp"
@@ -215,7 +215,7 @@ export default function NumberField({
           onPointerCancel={stopChangingValue}
           onLostPointerCapture={stopChangingValue}
         />
-      </InputAddon>
+      </InputGroup>
     </Input>
   );
 }

@@ -36,7 +36,7 @@ const inputVariants = cva(
   }
 );
 
-const inputAddonVariants = cva(
+const inputGroupVariants = cva(
   'flex h-full shrink-0 items-center gap-2 bg-transparent select-none',
   {
     variants: {
@@ -77,17 +77,17 @@ function Input({
   );
 }
 
-function InputAddon({
+function InputGroup({
   className,
   align = 'inline-start',
   ...props
-}: React.ComponentProps<'div'> & VariantProps<typeof inputAddonVariants>): React.JSX.Element {
+}: React.ComponentProps<'div'> & VariantProps<typeof inputGroupVariants>): React.JSX.Element {
   return (
     <div
       role="group"
       data-slot="input-group-addon"
       data-align={align}
-      className={cn('bg-transparent', inputAddonVariants({ align }), className)}
+      className={cn('bg-transparent', inputGroupVariants({ align }), className)}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) {
           return;
@@ -123,4 +123,4 @@ function InputField({
   );
 }
 
-export { Input, InputAddon, InputText, InputField };
+export { Input, InputGroup, InputText, InputField };

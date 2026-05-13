@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { Button } from './Button';
-import { Input, InputAddon, InputField, InputText } from './InputGroup';
+import { Input, InputGroup, InputField, InputText } from './Input';
 
 type LocationSelectorProps = React.ComponentProps<'input'> & {
   label?: string;
@@ -41,7 +41,7 @@ export function LocationSelector({
       )}
 
       <Input size="sm" className={cn('flex gap-0 divide-x divide-white/10')} disabled={disabled}>
-        <InputAddon className="group/location flex-1 gap-0 pl-0 overflow-hidden">
+        <InputGroup className="group/location flex-1 gap-0 pl-0 overflow-hidden">
           <Button
             variant="ghost"
             icon="folderOpen"
@@ -52,9 +52,9 @@ export function LocationSelector({
             onClick={onOpen}
             disabled={disabled}
           />
-        </InputAddon>
+        </InputGroup>
 
-        <InputAddon align="inline-end" className={cn('gap-0 flex-1')}>
+        <InputGroup align="inline-end" className={cn('gap-0 flex-1')}>
           <Button
             icon="reload"
             variant="ghost"
@@ -87,7 +87,7 @@ export function LocationSelector({
             disabled={disabled}
             ripple
           />
-        </InputAddon>
+        </InputGroup>
       </Input>
     </div>
   );
