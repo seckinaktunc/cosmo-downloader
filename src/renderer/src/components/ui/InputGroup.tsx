@@ -8,11 +8,17 @@ type InputProps = React.ComponentProps<'div'> &
   VariantProps<typeof inputVariants> & {
     asChild?: boolean;
     tooltip?: string;
+    disabled?: boolean;
     rounded?: boolean;
   };
 
 const inputVariants = cva(
-  'flex cursor-text items-center justify-center bg-dark border border-white/10 select-none has-disabled:cursor-not-allowed overflow-hidden bg-clip-content',
+  [
+    'flex items-center justify-center',
+    'bg-gray-950 border border-white/10 bg-clip-padding',
+    'focus-within:border-white/25 focus-within:divide-white/25',
+    'select-none has-disabled:cursor-not-allowed overflow-hidden'
+  ],
   {
     variants: {
       size: {
@@ -31,7 +37,7 @@ const inputVariants = cva(
 );
 
 const inputAddonVariants = cva(
-  'flex h-full shrink-0 cursor-text items-center gap-2 bg-transparent select-none',
+  'flex h-full shrink-0 items-center gap-2 bg-transparent select-none',
   {
     variants: {
       align: {
@@ -47,7 +53,13 @@ const inputAddonVariants = cva(
   }
 );
 
-function Input({ className, size, rounded = false, ...props }: InputProps): React.JSX.Element {
+function Input({
+  className,
+  size,
+  disabled = false,
+  rounded = false,
+  ...props
+}: InputProps): React.JSX.Element {
   return (
     <div
       data-slot="input-group"
@@ -55,7 +67,9 @@ function Input({ className, size, rounded = false, ...props }: InputProps): Reac
       className={cn(
         inputVariants({ size }),
         'group/input-group relative flex w-full min-w-0 items-center disabled:opacity-25 has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3',
+        !disabled && 'hover:border-white/25 hover:divide-white/25',
         rounded && 'rounded-lg',
+        disabled && 'cursor-not-allowed opacity-50',
         className
       )}
       {...props}
@@ -91,14 +105,19 @@ function InputText({ className, ...props }: React.ComponentProps<'span'>): React
   );
 }
 
-function InputField({ className, ...props }: React.ComponentProps<'input'>): React.JSX.Element {
+function InputField({
+  className,
+  disabled = false,
+  ...props
+}: React.ComponentProps<'input'>): React.JSX.Element {
   return (
     <input
       data-slot="input-group-control"
       className={cn(
-        'w-full min-w-0 truncate outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+        'w-full h-full min-w-0 truncate outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 read-only:text-white/50',
         className
       )}
+      disabled={disabled}
       {...props}
     />
   );

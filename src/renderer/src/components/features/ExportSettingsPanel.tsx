@@ -18,7 +18,9 @@ import { normalizeTrimRange } from '../../../../shared/trim';
 import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/types';
 import { useActiveExportSettings } from '../../hooks/useActiveExportSettings';
 import {
+  buildOutputPath,
   getEditableSavePathParts,
+  resetOutputBasename,
   replaceOutputBasename,
   replaceOutputExtension,
   sanitizeOutputFilename
@@ -51,7 +53,6 @@ export function ExportSettingsPanel({
   } | null>(null);
   const audioOnly = isAudioOnlyFormat(exportSettings.outputFormat);
   const controlsDisabled = readOnly || metadata == null;
-  const showSavePath = Boolean(settings?.alwaysAskDownloadLocation);
   const durationSeconds = metadata?.duration ? Math.floor(metadata.duration) : 0;
   const trimRange = normalizeTrimRange(
     exportSettings.trimStartSeconds,
@@ -140,27 +141,19 @@ export function ExportSettingsPanel({
   ]);
 
   useEffect(() => {
-    if (!showSavePath || controlsDisabled || !exportSettings.savePath) {
-      return;
-    }
+    if (controlsDisabled || !exportSettings.savePath) return;
 
     const nextPath = replaceOutputExtension(exportSettings.savePath, exportSettings.outputFormat);
-    if (nextPath !== exportSettings.savePath) {
-      void updateExportSettings({ savePath: nextPath });
-    }
+    if (nextPath !== exportSettings.savePath) void updateExportSettings({ savePath: nextPath });
   }, [
     controlsDisabled,
     exportSettings.outputFormat,
     exportSettings.savePath,
-    showSavePath,
     updateExportSettings
   ]);
 
   useEffect(() => {
-    if (controlsDisabled) {
-      return;
-    }
-
+    if (controlsDisabled) return;
     const nextSettings = coerceExportSettingsForFormat(exportSettings);
     if (
       nextSettings.videoCodec !== exportSettings.videoCodec ||
@@ -174,16 +167,12 @@ export function ExportSettingsPanel({
   }, [controlsDisabled, exportSettings, updateExportSettings]);
 
   useEffect(() => {
-    if (!onMetricsChange) {
-      return undefined;
-    }
+    if (!onMetricsChange) return undefined;
 
     const emitMetrics = (): void => {
       const viewport = scrollRef.current;
       const content = contentRef.current;
-      if (!viewport || !content) {
-        return;
-      }
+      if (!viewport || !content) return;
 
       onMetricsChange({
         contentHeight: content.scrollHeight,
@@ -198,16 +187,10 @@ export function ExportSettingsPanel({
     const contentObserver =
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => emitMetrics());
 
-    if (scrollRef.current && viewportObserver) {
-      viewportObserver.observe(scrollRef.current);
-    }
-
-    if (contentRef.current && contentObserver) {
-      contentObserver.observe(contentRef.current);
-    }
+    if (scrollRef.current && viewportObserver) viewportObserver.observe(scrollRef.current);
+    if (contentRef.current && contentObserver) contentObserver.observe(contentRef.current);
 
     window.addEventListener('resize', emitMetrics);
-
     return () => {
       viewportObserver?.disconnect();
       contentObserver?.disconnect();
@@ -220,8 +203,7 @@ export function ExportSettingsPanel({
     exportSettings,
     frameRateOptions,
     onMetricsChange,
-    resolutionOptions,
-    showSavePath
+    resolutionOptions
   ]);
 
   const commitSavePathBasename = (): void => {
@@ -247,10 +229,26 @@ export function ExportSettingsPanel({
     });
   };
 
+  const resetSavePathBasename = (): void => {
+    if (controlsDisabled || !metadata || !settings) return;
+
+    const nextSavePath = exportSettings.savePath
+      ? replaceOutputExtension(
+          resetOutputBasename(exportSettings.savePath, metadata.title),
+          exportSettings.outputFormat
+        )
+      : buildOutputPath(
+          settings.lastDownloadDirectory ?? settings.defaultDownloadLocation,
+          metadata.title,
+          exportSettings.outputFormat
+        );
+
+    setSavePathBasenameDraft(null);
+    void updateExportSettings({ savePath: nextSavePath });
+  };
+
   const chooseSavePath = async (): Promise<void> => {
-    if (!metadata || controlsDisabled) {
-      return;
-    }
+    if (!metadata || controlsDisabled) return;
 
     const filePath = await chooseOutputPath({
       title: metadata.title,
@@ -258,15 +256,12 @@ export function ExportSettingsPanel({
       currentPath: exportSettings.savePath
     });
 
-    if (filePath) {
-      await updateExportSettings({ savePath: filePath });
-    }
+    if (filePath) await updateExportSettings({ savePath: filePath });
   };
 
   const openSavePath = (): void => {
-    if (exportSettings.savePath) {
+    if (exportSettings.savePath)
       void window.cosmo.shell.openPath({ path: exportSettings.savePath });
-    }
   };
 
   const handleOutputFormatChange = (outputFormat: OutputFormat): void => {
@@ -457,7 +452,6 @@ export function ExportSettingsPanel({
 
             <div className="flex flex-col items-center gap-16 min-w-0 shrink-0 p-4">
               <LocationSelector
-                mode={showSavePath ? 'file' : 'directory'}
                 path={savePathParts && savePathParts.leadingPath}
                 value={activeSavePathBasenameDraft ?? savePathParts?.basename}
                 suffix={savePathParts && savePathParts.trailingSuffix}
@@ -473,6 +467,7 @@ export function ExportSettingsPanel({
                 }}
                 onBlur={commitSavePathBasename}
                 onOpen={openSavePath}
+                onReset={resetSavePathBasename}
                 onChoose={() => void chooseSavePath()}
                 disabled={controlsDisabled}
               />

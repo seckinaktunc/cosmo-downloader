@@ -12,6 +12,7 @@ type ButtonProps = React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
     icon?: IconName;
+    iconSize?: number;
     iconPosition?: 'start' | 'end';
     label?: React.ReactNode;
     tooltip?: string;
@@ -39,9 +40,9 @@ const buttonVariants = cva(
       variant: {
         primary: 'bg-white text-black',
         secondary:
-          'bg-light [&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 border border-white/10 hover:bg-white/10 hover:[&_[data-slot=icon]]:opacity-100',
+          'bg-gray-850 [&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 border border-white/10 hover:bg-gray-800 not-disabled:hover:[&_[data-slot=icon]]:opacity-100',
         ghost:
-          '[&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 hover:[&_[data-slot=label]]:text-white hover:[&_[data-slot=icon]]:opacity-100',
+          '[&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 hoverdata-[icon=false]:[&_[data-slot=label]]::text-white not-disabled:hover:[&_[data-slot=icon]]:opacity-100 active:opacity-50',
         link: 'text-white underline-offset-2 hover:underline'
       },
       size: {
@@ -128,6 +129,7 @@ function Button({
   size = 'default',
   asChild = false,
   icon,
+  iconSize,
   iconPosition = 'start',
   label,
   tooltip,
@@ -141,7 +143,7 @@ function Button({
   const Comp = asChild ? Slot : 'button';
   const resolvedSize = size ?? (variant === 'link' ? 'auto' : 'default');
   const isIconOnly = String(resolvedSize).startsWith('icon');
-  const iconSize = iconSizeMap[resolvedSize ?? 'default'];
+  const resolvedIconSize = iconSizeMap[resolvedSize ?? 'default'];
   const isDisabled = props.disabled === true;
 
   const [buttonRipples, setButtonRipples] = useState<
@@ -199,7 +201,7 @@ function Button({
       data-variant={variant}
       data-size={resolvedSize}
       data-active={isActive ? 'true' : undefined}
-      data-icon={icon ? 'inline-start' : undefined}
+      data-icon={icon ? 'true' : 'false'}
       data-label={label}
       className={cn(
         buttonVariants({ variant, size: resolvedSize, isActive, className }),
@@ -241,7 +243,7 @@ function Button({
       >
         {icon && (
           <span data-slot="icon">
-            <Icon name={icon} size={iconSize} />
+            <Icon name={icon} size={iconSize ?? resolvedIconSize} />
           </span>
         )}
         {children ?? (!isIconOnly && <span data-slot="label">{label}</span>)}

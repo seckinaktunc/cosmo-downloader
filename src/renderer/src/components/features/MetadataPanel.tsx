@@ -23,9 +23,7 @@ export function MetadataPanel(): React.JSX.Element {
   const retryMetadata = useVideoStore((state) => state.retryMetadata);
   const [confirmDuplicate, setConfirmDuplicate] = useState(false);
   const settings = useSettingsStore((state) => state.settings);
-  const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath);
   const previewExportSettings = useUiStore((state) => state.previewExportSettings);
-  const updatePreviewExportSettings = useUiStore((state) => state.updatePreviewExportSettings);
   const activeExportTarget = useUiStore((state) => state.activeExportTarget);
   const historyEntries = useHistoryStore((state) => state.entries);
   const queueItems = useQueueStore((state) => state.items);
@@ -83,29 +81,9 @@ export function MetadataPanel(): React.JSX.Element {
     (item) => (item.metadata.webpageUrl ?? item.metadata.url) === sourceUrl
   );
   const addCurrentToQueue = async (): Promise<void> => {
-    if (!settings) {
-      return;
-    }
+    if (!settings || !previewMetadata) return;
 
-    if (!previewMetadata) {
-      return;
-    }
-
-    let exportSettings = previewExportSettings;
-    if (settings.alwaysAskDownloadLocation && !exportSettings.savePath) {
-      const savePath = await chooseOutputPath({
-        title: previewMetadata.title,
-        outputFormat: exportSettings.outputFormat
-      });
-
-      if (!savePath) {
-        return;
-      }
-
-      exportSettings = updatePreviewExportSettings({ savePath });
-    }
-
-    const added = await addToQueue(previewMetadata, exportSettings, settings);
+    const added = await addToQueue(previewMetadata, previewExportSettings, settings);
     if (added) {
       openMediaPanel('queue');
     }
