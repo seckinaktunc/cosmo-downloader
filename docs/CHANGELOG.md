@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.0.9
+
+### Added
+
+- Added a more streamlined auto-updater with a splash screen on start-up.
+- Added ripple effects to buttons when clicked.
+- Added new and reusable, custom input components.
+- Added maximum history items limit setting.
+- Added pagination for history items loading.
+- Added a shared cache limit setting.
+
+### Changed
+
+- Changed minimum window height to be responsive to export settings panel's height.
+- Rewrote the button component to improve reusability and maintainability.
+- Rewrote the location selector component to improve reusability and maintainability.
+- Changed half transparent white colored backgrounds across all UI components to fixed gray colors to improve consistency.
+- Adjusted disabled state of radio box and its options to improve consistency.
+
+### Fixed
+
+- Fixed the top-corner pin icon.
+- Fixed the macOS header layout direction.
+- Fixed tooltip layout breakage in edge cases.
+
+### Removed
+
+- Removed the startup auto-update confirmation step.
+- Removed the "Always ask download location" setting and the old Downloads section in Preferences.
+- Renamed the Preferences "Metadata" section to "Advanced".
+
 ## v1.0.8
 
 ### Fixed
