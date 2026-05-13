@@ -22,7 +22,6 @@ type SettingsState = {
   update: (update: SettingsUpdate) => Promise<void>;
   refreshCacheSummary: () => Promise<void>;
   clearCache: () => Promise<void>;
-  chooseDownloadDirectory: () => Promise<void>;
   chooseOutputPath: (request: {
     title: string;
     outputFormat: OutputFormat;
@@ -118,13 +117,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     set({ cacheSummary: result.data });
-  },
-
-  chooseDownloadDirectory: async () => {
-    const result = await window.cosmo.settings.chooseDownloadDirectory();
-    if (result.ok && result.data) {
-      await get().update({ defaultDownloadLocation: result.data });
-    }
   },
 
   chooseOutputPath: async ({ title, outputFormat, currentPath }) => {

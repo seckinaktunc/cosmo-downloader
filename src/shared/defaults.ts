@@ -43,9 +43,7 @@ export function mergeExportSettings(value: unknown): ExportSettings {
 export function createDefaultPreferencesSectionsExpanded(): PreferencesSectionsExpanded {
   return {
     general: true,
-    downloads: true,
-    metadata: true,
-    updates: true
+    metadata: true
   };
 }
 
@@ -55,7 +53,6 @@ export function createDefaultSettings(downloadsPath: string): AppSettings {
     automaticUpdates: true,
     lastAutomaticUpdateCheckAt: undefined,
     lastNotifiedAppVersion: undefined,
-    alwaysAskDownloadLocation: false,
     createFolderPerDownload: false,
     defaultDownloadLocation: downloadsPath,
     lastDownloadDirectory: downloadsPath,

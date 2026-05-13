@@ -6,7 +6,6 @@ import { useUiStore } from '@renderer/stores/uiStore';
 const settings: AppSettings = {
   hardwareAcceleration: true,
   automaticUpdates: true,
-  alwaysAskDownloadLocation: true,
   createFolderPerDownload: false,
   defaultDownloadLocation: 'C:\\Users\\me\\Downloads',
   lastDownloadDirectory: 'C:\\Users\\me\\Downloads',
@@ -18,9 +17,7 @@ const settings: AppSettings = {
   historyLimitItems: 500,
   preferencesSectionsExpanded: {
     general: true,
-    downloads: true,
-    metadata: true,
-    updates: true
+    metadata: true
   }
 };
 
@@ -82,6 +79,18 @@ describe('useUiStore per-video export settings', () => {
     });
   });
 
+  it('falls back to the default download location when there is no previous save path or last directory', () => {
+    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), {
+      ...settings,
+      defaultDownloadLocation: '/Users/me/Downloads',
+      lastDownloadDirectory: undefined
+    });
+
+    expect(useUiStore.getState().previewExportSettings.savePath).toBe(
+      '/Users/me/Downloads/New Video.mp4'
+    );
+  });
+
   it('updates preview settings without mutating the default object', () => {
     useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), settings);
 
@@ -138,20 +147,6 @@ describe('useUiStore per-video export settings', () => {
     expect(useUiStore.getState().previewExportSettings.savePath).toBe(
       'C:\\Downloads\\New Video Final.mp4'
     );
-  });
-
-  it('clears inherited save paths when always ask for location is disabled', () => {
-    useUiStore.getState().setLastEditableExportSettings({
-      ...DEFAULT_EXPORT_SETTINGS,
-      savePath: 'C:\\Downloads\\Old Video.mp4'
-    });
-
-    useUiStore.getState().initializePreviewExportSettings(metadata('New Video'), {
-      ...settings,
-      alwaysAskDownloadLocation: false
-    });
-
-    expect(useUiStore.getState().previewExportSettings.savePath).toBeUndefined();
   });
 
   it('keeps the new basename when output format changes', () => {

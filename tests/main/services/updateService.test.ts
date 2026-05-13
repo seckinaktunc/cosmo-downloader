@@ -47,7 +47,6 @@ vi.mock('electron-log/main', () => ({
 const baseSettings: AppSettings = {
   hardwareAcceleration: true,
   automaticUpdates: true,
-  alwaysAskDownloadLocation: false,
   createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
   lastDownloadDirectory: '/downloads',
@@ -59,9 +58,7 @@ const baseSettings: AppSettings = {
   historyLimitItems: 500,
   preferencesSectionsExpanded: {
     general: true,
-    downloads: true,
-    metadata: true,
-    updates: true
+    metadata: true
   }
 };
 

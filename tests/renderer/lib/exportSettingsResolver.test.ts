@@ -38,7 +38,6 @@ function queueItem(id: string, status: QueueItemStatus, exportSettings = setting
     settings: {
       hardwareAcceleration: true,
       automaticUpdates: true,
-      alwaysAskDownloadLocation: false,
       createFolderPerDownload: false,
       defaultDownloadLocation: '/downloads',
       interfaceLanguage: 'en_US',
@@ -49,9 +48,7 @@ function queueItem(id: string, status: QueueItemStatus, exportSettings = setting
       historyLimitItems: 500,
       preferencesSectionsExpanded: {
         general: true,
-        downloads: true,
-        metadata: true,
-        updates: true
+        metadata: true
       }
     },
     status,

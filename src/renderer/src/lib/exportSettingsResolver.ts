@@ -1,33 +1,33 @@
-import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults'
+import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults';
 import type {
   DownloadHistoryEntry,
   ExportSettings,
   QueueItem,
   QueueItemStatus,
   VideoMetadata
-} from '../../../shared/types'
-import type { ActiveExportTarget } from '../stores/uiStore'
+} from '../../../shared/types';
+import type { ActiveExportTarget } from '../stores/uiStore';
 
 export type ResolvedExportSettingsTarget = {
-  target: ActiveExportTarget | null
-  metadata: VideoMetadata | null
-  exportSettings: ExportSettings
-  readOnly: boolean
-  editable: boolean
-}
+  target: ActiveExportTarget | null;
+  metadata: VideoMetadata | null;
+  exportSettings: ExportSettings;
+  readOnly: boolean;
+  editable: boolean;
+};
 
 type ExportSettingsTargetLabels = {
-  queuedEditable: string
-  queuedReadOnly: string
-  historyReadOnly: string
-  previewEditable: string
-  unavailable: string
-}
+  queuedEditable: string;
+  queuedReadOnly: string;
+  historyReadOnly: string;
+  previewEditable: string;
+  unavailable: string;
+};
 
 export function isQueueExportEditable(status: QueueItemStatus): boolean {
   return (
     status === 'pending' || status === 'paused' || status === 'failed' || status === 'cancelled'
-  )
+  );
 }
 
 export function resolveExportSettingsTarget({
@@ -37,29 +37,29 @@ export function resolveExportSettingsTarget({
   queueItems,
   historyEntries
 }: {
-  activeTarget: ActiveExportTarget | null
-  previewMetadata: VideoMetadata | null
-  previewExportSettings: ExportSettings
-  queueItems: QueueItem[]
-  historyEntries: DownloadHistoryEntry[]
-  labels?: ExportSettingsTargetLabels
+  activeTarget: ActiveExportTarget | null;
+  previewMetadata: VideoMetadata | null;
+  previewExportSettings: ExportSettings;
+  queueItems: QueueItem[];
+  historyEntries: DownloadHistoryEntry[];
+  labels?: ExportSettingsTargetLabels;
 }): ResolvedExportSettingsTarget {
   if (activeTarget?.type === 'queue') {
-    const item = queueItems.find((candidate) => candidate.id === activeTarget.itemId)
+    const item = queueItems.find((candidate) => candidate.id === activeTarget.itemId);
     if (item) {
-      const editable = isQueueExportEditable(item.status)
+      const editable = isQueueExportEditable(item.status);
       return {
         target: activeTarget,
         metadata: item.metadata,
         exportSettings: item.exportSettings,
         readOnly: !editable,
         editable
-      }
+      };
     }
   }
 
   if (activeTarget?.type === 'history') {
-    const entry = historyEntries.find((candidate) => candidate.id === activeTarget.entryId)
+    const entry = historyEntries.find((candidate) => candidate.id === activeTarget.entryId);
     if (entry) {
       return {
         target: activeTarget,
@@ -67,7 +67,7 @@ export function resolveExportSettingsTarget({
         exportSettings: entry.exportSettings,
         readOnly: true,
         editable: false
-      }
+      };
     }
   }
 
@@ -78,7 +78,7 @@ export function resolveExportSettingsTarget({
       exportSettings: previewExportSettings,
       readOnly: false,
       editable: true
-    }
+    };
   }
 
   return {
@@ -87,5 +87,5 @@ export function resolveExportSettingsTarget({
     exportSettings: DEFAULT_EXPORT_SETTINGS,
     readOnly: true,
     editable: false
-  }
+  };
 }

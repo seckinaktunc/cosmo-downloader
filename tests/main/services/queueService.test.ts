@@ -27,12 +27,13 @@ vi.mock('electron', () => ({
   }
 }));
 
+const { dialog } = await import('electron');
+
 const tempDirs: string[] = [];
 
 const settings: AppSettings = {
   hardwareAcceleration: true,
   automaticUpdates: true,
-  alwaysAskDownloadLocation: false,
   createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
   lastDownloadDirectory: '/downloads',
@@ -44,9 +45,7 @@ const settings: AppSettings = {
   historyLimitItems: 500,
   preferencesSectionsExpanded: {
     general: true,
-    downloads: true,
-    metadata: true,
-    updates: true
+    metadata: true
   }
 };
 
@@ -163,6 +162,21 @@ describe('QueueService export settings updates', () => {
 
     expect(result.ok).toBe(true);
     expect(service.getSnapshot().items[0].exportSettings).toEqual(nextSettings);
+  });
+
+  it('does not prompt when a queue item is added without a save path', async () => {
+    vi.mocked(dialog.showSaveDialog).mockClear();
+    const service = createQueueService();
+
+    const addResult = await service.add({
+      metadata: metadata('one'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+
+    if (!addResult.ok) throw new Error(addResult.error.message);
+    expect(addResult.data.items[0].requestedOutputPath).toBeUndefined();
+    expect(vi.mocked(dialog.showSaveDialog)).not.toHaveBeenCalled();
   });
 
   it('reuses fetched history entries for matching preview request ids', async () => {

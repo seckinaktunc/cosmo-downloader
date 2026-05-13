@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_EXPORT_SETTINGS } from '@shared/defaults';
 import type { AppSettings, DownloadStartRequest, VideoMetadata } from '@shared/types';
 import {
+  DownloadService,
   buildFfmpegStreamCopyTrimArgs,
   buildFfmpegTranscodeArgs,
   buildYtDlpArgs,
@@ -29,10 +30,11 @@ vi.mock('electron', () => ({
   }
 }));
 
+const { dialog } = await import('electron');
+
 const settings: AppSettings = {
   hardwareAcceleration: false,
   automaticUpdates: true,
-  alwaysAskDownloadLocation: false,
   createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
   lastDownloadDirectory: '/downloads',
@@ -44,9 +46,7 @@ const settings: AppSettings = {
   historyLimitItems: 500,
   preferencesSectionsExpanded: {
     general: true,
-    downloads: true,
-    metadata: true,
-    updates: true
+    metadata: true
   }
 };
 
@@ -294,6 +294,19 @@ describe('createFinalDestinationPath', () => {
     expect(createFinalDestinationPath(directory, 'myVideo1', 'mp4', false)).toBe(
       join(directory, 'myVideo1.mp4')
     );
+  });
+});
+
+describe('resolveDestination', () => {
+  it('builds a default destination without showing a save dialog when no save path exists', () => {
+    vi.mocked(dialog.showSaveDialog).mockClear();
+    const service = new DownloadService({} as never);
+    const destination = (
+      service as unknown as { resolveDestination: (request: DownloadStartRequest) => string }
+    ).resolveDestination(request({}));
+
+    expect(normalize(destination)).toBe(normalize('/downloads/Video.mp4'));
+    expect(vi.mocked(dialog.showSaveDialog)).not.toHaveBeenCalled();
   });
 });
 

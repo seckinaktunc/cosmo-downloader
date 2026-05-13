@@ -1,4 +1,4 @@
-import { app, dialog, Notification, WebContents, webContents as allWebContents } from 'electron';
+import { app, Notification, WebContents, webContents as allWebContents } from 'electron';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import {
   createWriteStream,
@@ -447,19 +447,7 @@ export class DownloadService {
       const ffprobePath = hasExplicitCodecSelection(request.exportSettings)
         ? requireFfprobePath(binaries)
         : undefined;
-      const destination = await this.resolveDestination(request);
-
-      if (destination == null) {
-        job.cancelled = true;
-        appendLog(
-          `[${new Date().toISOString()}] Download cancelled before destination selection.\n`
-        );
-        emit({ stage: 'cancelled', stageLabel: 'Cancelled', message: 'Download cancelled.' });
-        return {
-          ok: false,
-          error: { code: 'CANCELLED', message: 'Download cancelled.', details: logPath }
-        };
-      }
+      const destination = this.resolveDestination(request);
 
       if (!trimRange && hasRequestedTrimWithoutDuration(request)) {
         appendLog(`[${new Date().toISOString()}] Trim skipped: media duration unavailable.\n`);
@@ -569,40 +557,13 @@ export class DownloadService {
     }
   }
 
-  private async resolveDestination(request: DownloadStartRequest): Promise<string | null> {
+  private resolveDestination(request: DownloadStartRequest): string {
     const extension = request.exportSettings.outputFormat;
 
     const requestedPath = request.outputPath ?? request.exportSettings.savePath;
     if (requestedPath) {
       const parsed = parse(requestedPath);
       const outputExtension = extname(requestedPath).replace(/^\./, '') || extension;
-      return createFinalDestinationPath(
-        parsed.dir,
-        parsed.name,
-        outputExtension,
-        request.settings.createFolderPerDownload
-      );
-    }
-
-    if (request.settings.alwaysAskDownloadLocation) {
-      const result = await dialog.showSaveDialog({
-        title: 'Save download',
-        defaultPath: createUniquePath(
-          request.settings.lastDownloadDirectory ||
-            request.settings.defaultDownloadLocation ||
-            app.getPath('downloads'),
-          request.metadata.title,
-          extension
-        ),
-        filters: [{ name: extension.toUpperCase(), extensions: [extension] }]
-      });
-
-      if (result.canceled || !result.filePath) {
-        return null;
-      }
-
-      const parsed = parse(result.filePath);
-      const outputExtension = extname(result.filePath).replace(/^\./, '') || extension;
       return createFinalDestinationPath(
         parsed.dir,
         parsed.name,

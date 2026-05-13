@@ -51,7 +51,6 @@ export type CosmoApi = {
   settings: {
     get: () => Promise<IpcResult<AppSettings>>;
     update: (update: SettingsUpdate) => Promise<IpcResult<AppSettings>>;
-    chooseDownloadDirectory: () => Promise<IpcResult<string | null>>;
     chooseOutputPath: (
       request: ChooseOutputPathRequest
     ) => Promise<IpcResult<ChooseOutputPathResult | null>>;
@@ -164,8 +163,6 @@ const api: CosmoApi = {
   settings: {
     get: () => invoke<AppSettings>(IPC_CHANNELS.settings.get),
     update: (update) => invoke<AppSettings>(IPC_CHANNELS.settings.update, update),
-    chooseDownloadDirectory: () =>
-      invoke<string | null>(IPC_CHANNELS.settings.chooseDownloadDirectory),
     chooseOutputPath: (request) =>
       invoke<ChooseOutputPathResult | null>(IPC_CHANNELS.settings.chooseOutputPath, request)
   },

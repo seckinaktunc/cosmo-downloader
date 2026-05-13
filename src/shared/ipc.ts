@@ -5,7 +5,6 @@ export const IPC_CHANNELS = {
   settings: {
     get: 'settings:get',
     update: 'settings:update',
-    chooseDownloadDirectory: 'settings:choose-download-directory',
     chooseOutputPath: 'settings:choose-output-path'
   },
   clipboard: {

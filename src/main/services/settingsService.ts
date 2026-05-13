@@ -36,9 +36,7 @@ function mergePreferencesSectionsExpanded(
 
   return {
     general: typeof saved.general === 'boolean' ? saved.general : defaults.general,
-    downloads: typeof saved.downloads === 'boolean' ? saved.downloads : defaults.downloads,
-    metadata: typeof saved.metadata === 'boolean' ? saved.metadata : defaults.metadata,
-    updates: typeof saved.updates === 'boolean' ? saved.updates : defaults.updates
+    metadata: typeof saved.metadata === 'boolean' ? saved.metadata : defaults.metadata
   };
 }
 
@@ -65,10 +63,6 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
       typeof saved.lastNotifiedAppVersion === 'string' && saved.lastNotifiedAppVersion.length > 0
         ? saved.lastNotifiedAppVersion
         : defaults.lastNotifiedAppVersion,
-    alwaysAskDownloadLocation:
-      typeof saved.alwaysAskDownloadLocation === 'boolean'
-        ? saved.alwaysAskDownloadLocation
-        : defaults.alwaysAskDownloadLocation,
     createFolderPerDownload:
       typeof saved.createFolderPerDownload === 'boolean'
         ? saved.createFolderPerDownload

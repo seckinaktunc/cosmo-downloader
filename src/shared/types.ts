@@ -49,7 +49,7 @@ export type CookieBrowserOption = {
   exists: boolean;
 };
 
-export type PreferencesSection = 'general' | 'downloads' | 'metadata' | 'updates';
+export type PreferencesSection = 'general' | 'metadata';
 
 export type PreferencesSectionsExpanded = Record<PreferencesSection, boolean>;
 
@@ -58,7 +58,6 @@ export type AppSettings = {
   automaticUpdates: boolean;
   lastAutomaticUpdateCheckAt?: string;
   lastNotifiedAppVersion?: string;
-  alwaysAskDownloadLocation: boolean;
   createFolderPerDownload: boolean;
   defaultDownloadLocation: string;
   lastDownloadDirectory?: string;

@@ -58,9 +58,7 @@ function createPreviewExportSettings(
     ...baseSettings,
     trimStartSeconds: 0,
     trimEndSeconds: metadata.duration != null ? Math.floor(metadata.duration) : undefined,
-    savePath: settings.alwaysAskDownloadLocation
-      ? buildOutputPath(saveDirectory, metadata.title, baseSettings.outputFormat)
-      : undefined
+    savePath: buildOutputPath(saveDirectory, metadata.title, baseSettings.outputFormat)
   }
 }
 

@@ -32,6 +32,28 @@ describe('mergeSettings', () => {
     expect(mergeSettings(defaults, {}).createFolderPerDownload).toBe(false);
   });
 
+  it('ignores legacy always-ask and removed section keys', () => {
+    const defaults = createDefaultSettings('/downloads');
+
+    expect(
+      mergeSettings(defaults, {
+        alwaysAskDownloadLocation: true,
+        preferencesSectionsExpanded: {
+          general: false,
+          downloads: false,
+          metadata: false,
+          updates: false
+        }
+      })
+    ).toEqual({
+      ...defaults,
+      preferencesSectionsExpanded: {
+        general: false,
+        metadata: false
+      }
+    });
+  });
+
   it('defaults cacheLimitMb to 50 for legacy settings', () => {
     const defaults = createDefaultSettings('/downloads');
 

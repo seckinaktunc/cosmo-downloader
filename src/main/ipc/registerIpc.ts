@@ -121,15 +121,6 @@ export function registerIpcHandlers(): RegisteredServices {
     return ok(settings);
   });
 
-  ipcMain.handle(IPC_CHANNELS.settings.chooseDownloadDirectory, async () => {
-    const result = await dialog.showOpenDialog({
-      title: 'Choose download location',
-      properties: ['openDirectory', 'createDirectory']
-    });
-
-    return ok(result.canceled ? null : result.filePaths[0]);
-  });
-
   ipcMain.handle(
     IPC_CHANNELS.settings.chooseOutputPath,
     async (_event, request: ChooseOutputPathRequest) => {

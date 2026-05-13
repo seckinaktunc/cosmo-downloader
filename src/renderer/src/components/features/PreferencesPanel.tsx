@@ -10,7 +10,6 @@ import AppIcon from '../miscellaneous/AppIcon';
 import Icon from '../miscellaneous/Icon';
 import { Button } from '../ui/Button';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { LocationSelector } from '../ui/LocationSelector';
 import NumberField from '../ui/NumberField';
 import { SelectField } from '../ui/SelectField';
 import { Switch } from '../ui/Switch';
@@ -26,7 +25,6 @@ export function PreferencesPanel(): React.JSX.Element {
   const update = useSettingsStore((state) => state.update);
   const refreshCacheSummary = useSettingsStore((state) => state.refreshCacheSummary);
   const clearCache = useSettingsStore((state) => state.clearCache);
-  const chooseDownloadDirectory = useSettingsStore((state) => state.chooseDownloadDirectory);
   const updateState = useUpdateStore((state) => state.state);
   const checkForUpdates = useUpdateStore((state) => state.checkNow);
   const downloadUpdate = useUpdateStore((state) => state.download);
@@ -35,9 +33,7 @@ export function PreferencesPanel(): React.JSX.Element {
   const [historyLimitInput, setHistoryLimitInput] = useState<string | null>(null);
 
   const commitCacheLimitInput = (nextInputValue?: string): void => {
-    if (!settings) {
-      return;
-    }
+    if (!settings) return;
 
     const nextInput = nextInputValue ?? cacheLimitInput ?? String(settings.cacheLimitMb);
     const parsed = Number(nextInput);
@@ -59,9 +55,7 @@ export function PreferencesPanel(): React.JSX.Element {
   };
 
   const commitHistoryLimitInput = (): void => {
-    if (!settings) {
-      return;
-    }
+    if (!settings) return;
 
     const nextInput = historyLimitInput ?? String(settings.historyLimitItems);
     const parsed = Number(nextInput);
@@ -199,51 +193,20 @@ export function PreferencesPanel(): React.JSX.Element {
           </div>
           <div className="p-4">
             <Switch
-              label={t('preferences.automaticUpdates')}
-              checked={settings.automaticUpdates}
-              onChange={(automaticUpdates) => void update({ automaticUpdates })}
-              description={t('preferences.automaticUpdatesDescription')}
-            />
-          </div>
-        </>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title={t('preferences.sections.downloads')}
-        expanded={settings.preferencesSectionsExpanded.downloads}
-        onExpandedChange={(expanded) => updateSectionExpanded('downloads', expanded)}
-      >
-        <>
-          <div className="p-4">
-            <Switch
-              label={t('preferences.alwaysAsk')}
-              checked={settings.alwaysAskDownloadLocation}
-              onChange={(alwaysAskDownloadLocation) => void update({ alwaysAskDownloadLocation })}
-            />
-          </div>
-          <div className="p-4">
-            <Switch
               label={t('preferences.createFolderPerDownload')}
               checked={settings.createFolderPerDownload}
               onChange={(createFolderPerDownload) => void update({ createFolderPerDownload })}
               description={t('preferences.createFolderPerDownloadDescription')}
             />
           </div>
-          {!settings.alwaysAskDownloadLocation ? (
-            <LocationSelector
-              mode="directory"
-              className="p-4"
-              label={t('preferences.downloadLocation')}
-              labelClassName="text-base"
-              value={settings.defaultDownloadLocation}
-              placeholder={t('preferences.downloadLocation')}
-              chooseLabel={t('actions.choose')}
-              onChoose={() => void chooseDownloadDirectory()}
-              onOpen={() =>
-                void window.cosmo.shell.openPath({ path: settings.defaultDownloadLocation })
-              }
+          <div className="p-4">
+            <Switch
+              label={t('preferences.automaticUpdates')}
+              checked={settings.automaticUpdates}
+              onChange={(automaticUpdates) => void update({ automaticUpdates })}
+              description={t('preferences.automaticUpdatesDescription')}
             />
-          ) : null}
+          </div>
         </>
       </CollapsibleSection>
 

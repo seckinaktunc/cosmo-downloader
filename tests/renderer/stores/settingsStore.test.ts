@@ -12,7 +12,6 @@ import { useSettingsStore } from '@renderer/stores/settingsStore';
 const baseSettings: AppSettings = {
   hardwareAcceleration: true,
   automaticUpdates: true,
-  alwaysAskDownloadLocation: false,
   createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
   lastDownloadDirectory: '/downloads',
@@ -24,9 +23,7 @@ const baseSettings: AppSettings = {
   historyLimitItems: 500,
   preferencesSectionsExpanded: {
     general: true,
-    downloads: true,
-    metadata: true,
-    updates: true
+    metadata: true
   }
 };
 
@@ -67,7 +64,6 @@ function installCosmoMock(initialSettings = baseSettings): {
       settings: {
         get: vi.fn(async () => ok(state.currentSettings)),
         update: updateMock,
-        chooseDownloadDirectory: vi.fn(),
         chooseOutputPath: vi.fn()
       },
       system: {
@@ -201,7 +197,6 @@ describe('useSettingsStore restart warning', () => {
         settings: {
           get: vi.fn(async () => ok(baseSettings)),
           update: updateMock,
-          chooseDownloadDirectory: vi.fn(),
           chooseOutputPath: vi.fn()
         },
         system: {

@@ -19,7 +19,6 @@ const queueItem: QueueItem = {
   settings: {
     hardwareAcceleration: true,
     automaticUpdates: true,
-    alwaysAskDownloadLocation: false,
     createFolderPerDownload: false,
     defaultDownloadLocation: '/downloads',
     interfaceLanguage: 'en_US',
@@ -30,9 +29,7 @@ const queueItem: QueueItem = {
     historyLimitItems: 500,
     preferencesSectionsExpanded: {
       general: true,
-      downloads: true,
-      metadata: true,
-      updates: true
+      metadata: true
     }
   },
   status: 'pending',

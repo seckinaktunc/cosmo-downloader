@@ -1,4 +1,4 @@
-import { app, dialog, webContents, type WebContents } from 'electron';
+import { app, webContents, type WebContents } from 'electron';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { randomUUID } from 'crypto';
@@ -17,7 +17,6 @@ import type {
   QueueReorderRequest,
   QueueSnapshot
 } from '../../shared/types';
-import { createUniquePath } from './filename';
 import { DownloadService } from './downloadService';
 import { HistoryService } from './historyService';
 import { movePendingItem, movePendingItems, removeManyQueueItems } from '../../shared/queueModel';
@@ -92,11 +91,7 @@ export class QueueService {
   }
 
   async add(request: QueueAddRequest): Promise<IpcResult<QueueSnapshot>> {
-    const requestedOutputPath = await this.resolveRequestedOutputPath(request);
-    if (requestedOutputPath === null) {
-      return fail('CANCELLED', 'Queue item was not added.');
-    }
-
+    const requestedOutputPath = this.resolveRequestedOutputPath(request);
     const reusableHistoryEntry = this.historyService.findReusableFetchedByRequestId?.(
       request.metadata.requestId
     );
@@ -486,28 +481,8 @@ export class QueueService {
     return item;
   }
 
-  private async resolveRequestedOutputPath(
-    request: QueueAddRequest
-  ): Promise<string | undefined | null> {
-    const explicitOutputPath = request.outputPath ?? request.exportSettings.savePath;
-    if (explicitOutputPath || !request.settings.alwaysAskDownloadLocation) {
-      return explicitOutputPath;
-    }
-
-    const extension = request.exportSettings.outputFormat;
-    const result = await dialog.showSaveDialog({
-      title: 'Save queued download',
-      defaultPath: createUniquePath(
-        request.settings.lastDownloadDirectory ||
-          request.settings.defaultDownloadLocation ||
-          app.getPath('downloads'),
-        request.metadata.title,
-        extension
-      ),
-      filters: [{ name: extension.toUpperCase(), extensions: [extension] }]
-    });
-
-    return result.canceled || !result.filePath ? null : result.filePath;
+  private resolveRequestedOutputPath(request: QueueAddRequest): string | undefined {
+    return request.outputPath ?? request.exportSettings.savePath;
   }
 
   private writeAndBroadcast(): void {

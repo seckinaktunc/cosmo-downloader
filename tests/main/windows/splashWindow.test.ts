@@ -20,7 +20,6 @@ const { isSplashEligible } = await import('@main/windows/splashWindow');
 const baseSettings: AppSettings = {
   hardwareAcceleration: true,
   automaticUpdates: true,
-  alwaysAskDownloadLocation: false,
   createFolderPerDownload: false,
   defaultDownloadLocation: '/downloads',
   interfaceLanguage: 'en_US',
@@ -31,9 +30,7 @@ const baseSettings: AppSettings = {
   historyLimitItems: 500,
   preferencesSectionsExpanded: {
     general: true,
-    downloads: true,
-    metadata: true,
-    updates: true
+    metadata: true
   }
 };
 

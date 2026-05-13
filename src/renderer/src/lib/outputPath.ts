@@ -92,6 +92,11 @@ export function replaceOutputBasename(filePath: string, basename: string): strin
   return `${leadingPath}${basename}${trailingSuffix}`;
 }
 
+export function resetOutputBasename(filePath: string, title: string): string {
+  const { basename } = splitOutputPath(filePath);
+  return replaceOutputBasename(filePath, sanitizeOutputFilename(title, basename || 'video'));
+}
+
 export function getEffectiveSavePath(
   filePath: string | undefined,
   outputFormat: OutputFormat,

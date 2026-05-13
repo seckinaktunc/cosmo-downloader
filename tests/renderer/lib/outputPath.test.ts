@@ -4,6 +4,7 @@ import {
   getEditableSavePathParts,
   getEffectiveSavePath,
   getOutputDirectory,
+  resetOutputBasename,
   replaceOutputBasename,
   replaceOutputExtension,
   sanitizeOutputFilename
@@ -32,6 +33,12 @@ describe('replaceOutputExtension', () => {
     );
     expect(replaceOutputBasename('/Users/me/Downloads/Old Video.webm', 'New Video')).toBe(
       '/Users/me/Downloads/New Video.webm'
+    );
+  });
+
+  it('resets the basename to the sanitized fetched title while preserving directory and extension', () => {
+    expect(resetOutputBasename('C:\\Downloads\\Custom Name.mp4', 'New: Video? <Final>.')).toBe(
+      'C:\\Downloads\\New Video Final.mp4'
     );
   });
 });
