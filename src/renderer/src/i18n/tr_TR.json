@@ -41,7 +41,6 @@
     "loading": "Tercihler yükleniyor...",
     "sections": {
       "general": "Genel",
-      "downloads": "İndirmeler",
       "metadata": "Gelişmiş"
     },
     "hardwareAcceleration": "Donanım hızlandırma",
@@ -52,10 +51,8 @@
     "clipboardPrefetchDescription": "Kopyalanan web bağlantılarının meta verilerini sessizce önceden getirir ve aynı URL'yi önizlediğinizde sonucu anında yeniden kullanır.",
     "cookiesBrowser": "Çerezler için kullanılacak tarayıcı",
     "cookiesBrowserDescription": "Korumalı içeriklere daha güvenilir erişmek için seçili tarayıcıdan çerezleri içe aktarır (önerilir).",
-    "alwaysAsk": "İndirme konumunu her zaman sor",
     "createFolderPerDownload": "Her indirme için klasör oluştur",
     "createFolderPerDownloadDescription": "Her indirmeyi çıkış dosyasının adıyla oluşturulan bir klasöre kaydet.",
-    "downloadLocation": "Varsayılan indirme konumu",
     "language": "Arayüz dili",
     "restartRequired": "Donanım hızlandırma değişiklikleri için yeniden başlatma gerekir.",
     "cacheLimit": "Önbellek sınırı",
@@ -112,6 +109,7 @@
     "videoCodec": "Video kodeği",
     "audioCodec": "Ses kodeği",
     "savePath": "İndirme konumu",
+    "fileNamePlaceholder": "Bir dosya adı girin",
     "noSavePath": "Bu videonun nereye kaydedileceğini seçin",
     "auto": "Auto",
     "formatDescriptions": {

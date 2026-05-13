@@ -41,7 +41,6 @@
     "loading": "正在加载偏好设置...",
     "sections": {
       "general": "常规",
-      "downloads": "下载",
       "metadata": "高级"
     },
     "hardwareAcceleration": "硬件加速",
@@ -52,10 +51,8 @@
     "clipboardPrefetchDescription": "静默预取已复制网页链接的元数据，并在预览相同 URL 时立即复用结果。",
     "cookiesBrowser": "用于读取 Cookie 的浏览器",
     "cookiesBrowserDescription": "从所选浏览器导入 Cookie，以更可靠地访问受保护内容（推荐）。",
-    "alwaysAsk": "始终询问下载位置",
     "createFolderPerDownload": "每次下载创建一个文件夹",
     "createFolderPerDownloadDescription": "将每次下载保存到以输出文件命名的文件夹中。",
-    "downloadLocation": "默认下载位置",
     "language": "界面语言",
     "restartRequired": "硬件加速更改需要重启。",
     "cacheLimit": "缓存上限",
@@ -112,6 +109,7 @@
     "videoCodec": "视频编码器",
     "audioCodec": "音频编码器",
     "savePath": "下载位置",
+    "fileNamePlaceholder": "输入文件名",
     "noSavePath": "选择此视频的保存位置",
     "auto": "自动",
     "formatDescriptions": {

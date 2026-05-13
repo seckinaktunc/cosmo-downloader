@@ -65,7 +65,7 @@ export function LocationSelector({
           <InputField
             className="text-white"
             value={disabled ? '' : value}
-            placeholder={'Enter a file name'}
+            placeholder={t('exportSettings.fileNamePlaceholder')}
             disabled={disabled}
             onChange={onChange}
             onBlur={onBlur}
