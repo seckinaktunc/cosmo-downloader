@@ -217,7 +217,7 @@ export function BottomBar(): React.JSX.Element {
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate">{buttonText.primary}</span>
             {buttonText.secondary && (
-              <span className="truncate text-xs font-normal opacity-70">
+              <span className="truncate text-xs font-normal text-black/50">
                 {buttonText.secondary}
               </span>
             )}
