@@ -231,6 +231,7 @@ Older shipped Mac builds that still expect `latest-mac.yml` will need a one-time
 - [x] Windows build
 - [x] Linux build
 - [x] macOS build
+- [ ] Parallel downloading
 - [ ] Playlist support
 - [ ] Subtitle support
 - [ ] Automated tasks
