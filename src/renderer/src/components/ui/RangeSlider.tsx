@@ -513,7 +513,7 @@ export function RangeSlider({
   };
 
   return (
-    <div className={cn('flex flex-col gap-2', disabled && 'opacity-40')}>
+    <div className={cn('flex flex-col gap-2', disabled && 'opacity-25')}>
       <div className="flex items-center justify-between gap-4">
         <label
           className={cn('flex gap-1 text-sm font-medium text-white/50', error && 'text-primary')}

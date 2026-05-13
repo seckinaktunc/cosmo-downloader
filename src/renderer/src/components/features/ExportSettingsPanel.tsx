@@ -19,7 +19,6 @@ import type { AudioCodec, OutputFormat, VideoCodec } from '../../../../shared/ty
 import { useActiveExportSettings } from '../../hooks/useActiveExportSettings';
 import {
   getEditableSavePathParts,
-  getEffectiveSavePath,
   replaceOutputBasename,
   replaceOutputExtension,
   sanitizeOutputFilename
@@ -58,11 +57,6 @@ export function ExportSettingsPanel({
     exportSettings.trimStartSeconds,
     exportSettings.trimEndSeconds,
     durationSeconds
-  );
-  const displaySavePath = getEffectiveSavePath(
-    exportSettings.savePath,
-    exportSettings.outputFormat,
-    Boolean(settings?.createFolderPerDownload)
   );
   const savePathParts = getEditableSavePathParts(
     exportSettings.savePath,
@@ -461,41 +455,28 @@ export function ExportSettingsPanel({
               </div>
             </div>
 
-            {showSavePath && (
-              <div className="min-w-0 shrink-0 p-4">
-                <LocationSelector
-                  mode="file"
-                  label={t('exportSettings.savePath')}
-                  value={displaySavePath}
-                  editableFilePath={
-                    savePathParts
-                      ? {
-                          leadingPath: savePathParts.leadingPath,
-                          editableBasename: activeSavePathBasenameDraft ?? savePathParts.basename,
-                          trailingSuffix: savePathParts.trailingSuffix,
-                          onEditableBasenameChange: (value) => {
-                            if (!exportSettings.savePath) {
-                              return;
-                            }
+            <div className="flex flex-col items-center gap-16 min-w-0 shrink-0 p-4">
+              <LocationSelector
+                mode={showSavePath ? 'file' : 'directory'}
+                path={savePathParts && savePathParts.leadingPath}
+                value={activeSavePathBasenameDraft ?? savePathParts?.basename}
+                suffix={savePathParts && savePathParts.trailingSuffix}
+                placeholder={t('exportSettings.noSavePath')}
+                chooseLabel={t('actions.choose')}
+                onChange={(event) => {
+                  if (!exportSettings.savePath) return;
 
-                            setSavePathBasenameDraft({
-                              sourcePath: exportSettings.savePath,
-                              value
-                            });
-                          },
-                          onEditableBasenameCommit: commitSavePathBasename
-                        }
-                      : undefined
-                  }
-                  labelClassName="text-sm font-medium"
-                  placeholder={t('exportSettings.noSavePath')}
-                  chooseLabel={t('actions.choose')}
-                  disabled={controlsDisabled}
-                  onChoose={() => void chooseSavePath()}
-                  onOpen={openSavePath}
-                />
-              </div>
-            )}
+                  setSavePathBasenameDraft({
+                    sourcePath: exportSettings.savePath,
+                    value: event.currentTarget.value
+                  });
+                }}
+                onBlur={commitSavePathBasename}
+                onOpen={openSavePath}
+                onChoose={() => void chooseSavePath()}
+                disabled={controlsDisabled}
+              />
+            </div>
           </div>
         </div>
       </div>

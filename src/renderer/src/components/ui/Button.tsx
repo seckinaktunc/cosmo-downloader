@@ -8,6 +8,18 @@ import { Tooltip } from './Tooltip';
 
 export type ButtonSize = NonNullable<React.ComponentProps<typeof Button>['size']>;
 
+type ButtonProps = React.ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+    icon?: IconName;
+    iconPosition?: 'start' | 'end';
+    label?: React.ReactNode;
+    tooltip?: string;
+    rounded?: boolean;
+    ripple?: boolean;
+    isActive?: boolean;
+  };
+
 const buttonVariants = cva(
   [
     'group/button relative inline-flex shrink-0 items-center justify-center',
@@ -27,13 +39,13 @@ const buttonVariants = cva(
       variant: {
         primary: 'bg-white text-black',
         secondary:
-          'bg-white/5 [&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 border border-white/10 hover:bg-white/10 hover:[&_[data-slot=icon]]:opacity-100',
+          'bg-light [&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 border border-white/10 hover:bg-white/10 hover:[&_[data-slot=icon]]:opacity-100',
         ghost:
           '[&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 hover:[&_[data-slot=label]]:text-white hover:[&_[data-slot=icon]]:opacity-100',
         link: 'text-white underline-offset-2 hover:underline'
       },
       size: {
-        default: 'h-11 px-3 gap-2 [&_[data-slot=label]]:text-sm',
+        default: 'h-11 px-3 gap-2 [&_[data-slot=label]]:text-base',
         xs: 'h-8 px-2 gap-2 [&_[data-slot=label]]:text-sm',
         sm: 'h-10 px-2.5 gap-2 [&_[data-slot=label]]:text-base',
         lg: 'h-12 px-4 gap-2 [&_[data-slot=label]]:text-base',
@@ -107,18 +119,6 @@ const iconSizeMap = {
   'icon-lg': 22,
   'icon-xl': 24
 } as const;
-
-type ButtonProps = React.ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-    icon?: IconName;
-    iconPosition?: 'start' | 'end';
-    label?: React.ReactNode;
-    tooltip?: string;
-    rounded?: boolean;
-    ripple?: boolean;
-    isActive?: boolean;
-  };
 
 const RIPPLE_DURATION_MS = 600;
 
@@ -208,14 +208,14 @@ function Button({
       onClick={handleClick}
       {...props}
     >
-      {ripple ? (
+      {ripple && (
         <span className="pointer-events-none absolute inset-0">
           {buttonRipples.map((rippleItem) => (
             <span
               className={cn(
                 'animate-rippling absolute rounded-full',
                 variant === 'primary' || (isActive && variant !== 'ghost')
-                  ? 'bg-black/25'
+                  ? 'bg-black/50'
                   : 'bg-white/25'
               )}
               key={rippleItem.key}
@@ -232,7 +232,7 @@ function Button({
             />
           ))}
         </span>
-      ) : null}
+      )}
       <span
         className={cn(
           iconPosition === 'start' ? 'flex-row' : 'flex-row-reverse',

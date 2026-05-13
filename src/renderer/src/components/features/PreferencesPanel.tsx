@@ -1,3 +1,4 @@
+import { COOKIE_BROWSER_ICONS } from '@renderer/lib/constants';
 import { formatBytes } from '@renderer/lib/formatters';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,15 +7,14 @@ import { SUPPORTED_LOCALES, resolveSupportedLocale } from '../../i18n';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUpdateStore } from '../../stores/updateStore';
 import AppIcon from '../miscellaneous/AppIcon';
+import Icon from '../miscellaneous/Icon';
 import { Button } from '../ui/Button';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { InputField } from '../ui/InputField';
 import { LocationSelector } from '../ui/LocationSelector';
+import NumberField from '../ui/NumberField';
 import { SelectField } from '../ui/SelectField';
 import { Switch } from '../ui/Switch';
-import { COOKIE_BROWSER_ICONS } from '@renderer/lib/constants';
 import { Tooltip } from '../ui/Tooltip';
-import Icon from '../miscellaneous/Icon';
 
 export function PreferencesPanel(): React.JSX.Element {
   const { t } = useTranslation();
@@ -34,12 +34,12 @@ export function PreferencesPanel(): React.JSX.Element {
   const [cacheLimitInput, setCacheLimitInput] = useState<string | null>(null);
   const [historyLimitInput, setHistoryLimitInput] = useState<string | null>(null);
 
-  const commitCacheLimitInput = (): void => {
+  const commitCacheLimitInput = (nextInputValue?: string): void => {
     if (!settings) {
       return;
     }
 
-    const nextInput = cacheLimitInput ?? String(settings.cacheLimitMb);
+    const nextInput = nextInputValue ?? cacheLimitInput ?? String(settings.cacheLimitMb);
     const parsed = Number(nextInput);
     if (!Number.isFinite(parsed)) {
       setCacheLimitInput(null);
@@ -134,6 +134,7 @@ export function PreferencesPanel(): React.JSX.Element {
                 label={t('updates.download')}
                 size="sm"
                 onClick={() => void downloadUpdate()}
+                ripple
               />
             )}
             {updateState.status === 'downloaded' && (
@@ -142,6 +143,7 @@ export function PreferencesPanel(): React.JSX.Element {
                 label={t('updates.restartNow')}
                 size="sm"
                 onClick={() => void installUpdate()}
+                ripple
               />
             )}
             <Button
@@ -151,6 +153,7 @@ export function PreferencesPanel(): React.JSX.Element {
               size="sm"
               disabled={updateState.status === 'checking' || updateState.status === 'downloading'}
               onClick={() => void checkForUpdates()}
+              ripple
             />
           </div>
         </div>
@@ -261,38 +264,29 @@ export function PreferencesPanel(): React.JSX.Element {
           <div className="p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="flex min-w-0 items-center gap-1">
-                <span className="text-white/50">{t('preferences.historyLimit')}</span>
+                <span className="text-white/50 whitespace-nowrap">
+                  {t('preferences.historyLimit')}
+                </span>
                 <Tooltip label={t('preferences.historyLimitDescription')}>
                   <Icon name="info" className="opacity-50" />
                 </Tooltip>
               </span>
-              <InputField
-                mode="input"
-                type="number"
-                size="md"
-                numberControls="custom"
-                numberStepFallbackValue={settings.historyLimitItems}
-                min={1}
-                max={5000}
-                step={1}
-                inputMode="numeric"
-                value={historyLimitInput ?? String(settings.historyLimitItems)}
-                className="w-28"
-                contentClassName="text-right text-white"
-                onFocus={() => {
-                  if (historyLimitInput == null) {
-                    setHistoryLimitInput(String(settings.historyLimitItems));
-                  }
-                }}
-                onChange={(event) => setHistoryLimitInput(event.target.value)}
-                onBlur={commitHistoryLimitInput}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    commitHistoryLimitInput();
-                    event.currentTarget.blur();
-                  }
-                }}
-              />
+              <div className="flex">
+                <NumberField
+                  min={1}
+                  max={5000}
+                  step={1}
+                  value={historyLimitInput ?? String(settings.historyLimitItems)}
+                  suffix="items"
+                  onFocus={() => {
+                    if (historyLimitInput == null) {
+                      setHistoryLimitInput(String(settings.historyLimitItems));
+                    }
+                  }}
+                  onChange={(event) => setHistoryLimitInput(event.target.value)}
+                  onCommit={commitHistoryLimitInput}
+                />
+              </div>
             </div>
           </div>
           <div className="p-4">
@@ -307,33 +301,19 @@ export function PreferencesPanel(): React.JSX.Element {
                 </p>
               </div>
               <div className="flex gap-2">
-                <InputField
-                  mode="input"
-                  type="number"
-                  size="md"
-                  numberControls="custom"
-                  numberStepFallbackValue={settings.cacheLimitMb}
+                <NumberField
                   min={1}
                   max={500}
                   step={1}
-                  inputMode="numeric"
                   value={cacheLimitInput ?? String(settings.cacheLimitMb)}
-                  endAdornment={<span className="text-[10px] uppercase tracking-wide">MB</span>}
-                  className="w-24"
-                  contentClassName="text-right text-white"
+                  suffix="MB"
                   onFocus={() => {
                     if (cacheLimitInput == null) {
                       setCacheLimitInput(String(settings.cacheLimitMb));
                     }
                   }}
                   onChange={(event) => setCacheLimitInput(event.target.value)}
-                  onBlur={commitCacheLimitInput}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      commitCacheLimitInput();
-                      event.currentTarget.blur();
-                    }
-                  }}
+                  onCommit={commitCacheLimitInput}
                 />
                 <Button
                   variant="secondary"
@@ -342,6 +322,7 @@ export function PreferencesPanel(): React.JSX.Element {
                   size="sm"
                   disabled={cacheSummary == null || !cacheSummary.hasClearableEntries}
                   onClick={() => void clearCache()}
+                  ripple
                 />
               </div>
             </div>

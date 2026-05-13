@@ -27,7 +27,7 @@ export function SnapSlider<T extends SliderValue>({
   const progress = maxIndex === 0 ? 0 : (currentIndex / maxIndex) * 100;
 
   return (
-    <div className={cn('flex flex-col gap-2', disabled && 'opacity-40')}>
+    <div className={cn('flex flex-col gap-2', disabled && 'opacity-25')}>
       <div className="flex items-center justify-between gap-4">
         <label className="text-sm font-medium text-white/50">{label}</label>
         <span className="text-sm font-bold text-white">{formatLabel(options[currentIndex])}</span>

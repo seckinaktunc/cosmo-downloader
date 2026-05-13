@@ -50,7 +50,9 @@ import {
   IconWorld,
   IconX,
   IconChevronRight,
-  IconChevronsRight
+  IconChevronsRight,
+  IconChevronsUp,
+  IconChevronUp
 } from '@tabler/icons-react';
 import AppIcon from './AppIcon';
 import { cn } from '@renderer/lib/utils';
@@ -97,6 +99,8 @@ const iconMap = {
   brandSafari: IconBrandSafari,
   brandVivaldi: IconBrandVivaldi,
   browser: IconBrowser,
+  chevronUp: IconChevronUp,
+  chevronsUp: IconChevronsUp,
   chevronDown: IconChevronDown,
   chevronsDown: IconChevronsDown,
   chevronRight: IconChevronRight,
