@@ -27,11 +27,12 @@ export function RadioBoxes<T extends string>({
   onChange
 }: RadioBoxesProps<T>): React.JSX.Element {
   return (
-    <fieldset
-      className={cn('space-y-2', disabled && 'opacity-25')}
-      aria-disabled={disabled || undefined}
-    >
-      {label && <legend className={cn('text-sm font-medium text-white/50')}>{label}</legend>}
+    <fieldset className={cn('space-y-2')} aria-disabled={disabled || undefined}>
+      {label && (
+        <legend className={cn('text-sm font-medium text-white/50', disabled && 'opacity-25')}>
+          {label}
+        </legend>
+      )}
       <div className={cn('grid grid-cols-6 h-auto gap-2', className)}>
         {options.map((option) => {
           const optionDisabled = disabled || option.disabled;
@@ -47,8 +48,8 @@ export function RadioBoxes<T extends string>({
                 'flex w-full cursor-pointer items-center justify-center gap-2 rounded-sm border px-3 py-2 text-sm font-semibold uppercase h-16',
                 value === option.value
                   ? 'border-white bg-white text-black'
-                  : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white',
-                optionDisabled && 'cursor-not-allowed'
+                  : 'border-white/10 bg-gray-850 text-white/50 hover:bg-gray-800 hover:text-white',
+                optionDisabled && 'cursor-not-allowed opacity-25'
               )}
             >
               <input

@@ -618,7 +618,7 @@ export function InteractiveItemPanel<TItem>({
                     src={thumbnail}
                     title={itemTitle}
                     badge={thumbnailBadge}
-                    className="aspect-video h-16 shrink-0 rounded-md bg-white/10"
+                    className="aspect-video h-16 shrink-0 rounded-md bg-gray-900"
                     actionSize="xs"
                     showPlaceholderIcon={false}
                     actions={thumbnailActions}

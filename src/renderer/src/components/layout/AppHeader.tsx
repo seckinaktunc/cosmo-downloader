@@ -129,28 +129,6 @@ export function AppHeader(): React.JSX.Element {
   };
 
   const isMac = environment?.platform === 'darwin';
-  const headerActions = (
-    <>
-      <Button
-        variant="ghost"
-        icon={settings?.alwaysOnTop ? 'pinFilled' : 'pin'}
-        tooltip={t('actions.pin')}
-        size="icon"
-        isActive={settings?.alwaysOnTop}
-        onClick={() => void toggleAlwaysOnTop()}
-        className="no-drag"
-      />
-      <Button
-        variant="ghost"
-        icon="history"
-        tooltip={t('actions.history')}
-        size="icon"
-        isActive={activePanel === 'history'}
-        onClick={() => toggleMediaPanel('history')}
-        className="no-drag"
-      />
-    </>
-  );
   const actionIcon =
     stage === 'fetching_metadata'
       ? 'spinner'
@@ -172,12 +150,35 @@ export function AppHeader(): React.JSX.Element {
         'drag-region grid min-h-16 grid-cols-[1fr_minmax(20rem,36rem)_1fr] items-center gap-6 bg-black p-2'
       )}
     >
-      <div className="flex items-center" onPointerDownCapture={handleHeaderPointerDownCapture}>
-        {!isMac ? headerActions : null}
+      <div
+        className={cn(
+          'no-drag row-start-1 flex items-center',
+          isMac ? 'col-start-3 flex-row-reverse' : 'col-start-1'
+        )}
+        onPointerDownCapture={handleHeaderPointerDownCapture}
+      >
+        <Button
+          variant="ghost"
+          icon={settings?.alwaysOnTop ? 'pinFilled' : 'pin'}
+          tooltip={t('actions.pin')}
+          size="icon"
+          isActive={settings?.alwaysOnTop}
+          onClick={() => void toggleAlwaysOnTop()}
+          className="no-drag"
+        />
+        <Button
+          variant="ghost"
+          icon="history"
+          tooltip={t('actions.history')}
+          size="icon"
+          isActive={activePanel === 'history'}
+          onClick={() => toggleMediaPanel('history')}
+          className="no-drag"
+        />
       </div>
 
       <div
-        className="no-drag relative flex h-12 items-center"
+        className="no-drag relative col-start-2 row-start-1 flex h-12 items-center"
         onPointerDownCapture={handleHeaderPointerDownCapture}
         onContextMenu={(event) => {
           event.preventDefault();
@@ -186,7 +187,7 @@ export function AppHeader(): React.JSX.Element {
         }}
       >
         <input
-          className="size-full rounded-lg border border-white/10 bg-white/10 pl-4 pr-12 text-white outline-none transition placeholder:text-white/40 focus:border-white/40"
+          className="size-full rounded-lg border border-white/10 bg-gray-900 pl-4 pr-12 text-white outline-none transition placeholder:text-white/40 focus:border-white/40"
           placeholder={t('search.placeholder')}
           value={url}
           onChange={(event) => handleUrlChange(event.currentTarget.value)}
@@ -224,13 +225,6 @@ export function AppHeader(): React.JSX.Element {
             }
           ]}
         />
-      </div>
-
-      <div
-        className="no-drag flex items-center justify-end"
-        onPointerDownCapture={handleHeaderPointerDownCapture}
-      >
-        {isMac ? headerActions : null}
       </div>
     </header>
   );

@@ -283,8 +283,8 @@ export function Tooltip({
                   <span
                     className={cn(
                       'absolute border',
-                      type === 'default' && 'border-white/10 bg-dark',
-                      type === 'error' && 'border-primary/50 bg-primary-dark'
+                      type === 'default' && 'border-white/10 bg-gray-950',
+                      type === 'error' && 'border-primary/50 bg-primary-gray-950'
                     )}
                     style={getTailDiamondStyle(position.tailSide)}
                   />
@@ -299,8 +299,8 @@ export function Tooltip({
                     whitespace-normal wrap-break-word text-center
                     rounded-md border text-sm shadow-lg backdrop-blur-lg
                   `,
-                  type === 'default' && 'border-white/10 bg-dark text-white/50',
-                  type === 'error' && 'border-primary/50 bg-primary-dark text-primary',
+                  type === 'default' && 'border-white/10 bg-gray-950 text-white/50',
+                  type === 'error' && 'border-primary/50 bg-primary-gray-950 text-primary',
                   'px-3 py-2'
                 )}
               >
@@ -310,8 +310,8 @@ export function Tooltip({
                     aria-hidden="true"
                     className={cn(
                       'pointer-events-none absolute backdrop-blur-lg z-30',
-                      type === 'default' && 'bg-dark',
-                      type === 'error' && 'bg-primary-dark'
+                      type === 'default' && 'bg-gray-950',
+                      type === 'error' && 'bg-primary-gray-950'
                     )}
                     style={getTailBridgeStyle(position.tailSide, position.tailOffset)}
                   />

@@ -197,7 +197,7 @@ export function LogsPanel(): React.JSX.Element {
       <div className="relative min-h-0">
         <div
           ref={scrollRef}
-          className="h-full overflow-y-auto min-w-0 selection:bg-white selection:text-white"
+          className="h-full overflow-y-auto min-w-0 selection:bg-white"
           onScroll={handleScroll}
         >
           {!selectedLogPath ? (
@@ -221,7 +221,7 @@ export function LogsPanel(): React.JSX.Element {
                 {selectedLogResult.content || t('logs.emptyLog')}
 
                 {showScrollToBottom ? (
-                  <div className="absolute flex items-end justify-center bottom-0 -left-3 w-full h-32 pl-6 bg-linear-to-b from-transparent to-gray to-95% pointer-events-none">
+                  <div className="absolute flex items-end justify-center bottom-0 -left-3 w-full h-32 pl-6 bg-linear-to-b from-transparent to-gray-900 to-95% pointer-events-none">
                     <Button
                       variant="ghost"
                       icon="chevronsDown"

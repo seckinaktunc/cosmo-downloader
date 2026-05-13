@@ -19,7 +19,7 @@ export default function ContentTab({ tabs }: ContentTabProps): React.JSX.Element
   const setActiveContent = useUiStore((state) => state.setActiveContent);
 
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-linear-to-b from-dark to-white/10">
+    <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-linear-to-b from-gray-950 to-white/10">
       <div className="flex w-full divide-x divide-white/10">
         {tabs.map((tab) => {
           const isActive = activeContent === tab.id;
@@ -31,8 +31,8 @@ export default function ContentTab({ tabs }: ContentTabProps): React.JSX.Element
                 'flex gap-2 items-center justify-center py-2 px-3',
                 tab.title && 'flex-1',
                 isActive
-                  ? 'bg-dark text-white mb-px'
-                  : 'bg-black border-b border-white/10 text-white/50 hover:bg-dark cursor-pointer'
+                  ? 'bg-gray-950 text-white mb-px'
+                  : 'bg-black border-b border-white/10 text-white/50 hover:bg-gray-950 cursor-pointer'
               )}
               onClick={() => !isActive && setActiveContent(tab.id)}
             >

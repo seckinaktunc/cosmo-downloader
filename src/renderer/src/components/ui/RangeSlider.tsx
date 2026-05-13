@@ -560,7 +560,7 @@ export function RangeSlider({
               offset={PREVIEW_POPOVER_OFFSET_PX}
             />
           )}
-        <div className="absolute inset-0 rounded-lg bg-white/10" />
+        <div className="absolute inset-0 rounded-lg bg-gray-900" />
         <div
           className={cn(
             'absolute top-0 z-10 h-2 rounded-lg bg-linear-to-r from-primary/50 to-primary',

@@ -86,7 +86,7 @@ export function SplashApp(): React.JSX.Element {
   };
 
   return (
-    <div className="drag-region flex h-screen w-screen flex-col items-center justify-center gap-4 bg-linear-to-b from-dark to-gray p-8 text-white select-none">
+    <div className="drag-region flex h-screen w-screen flex-col items-center justify-center gap-4 bg-linear-to-b from-gray-950 to-gray-900 p-8 text-white select-none">
       <div className="flex flex-col w-full gap-6">
         <div className="relative flex items-center justify-center">
           <Icon name="appIcon" size={80} />
@@ -94,7 +94,7 @@ export function SplashApp(): React.JSX.Element {
         </div>
         <div className="flex flex-col items-center w-full gap-2">
           <span className="text-base font-medium">{headline}</span>
-          <div className="col-span-3 w-full h-2 overflow-hidden rounded-lg bg-white/10 box-content border border-white/10">
+          <div className="col-span-3 w-full h-2 overflow-hidden rounded-lg bg-gray-900 box-content border border-white/10">
             {showIndeterminate ? (
               <div className="h-full w-1/3 animate-pulse rounded-full bg-white/70" />
             ) : (

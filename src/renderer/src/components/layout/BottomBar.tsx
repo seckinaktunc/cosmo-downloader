@@ -19,9 +19,7 @@ export function BottomBar(): React.JSX.Element {
   const videoStage = useVideoStore((state) => state.stage);
   const clearVideo = useVideoStore((state) => state.clear);
   const settings = useSettingsStore((state) => state.settings);
-  const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath);
   const previewExportSettings = useUiStore((state) => state.previewExportSettings);
-  const updatePreviewExportSettings = useUiStore((state) => state.updatePreviewExportSettings);
   const activePanel = useUiStore((state) => state.activePanel);
   const openMediaPanel = useUiStore((state) => state.openMediaPanel);
   const toggleMediaPanel = useUiStore((state) => state.toggleMediaPanel);
@@ -110,25 +108,9 @@ export function BottomBar(): React.JSX.Element {
   };
 
   const addPreviewAndStart = async (): Promise<void> => {
-    if (!metadata || !settings) {
-      return;
-    }
+    if (!metadata || !settings) return;
 
-    let exportSettings = previewExportSettings;
-    if (settings.alwaysAskDownloadLocation && !exportSettings.savePath) {
-      const savePath = await chooseOutputPath({
-        title: metadata.title,
-        outputFormat: exportSettings.outputFormat
-      });
-
-      if (!savePath) {
-        return;
-      }
-
-      exportSettings = updatePreviewExportSettings({ savePath });
-    }
-
-    const added = await addToQueue(metadata, exportSettings, settings);
+    const added = await addToQueue(metadata, previewExportSettings, settings);
     if (added) {
       trackPreviewDownload(added.id, getSourceUrl(metadata));
       await flushExportSettingsSaves();
@@ -175,7 +157,7 @@ export function BottomBar(): React.JSX.Element {
           src={summaryMetadata?.thumbnail}
           title={summaryMetadata?.title}
           duration={summaryMetadata?.duration}
-          className="aspect-video h-16 rounded-lg bg-gray shrink-0 border border-white/10"
+          className="aspect-video h-16 rounded-lg bg-gray-900 shrink-0 border border-white/10"
           actionSize="xs"
           showPlaceholderIcon={false}
           actionsEnabled={false}
@@ -192,7 +174,7 @@ export function BottomBar(): React.JSX.Element {
             rel="noreferrer"
             className="block max-w-full truncate font-bold underline-offset-2 hover:underline text-white"
           >
-            {summaryMetadata?.title ?? <div className="h-4 w-40 bg-gray rounded-lg mb-1" />}
+            {summaryMetadata?.title ?? <div className="h-4 w-40 bg-gray-900 rounded-lg mb-1" />}
           </a>
           {summaryMetadata?.uploaderUrl ? (
             <a
@@ -201,11 +183,11 @@ export function BottomBar(): React.JSX.Element {
               rel="noreferrer"
               className="block max-w-full truncate text-sm underline-offset-2 hover:underline text-white/50"
             >
-              {summaryMetadata.uploader ?? <div className="h-4 w-24 bg-gray/50 rounded-lg" />}
+              {summaryMetadata.uploader ?? <div className="h-4 w-24 bg-gray-900/50 rounded-lg" />}
             </a>
           ) : (
             <span className="block max-w-full truncate text-sm text-white/50">
-              {summaryMetadata?.uploader ?? <div className="h-4 w-24 bg-gray/50 rounded-lg" />}
+              {summaryMetadata?.uploader ?? <div className="h-4 w-24 bg-gray-900/50 rounded-lg" />}
             </span>
           )}
         </div>
@@ -254,7 +236,7 @@ export function BottomBar(): React.JSX.Element {
         />
       </div>
 
-      <div className="col-span-3 h-2 overflow-hidden rounded-lg bg-white/10 border border-white/10">
+      <div className="col-span-3 h-2 overflow-hidden rounded-lg bg-gray-900 border border-white/10">
         <div
           className="h-full rounded-lg bg-linear-to-r from-primary/50 to-primary bg-no-repeat transition-all"
           style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}

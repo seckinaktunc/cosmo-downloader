@@ -164,7 +164,7 @@ export function ActionMenu({
     <div
       ref={rootRef}
       className={cn(
-        'fixed z-50 min-w-36 overflow-hidden border border-white/10 bg-dark shadow-2xl shadow-black/40',
+        'fixed z-50 min-w-36 overflow-hidden border border-white/10 bg-gray-950 shadow-2xl shadow-black/40',
         className
       )}
       style={style}
@@ -209,7 +209,7 @@ export function ActionMenu({
           key={item.id}
           type="button"
           className={cn(
-            'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white/80 outline-none hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white disabled:cursor-not-allowed disabled:opacity-40',
+            'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white/80 outline-none hover:bg-gray-900 hover:text-white focus:bg-gray-900 focus:text-white disabled:cursor-not-allowed disabled:opacity-40',
             item.danger && 'text-red-300 hover:text-red-200 focus:text-red-200'
           )}
           role="menuitem"

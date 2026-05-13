@@ -41,7 +41,7 @@ export function SnapSlider<T extends SliderValue>({
         value={currentIndex}
         onChange={(event) => onChange(options[Number(event.currentTarget.value)])}
         className={`
-          w-full h-2 bg-white/10 rounded-lg appearance-none z-10
+          w-full h-2 bg-gray-900 rounded-lg appearance-none z-10
           bg-linear-to-r from-primary/50 to-primary bg-no-repeat
           [&::-webkit-slider-thumb]:appearance-none
           [&::-webkit-slider-thumb]:w-3.5 

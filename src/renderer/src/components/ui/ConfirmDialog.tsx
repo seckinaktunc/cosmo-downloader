@@ -1,11 +1,11 @@
 type ConfirmDialogProps = {
-  title: string
-  message: string
-  confirmLabel: string
-  cancelLabel: string
-  onConfirm: () => void
-  onCancel: () => void
-}
+  title: string;
+  message: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+};
 
 export function ConfirmDialog({
   title,
@@ -30,7 +30,7 @@ export function ConfirmDialog({
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"
-            className="no-drag rounded-lg bg-white/5 px-4 py-2 text-sm font-bold text-white outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70"
+            className="no-drag rounded-lg bg-white/5 px-4 py-2 text-sm font-bold text-white outline-none transition hover:bg-gray-900 focus-visible:ring-2 focus-visible:ring-white/70"
             onClick={onCancel}
           >
             {cancelLabel}
@@ -45,5 +45,5 @@ export function ConfirmDialog({
         </div>
       </div>
     </div>
-  )
+  );
 }

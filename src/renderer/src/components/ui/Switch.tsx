@@ -42,7 +42,7 @@ export function Switch({
         aria-hidden
         className={cn(
           'relative flex items-center h-8 w-14 rounded-full border transition',
-          checked ? 'bg-primary/50 border-primary' : 'bg-white/10 border-white/10'
+          checked ? 'bg-primary/50 border-primary' : 'bg-gray-900 border-white/10'
         )}
       >
         <span

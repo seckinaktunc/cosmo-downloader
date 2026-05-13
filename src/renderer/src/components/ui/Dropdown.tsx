@@ -159,7 +159,7 @@ export function Dropdown<T extends string>({
         aria-haspopup="listbox"
         aria-labelledby={ariaLabelledBy}
         aria-activedescendant={open && focusedIndex >= 0 ? getOptionId(focusedIndex) : undefined}
-        className="no-drag flex w-full items-center min-w-40 h-10 justify-between gap-3 border border-white/10 bg-dark p-2 text-left text-white outline-none hover:border-white/25 focus-visible:ring-2 focus-visible:ring-white/70 cursor-pointer"
+        className="no-drag flex w-full items-center min-w-40 h-10 justify-between gap-3 border border-white/10 bg-gray-950 p-2 text-left text-white outline-none hover:border-white/25 focus-visible:ring-2 focus-visible:ring-white/70 cursor-pointer"
         onClick={() => (open ? closeDropdown() : openDropdown())}
         onKeyDown={handleKeyDown}
       >
@@ -181,7 +181,7 @@ export function Dropdown<T extends string>({
           id={listboxId}
           role="listbox"
           aria-labelledby={ariaLabelledBy}
-          className="no-drag absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto border border-white/10 bg-dark shadow-2xl shadow-black/40"
+          className="no-drag absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto border border-white/10 bg-gray-950 shadow-2xl shadow-black/40"
         >
           {options.map((option, index) => {
             const selected = option.value === value;
@@ -196,7 +196,7 @@ export function Dropdown<T extends string>({
                 aria-disabled={option.disabled}
                 className={cn(
                   'flex w-full cursor-pointer items-center justify-between gap-3 px-2 py-2 text-left text-sm text-white/80',
-                  focused && 'bg-white/10 text-white',
+                  focused && 'bg-gray-900 text-white',
                   selected && 'text-white',
                   option.disabled && 'cursor-not-allowed opacity-40'
                 )}

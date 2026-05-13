@@ -76,7 +76,7 @@ export function MainContent(): React.JSX.Element {
         gridTemplateColumns: `${mediaOverviewWidthPercent}% 0.5rem minmax(0, 1fr)`
       }}
     >
-      <aside className="min-h-0 min-w-0 overflow-hidden rounded-lg bg-linear-to-b from-dark to-gray border border-white/10">
+      <aside className="min-h-0 min-w-0 overflow-hidden rounded-lg bg-linear-to-b from-gray-950 to-gray-900 border border-white/10">
         <MediaOverview />
       </aside>
       <ResizeHandle
