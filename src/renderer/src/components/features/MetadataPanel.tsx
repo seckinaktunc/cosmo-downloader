@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDisplayMetadata } from '../../hooks/useDisplayMetadata';
 import { renderFormattedDescription } from '../../lib/descriptionFormatter';
 import { getHistoryQueueAction } from '../../lib/historyEntryActions';
+import { readValidClipboardUrl } from '../../lib/urlInput';
+import { useDownloadStore } from '../../stores/downloadStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useQueueStore } from '../../stores/queueStore';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -21,11 +23,15 @@ export function MetadataPanel(): React.JSX.Element {
   const stage = useVideoStore((state) => state.stage);
   const error = useVideoStore((state) => state.error);
   const retryMetadata = useVideoStore((state) => state.retryMetadata);
+  const setUrl = useVideoStore((state) => state.setUrl);
   const [confirmDuplicate, setConfirmDuplicate] = useState(false);
+  const [clipboardUrl, setClipboardUrl] = useState<string | null>(null);
   const settings = useSettingsStore((state) => state.settings);
   const previewExportSettings = useUiStore((state) => state.previewExportSettings);
   const activeExportTarget = useUiStore((state) => state.activeExportTarget);
+  const resetDownload = useDownloadStore((state) => state.reset);
   const historyEntries = useHistoryStore((state) => state.entries);
+  const activeQueueItemId = useQueueStore((state) => state.activeItemId);
   const queueItems = useQueueStore((state) => state.items);
   const addToQueue = useQueueStore((state) => state.add);
   const requeue = useHistoryStore((state) => state.requeue);
@@ -37,8 +43,45 @@ export function MetadataPanel(): React.JSX.Element {
   const activeHistoryQueueAction = activeHistoryEntry
     ? getHistoryQueueAction(activeHistoryEntry.status)
     : null;
+  const refreshClipboardUrl = useCallback(async (): Promise<string | null> => {
+    const nextClipboardUrl = await readValidClipboardUrl();
+    setClipboardUrl(nextClipboardUrl);
+    return nextClipboardUrl;
+  }, []);
+
+  useEffect(() => {
+    const refresh = (): void => {
+      void refreshClipboardUrl();
+    };
+    const timer = window.setTimeout(refresh, 0);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refreshClipboardUrl]);
+
+  const handlePaste = async (): Promise<void> => {
+    const nextClipboardUrl = clipboardUrl ?? (await refreshClipboardUrl());
+    if (!nextClipboardUrl) {
+      return;
+    }
+
+    setUrl(nextClipboardUrl);
+    if (!activeQueueItemId) {
+      resetDownload();
+    }
+  };
 
   if (!metadata) {
+    const isFetching = stage === 'fetching_metadata';
+    const isFailed = stage === 'failed';
+    const shouldShowRetry = !isFetching && isFailed && error;
+    const shouldShowPaste = !isFetching && !error && !isFailed;
+    const pasteDisabled = !settings || clipboardUrl == null;
+    const pasteTooltip =
+      settings && clipboardUrl == null ? t('actions.copyVideoUrlFirst') : undefined;
+
     return (
       <section className="flex h-full flex-col items-center justify-center gap-4 text-center">
         <Icon
@@ -47,29 +90,42 @@ export function MetadataPanel(): React.JSX.Element {
           thickness={1}
           className={`opacity-50`}
         />
-        <div>
+        <div className="flex flex-col items-center gap-1">
           <h1 className="text-2xl font-bold text-white">
             {stage === 'fetching_metadata' ? t('metadata.fetching') : t('metadata.emptyTitle')}
           </h1>
           {error ? (
-            <div className="mt-1 flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               <p className="max-w-xl text-sm text-white/50">{error}</p>
-              {stage === 'failed' ? (
-                <Button
-                  variant="secondary"
-                  icon="reload"
-                  label={t('queue.actions.retry')}
-                  size="sm"
-                  className="rounded-none"
-                  disabled={!settings}
-                  onClick={() => settings && void retryMetadata(settings)}
-                />
-              ) : null}
             </div>
           ) : (
             stage !== 'fetching_metadata' && (
-              <p className="mt-1 max-w-xl text-sm text-white/50">{t('metadata.emptySubtitle')}</p>
+              <p className="max-w-xl text-sm text-white/50">{t('metadata.emptySubtitle')}</p>
             )
+          )}
+          {shouldShowRetry && (
+            <Button
+              variant="secondary"
+              icon="reload"
+              label={t('queue.actions.retry')}
+              size="sm"
+              className="mt-4"
+              disabled={!settings}
+              onClick={() => settings && void retryMetadata(settings)}
+            />
+          )}
+
+          {shouldShowPaste && (
+            <Button
+              variant="secondary"
+              icon="paste"
+              label={t('actions.pasteToBegin')}
+              size="sm"
+              className="mt-4"
+              disabled={pasteDisabled}
+              tooltip={pasteTooltip}
+              onClick={() => void handlePaste()}
+            />
           )}
         </div>
       </section>

@@ -17,6 +17,8 @@
     "clear": "Clear",
     "close": "Close",
     "paste": "Paste",
+    "pasteToBegin": "Paste to begin",
+    "copyVideoUrlFirst": "Copy a video URL first",
     "queueDisabled": "Queue is not available in this version",
     "history": "History",
     "choose": "Choose",
@@ -187,7 +189,6 @@
     "startQueue": "Start Queue ({{count}})",
     "newVideo": "New Video",
     "noVideo": "No video selected",
-    "pasteToBegin": "Paste a video link to begin",
     "queueProgress": "Queue {{index}} of {{total}} ({{percent}})"
   },
   "common": {

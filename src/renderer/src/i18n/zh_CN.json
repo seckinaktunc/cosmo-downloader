@@ -17,6 +17,8 @@
     "clear": "清除",
     "close": "关闭",
     "paste": "粘贴",
+    "pasteToBegin": "粘贴以开始",
+    "copyVideoUrlFirst": "请先复制一个视频链接",
     "queueDisabled": "此版本不支持队列",
     "history": "历史记录",
     "choose": "选择",
@@ -187,7 +189,6 @@
     "startQueue": "开始队列 ({{count}})",
     "newVideo": "新视频",
     "noVideo": "未选择视频",
-    "pasteToBegin": "粘贴视频链接以开始",
     "queueProgress": "队列 {{index}} / {{total}} ({{percent}})"
   },
   "common": {

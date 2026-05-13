@@ -17,6 +17,8 @@
     "clear": "Temizle",
     "close": "Kapat",
     "paste": "Yapıştır",
+    "pasteToBegin": "Başlamak için yapıştır",
+    "copyVideoUrlFirst": "Önce bir video bağlantısı kopyala",
     "queueDisabled": "Kuyruk bu sürümde kullanılamıyor",
     "history": "Geçmiş",
     "choose": "Seç",
@@ -187,7 +189,6 @@
     "startQueue": "Kuyruğu Başlat ({{count}})",
     "newVideo": "Yeni Video",
     "noVideo": "Seçili bir video yok",
-    "pasteToBegin": "Bir video bağlantısı yapıştır",
     "queueProgress": "Kuyruk {{index}} / {{total}} ({{percent}})"
   },
   "common": {

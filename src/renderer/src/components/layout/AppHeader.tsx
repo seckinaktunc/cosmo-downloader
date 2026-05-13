@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMetadataAutoFetchKey } from '../../lib/metadataAutoFetch';
-import { getValidClipboardUrl } from '../../lib/urlInput';
+import { readValidClipboardUrl } from '../../lib/urlInput';
 import { cn } from '../../lib/utils';
 import { useDownloadStore } from '../../stores/downloadStore';
 import { useQueueStore } from '../../stores/queueStore';
@@ -36,8 +36,7 @@ export function AppHeader(): React.JSX.Element {
       return null;
     }
 
-    const result = await window.cosmo.clipboard.readText();
-    const nextClipboardUrl = result.ok ? getValidClipboardUrl(result.data) : null;
+    const nextClipboardUrl = await readValidClipboardUrl();
     setClipboardUrl(nextClipboardUrl);
     return nextClipboardUrl;
   }, [url]);
