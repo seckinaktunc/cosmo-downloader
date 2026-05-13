@@ -14,7 +14,7 @@ Make sure the selected browser is fully closed before downloading. Some browsers
 
 ## Where are my downloads saved?
 
-By default, to your system **Downloads** folder. You can change the default in **Preferences > Default download location**, or choose a per-video location in **Export Settings**.
+By default, to your system **Downloads** folder. You can also choose a per-video location in **Export Settings**.
 
 ## Does uninstall delete my downloads or app data?
 
@@ -40,11 +40,11 @@ The **History** tab. You can re-queue any past download with a click, or copy th
 
 ## Why don't I see subtitles yet?
 
-Subtitle support is on the [roadmap](README.md#roadmap) but not yet implemented.
+Subtitle support is on the [roadmap](../README.md#roadmap) but not yet implemented.
 
 ## Is there a macOS or Linux version?
 
-Linux x64 builds are available on the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page as AppImages. A macOS build is still being prepared.
+Yes. Linux x64 builds are available on the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page as AppImages. macOS builds are available there as native DMGs for Apple Silicon (`arm64`) and Intel (`x64`) Macs.
 
 ## Does it work offline?
 

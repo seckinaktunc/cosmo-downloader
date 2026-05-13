@@ -61,7 +61,7 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 - Clipboard-aware URL intake
 - Browser cookie import for age-restricted content (check [Supported Browsers](https://github.com/yt-dlp/yt-dlp/issues/11352#issuecomment-2438518560))
 - Auto-update checks via GitHub Releases
-- Configurable download location and filename rules
+- Editable per-video download location and filename rules
 
 ## Installation
 
@@ -71,13 +71,20 @@ If it helps you, that's enough for me. If you have ideas, issues, or want to con
 2. Run the installer.
 3. Launch **Cosmo Downloader** from the Start Menu or your desktop.
 
+### macOS
+
+1. Grab `cosmo-downloader-<version>-mac-arm64.dmg` for Apple Silicon or `cosmo-downloader-<version>-mac-x64.dmg` for Intel from the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page.
+2. Open the DMG and drag **Cosmo Downloader** into `Applications`.
+3. Launch **Cosmo Downloader** from `Applications`.
+4. If macOS blocks the first launch, right-click the app and choose **Open** once, or allow it in **System Settings > Privacy & Security**.
+
 ### Linux (x64)
 
 1. Grab the latest `cosmo-downloader-<version>.AppImage` from the [Releases](https://github.com/seckinaktunc/cosmo-downloader/releases) page.
 2. Mark it executable if needed: `chmod +x cosmo-downloader-<version>.AppImage`
 3. Run the AppImage.
 
-Windows installer builds and Linux AppImage builds self-update on launch when a new release is available (can be disabled in Preferences).
+Packaged Windows, Linux, and macOS releases can check for updates on launch when a new release is available (can be disabled in Preferences).
 
 ## Usage
 
@@ -99,116 +106,6 @@ Cosmo Downloader is a standard Electron app:
 - **FFmpeg + ffprobe:** Encoding, remuxing, trimming, and media inspection (bundled)
 
 State is managed with Zustand. IPC between main and renderer is fully typed. Tests are written in Vitest.
-
-## Build from source
-
-### Prerequisites
-
-- **[Node.js](https://nodejs.org/) 22.x** and **npm**
-- **[Git](https://git-scm.com/)**
-- For Windows builds: **Developer Mode enabled** (or an Administrator shell) so `electron-builder` can create symlinks during packaging. The `preflight:win-symlink` script will tell you if this isn't set up.
-
-### Get the code
-
-```bash
-git clone https://github.com/seckinaktunc/cosmo-downloader.git
-cd cosmo-downloader
-npm install
-npm run download:binaries:current
-```
-
-`download:binaries:current` fetches `yt-dlp`, `Deno`, `ffmpeg`, and `ffprobe` for your current platform into `resources/bin/<platform-arch>/`. This must run at least once before `dev` or any build. Use `npm run download:binaries` to fetch binaries for all platforms (useful for CI).
-
-### Run in dev
-
-```bash
-npm run dev
-```
-
-Starts the app with hot-reload for the renderer.
-
-### Build a Windows installer
-
-```bash
-npm run build:win:local
-```
-
-Runs the full pipeline: fetch binaries -> typecheck -> bundle -> preflight symlink check -> `electron-builder`. The installer lands in `dist/cosmo-downloader-<version>-setup.exe`.
-
-> `build:win` (no `:local`) skips the preflight and binary-fetch steps - it's used by the CI workflow where those are handled separately. Use `build:win:local` for local builds.
-
-### Build a Linux AppImage
-
-```bash
-npm run build:linux:local
-```
-
-Runs the full Linux packaging flow: fetch binaries -> typecheck -> bundle -> `electron-builder` AppImage x64 packaging.
-
-> `build:linux` (no `:local`) is the CI-oriented packaging command. Use `build:linux:local` for local Linux release builds.
-
-### Build a macOS release
-
-```bash
-npm run build:mac:local
-```
-
-Runs the full macOS release flow on a Mac: fetch binaries for the current Mac architecture -> typecheck -> bundle -> `electron-builder` -> verify signing, Gatekeeper acceptance, and stapled notarization tickets.
-
-Before running it, create a local `.env.mac.local` from `.env.mac.local.example` and populate:
-
-- `APPLE_ID`
-- `APPLE_APP_SPECIFIC_PASSWORD`
-- `APPLE_TEAM_ID`
-- optional `CSC_NAME`
-
-The local script merges `.env.mac.local` into the current shell environment without overriding already-exported values. The real certificate should stay in macOS Keychain.
-
-> `build:mac` (no `:local`) is the CI-oriented packaging command. Use `build:mac:local` for local notarized release builds.
-
-### Code signing (optional)
-
-For a signed installer, set these before building:
-
-- `WIN_CSC_LINK` - base64-encoded `.pfx` certificate
-- `WIN_CSC_KEY_PASSWORD` - its password
-
-If either is missing, an unsigned installer is produced. You can sanity-check a signed artifact with `npm run verify:win-signing`.
-
-### macOS release secrets
-
-For local notarized Mac builds, use `.env.mac.local` with Apple ID credentials.
-
-For GitHub Actions macOS release jobs, configure these repository secrets:
-
-- `CSC_LINK` - base64-encoded `.p12` export of the `Developer ID Application` certificate
-- `CSC_KEY_PASSWORD` - password used when exporting that `.p12`
-- `APPLE_API_KEY_P8` - App Store Connect Team API key contents
-- `APPLE_API_KEY_ID` - App Store Connect API key ID
-- `APPLE_API_ISSUER` - App Store Connect issuer UUID
-
-Mac release uploads are split by architecture for manual downloads:
-
-- native `arm64` DMG/ZIP
-- native `x64` DMG/ZIP
-
-Mac in-app auto-updates are also split by architecture:
-
-- `latest-arm64-mac.yml`
-- `latest-x64-mac.yml`
-
-Older shipped Mac builds that still expect `latest-mac.yml` will need a one-time manual reinstall to pick up the new updater channel layout.
-
-### Other scripts
-
-| Script                   | What it does                                                 |
-| ------------------------ | ------------------------------------------------------------ |
-| `npm run lint`           | ESLint over the project                                      |
-| `npm run format`         | Prettier write                                               |
-| `npm run release:public` | Prepare, tag, and trigger the public GitHub release workflow |
-| `npm run typecheck`      | Node + web TS projects                                       |
-| `npm run test`           | Vitest (one-shot)                                            |
-| `npm run build:unpack`   | Unpacked build for local inspection (no installer)           |
 
 ## Roadmap
 
@@ -247,6 +144,7 @@ Released under a **[Custom Non-Commercial License](LICENSE)**. Personal use and 
 ## More
 
 - [Changelog](docs/CHANGELOG.md)
+- [Build from Source](docs/BUILD_FROM_SOURCE.md)
 - [FAQ](docs/FAQ.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Disclaimer](docs/DISCLAIMER.md)
