@@ -48,8 +48,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function createQueueSnapshotItem(item: QueueItem): QueueItem {
-  const { progress: _progress, ...snapshotItem } = item;
-  return { ...snapshotItem };
+  const snapshotItem = { ...item };
+  delete snapshotItem.progress;
+  return snapshotItem;
 }
 
 function deserializeItems(value: unknown): LoadedQueueItems {

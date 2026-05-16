@@ -1,49 +1,49 @@
-import { existsSync } from 'fs'
-import { join } from 'path'
-import type { CookieBrowser, CookieBrowserOption } from '../../shared/types'
+import { existsSync } from 'fs';
+import { join } from 'path';
+import type { CookieBrowser, CookieBrowserOption } from '../../shared/types';
 
 export type BrowserCandidate = {
-  id: CookieBrowser
-  label: string
-  paths: string[]
-}
+  id: CookieBrowser;
+  label: string;
+  paths: string[];
+};
 
-type PathExists = (path: string) => boolean
+type PathExists = (path: string) => boolean;
 
 function envPath(name: string): string {
-  return process.env[name] ?? ''
+  return process.env[name] ?? '';
 }
 
 function pathDirectories(): string[] {
-  const delimiter = process.platform === 'win32' ? ';' : ':'
+  const delimiter = process.platform === 'win32' ? ';' : ':';
   return envPath('PATH')
     .split(delimiter)
     .map((entry) => entry.trim())
-    .filter(Boolean)
+    .filter(Boolean);
 }
 
 function windowsChromiumPathCandidates(): string[] {
   return pathDirectories().flatMap((directory) => {
-    const chromiumExecutable = join(directory, 'chromium.exe')
-    const chromeExecutable = join(directory, 'chrome.exe')
+    const chromiumExecutable = join(directory, 'chromium.exe');
+    const chromeExecutable = join(directory, 'chrome.exe');
     return /chromium/i.test(directory)
       ? [chromiumExecutable, chromeExecutable]
-      : [chromiumExecutable]
-  })
+      : [chromiumExecutable];
+  });
 }
 
 function windowsProgramPaths(...parts: string[]): string[] {
-  const programFiles = envPath('PROGRAMFILES')
-  const programFilesX86 = envPath('PROGRAMFILES(X86)')
-  return [join(programFiles, ...parts), join(programFilesX86, ...parts)]
+  const programFiles = envPath('PROGRAMFILES');
+  const programFilesX86 = envPath('PROGRAMFILES(X86)');
+  return [join(programFiles, ...parts), join(programFilesX86, ...parts)];
 }
 
 export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidate[] {
-  const localAppData = envPath('LOCALAPPDATA')
-  const programFiles = envPath('PROGRAMFILES')
-  const programFilesX86 = envPath('PROGRAMFILES(X86)')
-  const appData = envPath('APPDATA')
-  const home = envPath('HOME') || envPath('USERPROFILE')
+  const localAppData = envPath('LOCALAPPDATA');
+  const programFiles = envPath('PROGRAMFILES');
+  const programFilesX86 = envPath('PROGRAMFILES(X86)');
+  const appData = envPath('APPDATA');
+  const home = envPath('HOME') || envPath('USERPROFILE');
 
   if (platform === 'win32') {
     return [
@@ -123,7 +123,7 @@ export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidat
           ...windowsProgramPaths('Naver', 'Naver Whale', 'Application', 'whale.exe')
         ]
       }
-    ]
+    ];
   }
 
   if (platform === 'darwin') {
@@ -136,7 +136,7 @@ export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidat
       { id: 'opera', label: 'Opera', paths: ['/Applications/Opera.app'] },
       { id: 'vivaldi', label: 'Vivaldi', paths: ['/Applications/Vivaldi.app'] },
       { id: 'whale', label: 'Whale', paths: ['/Applications/Whale.app'] }
-    ]
+    ];
   }
 
   return [
@@ -160,7 +160,7 @@ export function getBrowserCandidates(platform: NodeJS.Platform): BrowserCandidat
     { id: 'opera', label: 'Opera', paths: ['/usr/bin/opera'] },
     { id: 'vivaldi', label: 'Vivaldi', paths: ['/usr/bin/vivaldi'] },
     { id: 'whale', label: 'Whale', paths: ['/usr/bin/whale', '/usr/bin/naver-whale'] }
-  ]
+  ];
 }
 
 export function detectCookieBrowsers(
@@ -173,7 +173,7 @@ export function detectCookieBrowsers(
       id: candidate.id,
       label: candidate.label,
       exists: true
-    }))
+    }));
 
-  return [{ id: 'none', label: 'None', exists: true }, ...detected]
+  return [{ id: 'none', label: 'None', exists: true }, ...detected];
 }
