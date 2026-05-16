@@ -46,9 +46,7 @@ export function AppHeader(): React.JSX.Element {
   }, [settings]);
 
   useEffect(() => {
-    if (!metadataAutoFetchKey) {
-      return;
-    }
+    if (!metadataAutoFetchKey) return;
 
     const timer = window.setTimeout(() => {
       const latestSettings = latestSettingsRef.current;
@@ -81,16 +79,12 @@ export function AppHeader(): React.JSX.Element {
 
   const handleClear = (): void => {
     clear();
-    if (!activeQueueItemId) {
-      resetDownload();
-    }
+    if (!activeQueueItemId) resetDownload();
   };
 
   const handlePaste = async (): Promise<void> => {
     const nextClipboardUrl = clipboardUrl ?? (await refreshClipboardUrl());
-    if (!nextClipboardUrl) {
-      return;
-    }
+    if (!nextClipboardUrl) return;
 
     handleUrlChange(nextClipboardUrl);
   };
@@ -105,26 +99,11 @@ export function AppHeader(): React.JSX.Element {
   };
 
   const toggleAlwaysOnTop = async (): Promise<void> => {
-    if (!settings) {
-      return;
-    }
+    if (!settings) return;
 
     const alwaysOnTop = !settings.alwaysOnTop;
     const result = await window.cosmo.window.setAlwaysOnTop(alwaysOnTop);
-    if (result.ok) {
-      await updateSettings({ alwaysOnTop });
-    }
-  };
-
-  const handleHeaderPointerDownCapture = (event: React.PointerEvent<HTMLElement>): void => {
-    const target = event.target as HTMLElement;
-    if (target.closest('input, textarea, select, [contenteditable="true"]')) {
-      return;
-    }
-
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
+    if (result.ok) await updateSettings({ alwaysOnTop });
   };
 
   const isMac = environment?.platform === 'darwin';
@@ -151,10 +130,9 @@ export function AppHeader(): React.JSX.Element {
     >
       <div
         className={cn(
-          'no-drag row-start-1 flex items-center',
+          'row-start-1 flex items-center',
           isMac ? 'col-start-3 flex-row-reverse' : 'col-start-1'
         )}
-        onPointerDownCapture={handleHeaderPointerDownCapture}
       >
         <Button
           variant="ghost"
@@ -178,7 +156,6 @@ export function AppHeader(): React.JSX.Element {
 
       <div
         className="no-drag relative col-start-2 row-start-1 flex h-12 items-center"
-        onPointerDownCapture={handleHeaderPointerDownCapture}
         onContextMenu={(event) => {
           event.preventDefault();
           void refreshClipboardUrl();
