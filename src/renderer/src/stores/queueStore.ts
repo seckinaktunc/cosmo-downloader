@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import type {
   AppSettings,
+  DownloadProgress,
   ExportSettings,
   QueueItem,
+  QueueProgressEvent,
   QueueSnapshot,
   VideoMetadata
 } from '../../../shared/types';
@@ -12,6 +14,7 @@ type QueueState = {
   items: QueueItem[];
   activeItemId?: string;
   paused: boolean;
+  progressById: Record<string, DownloadProgress | undefined>;
   isSubscribed: boolean;
   error?: string;
   load: () => Promise<void>;
@@ -45,12 +48,27 @@ type PendingExportSettingsSave = {
 
 const pendingExportSettingsSaves = new Map<string, PendingExportSettingsSave>();
 
-function applySnapshot(set: (state: Partial<QueueState>) => void, snapshot: QueueSnapshot): void {
-  set({
-    items: snapshot.items,
-    activeItemId: snapshot.activeItemId,
-    paused: snapshot.paused,
-    error: undefined
+function applySnapshot(
+  set: (state: Partial<QueueState> | ((state: QueueState) => Partial<QueueState>)) => void,
+  snapshot: QueueSnapshot
+): void {
+  set((state) => {
+    const activeProgressIds = new Set(
+      snapshot.items.filter((item) => item.status === 'active').map((item) => item.id)
+    );
+    const progressById = Object.fromEntries(
+      Object.entries(state.progressById).filter(
+        ([itemId, progress]) => progress != null && activeProgressIds.has(itemId)
+      )
+    );
+
+    return {
+      items: snapshot.items,
+      activeItemId: snapshot.activeItemId,
+      paused: snapshot.paused,
+      progressById,
+      error: undefined
+    };
   });
 
   const activeExportTarget = useUiStore.getState().activeExportTarget;
@@ -60,6 +78,23 @@ function applySnapshot(set: (state: Partial<QueueState>) => void, snapshot: Queu
   ) {
     useUiStore.getState().setActiveExportTarget(null);
   }
+}
+
+function applyProgressEvent(
+  set: (state: Partial<QueueState> | ((state: QueueState) => Partial<QueueState>)) => void,
+  event: QueueProgressEvent
+): void {
+  set((state) => {
+    const progressById = { ...state.progressById };
+
+    if (event.cleared || event.progress == null) {
+      delete progressById[event.itemId];
+    } else {
+      progressById[event.itemId] = event.progress;
+    }
+
+    return { progressById };
+  });
 }
 
 function optimisticallyApplyExportSettings(
@@ -77,7 +112,7 @@ function optimisticallyApplyExportSettings(
 }
 
 async function saveExportSettings(
-  set: (state: Partial<QueueState>) => void,
+  set: (state: Partial<QueueState> | ((state: QueueState) => Partial<QueueState>)) => void,
   itemId: string,
   exportSettings: ExportSettings
 ): Promise<void> {
@@ -89,6 +124,7 @@ async function saveExportSettings(
 export const useQueueStore = create<QueueState>((set, get) => ({
   items: [],
   paused: true,
+  progressById: {},
   isSubscribed: false,
 
   load: async () => {
@@ -106,6 +142,7 @@ export const useQueueStore = create<QueueState>((set, get) => ({
     }
 
     window.cosmo.queue.onSnapshot((snapshot) => applySnapshot(set, snapshot));
+    window.cosmo.queue.onProgress((event) => applyProgressEvent(set, event));
     set({ isSubscribed: true });
   },
 

@@ -1,9 +1,10 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import type { WebContents } from 'electron';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_EXPORT_SETTINGS } from '@shared/defaults';
+import { IPC_CHANNELS } from '@shared/ipc';
 import type {
   AppSettings,
   DownloadProgress,
@@ -15,6 +16,10 @@ import type { DownloadService } from '@main/services/downloadService';
 import type { HistoryService } from '@main/services/historyService';
 import { QueueService } from '@main/services/queueService';
 
+const { mockQueueWebContents } = vi.hoisted(() => ({
+  mockQueueWebContents: [] as Array<{ isDestroyed: () => boolean; send: ReturnType<typeof vi.fn> }>
+}));
+
 vi.mock('electron', () => ({
   app: {
     getPath: () => ''
@@ -23,13 +28,13 @@ vi.mock('electron', () => ({
     showSaveDialog: vi.fn()
   },
   webContents: {
-    getAllWebContents: () => []
+    getAllWebContents: () => mockQueueWebContents
   }
 }));
 
 const { dialog } = await import('electron');
-
 const tempDirs: string[] = [];
+const services: QueueService[] = [];
 
 const settings: AppSettings = {
   hardwareAcceleration: true,
@@ -65,11 +70,13 @@ function metadata(title: string): VideoMetadata {
 function createQueueService(): QueueService {
   const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
   tempDirs.push(directory);
-  return new QueueService(
+  const service = new QueueService(
     {} as DownloadService,
     {} as HistoryService,
     join(directory, 'queue.json')
   );
+  services.push(service);
+  return service;
 }
 
 function queueItem(id: string, status: QueueItem['status']): QueueItem {
@@ -84,7 +91,9 @@ function queueItem(id: string, status: QueueItem['status']): QueueItem {
   };
 }
 
-afterEach(() => {
+afterEach(async () => {
+  await Promise.allSettled(services.splice(0).map((service) => service.dispose()));
+  mockQueueWebContents.length = 0;
   while (tempDirs.length > 0) {
     const directory = tempDirs.pop();
     if (directory) {
@@ -122,6 +131,7 @@ describe('QueueService export settings updates', () => {
     );
 
     const service = new QueueService({} as DownloadService, {} as HistoryService, filePath);
+    services.push(service);
 
     expect(service.getSnapshot().items[0].exportSettings.videoBitrate).toBe('auto');
     expect(service.getSnapshot().items[0].exportSettings.trimStartSeconds).toBe(0);
@@ -143,6 +153,7 @@ describe('QueueService export settings updates', () => {
     );
 
     const service = new QueueService({} as DownloadService, {} as HistoryService, filePath);
+    services.push(service);
 
     expect(service.getSnapshot().items.map((item) => item.id)).toEqual(['pending']);
   });
@@ -162,6 +173,96 @@ describe('QueueService export settings updates', () => {
 
     expect(result.ok).toBe(true);
     expect(service.getSnapshot().items[0].exportSettings).toEqual(nextSettings);
+  });
+
+  it('does not persist or broadcast full snapshots on live progress updates', async () => {
+    let emitProgress: ((progress: DownloadProgress) => void) | undefined;
+    let resolveDownload: ((value: { ok: true; data: DownloadProgress }) => void) | undefined;
+    const downloadService = {
+      start: vi.fn().mockImplementation(
+        async (
+          _sender,
+          _request,
+          options?: { onProgress?: (progress: DownloadProgress) => void }
+        ) =>
+          new Promise((resolve) => {
+            emitProgress = options?.onProgress;
+            resolveDownload = resolve;
+          })
+      ),
+      cancel: vi.fn()
+    } as unknown as DownloadService;
+    const historyService = {
+      addStarted: vi.fn((item: QueueItem) => ({
+        id: `${item.id}-history`,
+        queueItemId: item.id,
+        metadata: item.metadata,
+        exportSettings: item.exportSettings,
+        settings: item.settings,
+        status: 'started',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      update: vi.fn()
+    } as unknown as HistoryService;
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
+    tempDirs.push(directory);
+    const filePath = join(directory, 'queue.json');
+    const broadcastTarget = { isDestroyed: () => false, send: vi.fn() };
+    mockQueueWebContents.push(broadcastTarget);
+    const service = new QueueService(downloadService, historyService, filePath);
+    services.push(service);
+    const addResult = await service.add({
+      metadata: metadata('one'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!addResult.ok) throw new Error(addResult.error.message);
+
+    service.start({ isDestroyed: () => false } as WebContents);
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().activeItemId).toBe(addResult.data.items[0].id);
+    });
+    await service.dispose();
+    const queueFileBeforeProgress = readFileSync(filePath, 'utf8');
+    broadcastTarget.send.mockClear();
+
+    emitProgress?.({
+      stage: 'downloading',
+      stageLabel: 'Downloading',
+      percentage: 42,
+      logPath: '/logs/one.log'
+    });
+
+    await service.dispose();
+    const queueFileAfterProgress = readFileSync(filePath, 'utf8');
+
+    expect(queueFileAfterProgress).toBe(queueFileBeforeProgress);
+    expect(
+      broadcastTarget.send.mock.calls.some(([channel]) => channel === IPC_CHANNELS.queue.snapshot)
+    ).toBe(false);
+    expect(
+      broadcastTarget.send.mock.calls.some(([channel, event]) => {
+        return (
+          channel === IPC_CHANNELS.queue.progress &&
+          event.itemId === addResult.data.items[0].id &&
+          event.progress?.percentage === 42 &&
+          event.cleared === false
+        );
+      })
+    ).toBe(true);
+
+    resolveDownload?.({
+      ok: true,
+      data: {
+        stage: 'completed',
+        stageLabel: 'Completed',
+        percentage: 100,
+        outputPath: '/downloads/video.mp4',
+        logPath: '/logs/video.log'
+      }
+    });
   });
 
   it('does not prompt when a queue item is added without a save path', async () => {
@@ -190,6 +291,7 @@ describe('QueueService export settings updates', () => {
       historyService,
       join(directory, 'queue.json')
     );
+    services.push(service);
 
     const addResult = await service.add({
       metadata: metadata('matching-request'),
@@ -202,8 +304,38 @@ describe('QueueService export settings updates', () => {
     expect(historyService.findReusableFetchedByRequestId).toHaveBeenCalledWith('matching-request');
   });
 
-  it('rejects export settings updates for completed queue items', async () => {
-    const service = createQueueService();
+  it('rejects export settings updates for active queue items', async () => {
+    let resolveDownload: ((value: { ok: true; data: DownloadProgress }) => void) | undefined;
+    const downloadService = {
+      start: vi.fn().mockImplementation(
+        async () =>
+          new Promise((resolve) => {
+            resolveDownload = resolve;
+          })
+      ),
+      cancel: vi.fn()
+    } as unknown as DownloadService;
+    const historyService = {
+      addStarted: vi.fn((item: QueueItem) => ({
+        id: `${item.id}-history`,
+        queueItemId: item.id,
+        metadata: item.metadata,
+        exportSettings: item.exportSettings,
+        settings: item.settings,
+        status: 'started',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      update: vi.fn()
+    } as unknown as HistoryService;
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
+    tempDirs.push(directory);
+    const service = new QueueService(
+      downloadService,
+      historyService,
+      join(directory, 'queue.json')
+    );
+    services.push(service);
     const addResult = await service.add({
       metadata: metadata('one'),
       exportSettings: DEFAULT_EXPORT_SETTINGS,
@@ -211,7 +343,11 @@ describe('QueueService export settings updates', () => {
     });
     if (!addResult.ok) throw new Error(addResult.error.message);
     const itemId = addResult.data.items[0].id;
-    service.getSnapshot().items[0].status = 'completed';
+    service.start({ isDestroyed: () => false } as WebContents);
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().activeItemId).toBe(itemId);
+    });
 
     const result = service.updateExportSettings({
       itemId,
@@ -219,6 +355,17 @@ describe('QueueService export settings updates', () => {
     });
 
     expect(result.ok).toBe(false);
+
+    resolveDownload?.({
+      ok: true,
+      data: {
+        stage: 'completed',
+        stageLabel: 'Completed',
+        percentage: 100,
+        outputPath: '/downloads/video.mp4',
+        logPath: '/logs/video.log'
+      }
+    });
   });
 
   it('prunes completed queue items after history is updated', async () => {
@@ -253,6 +400,7 @@ describe('QueueService export settings updates', () => {
       historyService,
       join(directory, 'queue.json')
     );
+    services.push(service);
     const addResult = await service.add({
       metadata: metadata('one'),
       exportSettings: DEFAULT_EXPORT_SETTINGS,
@@ -269,6 +417,189 @@ describe('QueueService export settings updates', () => {
       outputPath: '/downloads/video.mp4',
       logPath: '/logs/video.log'
     });
+  });
+
+  it('emits cleared queue progress when a download fails', async () => {
+    let emitProgress: ((progress: DownloadProgress) => void) | undefined;
+    let resolveDownload:
+      | ((value: {
+          ok: false;
+          error: { code: 'PROCESS_FAILED'; message: string; details: string };
+        }) => void)
+      | undefined;
+    const downloadService = {
+      start: vi.fn().mockImplementation(
+        async (
+          _sender,
+          _request,
+          options?: { onProgress?: (progress: DownloadProgress) => void }
+        ) =>
+          new Promise((resolve) => {
+            emitProgress = options?.onProgress;
+            resolveDownload = resolve;
+          })
+      ),
+      cancel: vi.fn()
+    } as unknown as DownloadService;
+    const historyService = {
+      addStarted: vi.fn((item: QueueItem) => ({
+        id: `${item.id}-history`,
+        queueItemId: item.id,
+        metadata: item.metadata,
+        exportSettings: item.exportSettings,
+        settings: item.settings,
+        status: 'started',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      update: vi.fn()
+    } as unknown as HistoryService;
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
+    tempDirs.push(directory);
+    const broadcastTarget = { isDestroyed: () => false, send: vi.fn() };
+    mockQueueWebContents.push(broadcastTarget);
+    const service = new QueueService(
+      downloadService,
+      historyService,
+      join(directory, 'queue.json')
+    );
+    services.push(service);
+    const addResult = await service.add({
+      metadata: metadata('one'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!addResult.ok) throw new Error(addResult.error.message);
+
+    service.start({ isDestroyed: () => false } as WebContents);
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().activeItemId).toBe(addResult.data.items[0].id);
+    });
+
+    emitProgress?.({
+      stage: 'downloading',
+      stageLabel: 'Downloading',
+      percentage: 12,
+      logPath: '/logs/one.log'
+    });
+    broadcastTarget.send.mockClear();
+
+    resolveDownload?.({
+      ok: false,
+      error: {
+        code: 'PROCESS_FAILED',
+        message: 'ffmpeg failed',
+        details: '/logs/one.log'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().items[0]?.status).toBe('failed');
+    });
+
+    expect(service.getSnapshot().items[0]?.progress).toBeUndefined();
+    expect(
+      broadcastTarget.send.mock.calls.some(([channel, event]) => {
+        return (
+          channel === IPC_CHANNELS.queue.progress &&
+          event.itemId === addResult.data.items[0].id &&
+          event.cleared === true &&
+          event.logPath === '/logs/one.log'
+        );
+      })
+    ).toBe(true);
+  });
+
+  it('emits cleared queue progress when a download is paused', async () => {
+    let emitProgress: ((progress: DownloadProgress) => void) | undefined;
+    let resolveDownload:
+      | ((value: {
+          ok: false;
+          error: { code: 'CANCELLED'; message: string; details: string };
+        }) => void)
+      | undefined;
+    const downloadService = {
+      start: vi.fn().mockImplementation(
+        async (
+          _sender,
+          _request,
+          options?: { onProgress?: (progress: DownloadProgress) => void }
+        ) =>
+          new Promise((resolve) => {
+            emitProgress = options?.onProgress;
+            resolveDownload = resolve;
+          })
+      ),
+      cancel: vi.fn()
+    } as unknown as DownloadService;
+    const historyService = {
+      addStarted: vi.fn((item: QueueItem) => ({
+        id: `${item.id}-history`,
+        queueItemId: item.id,
+        metadata: item.metadata,
+        exportSettings: item.exportSettings,
+        settings: item.settings,
+        status: 'started',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      update: vi.fn()
+    } as unknown as HistoryService;
+    const directory = mkdtempSync(join(tmpdir(), 'cosmo-queue-'));
+    tempDirs.push(directory);
+    const broadcastTarget = { isDestroyed: () => false, send: vi.fn() };
+    mockQueueWebContents.push(broadcastTarget);
+    const service = new QueueService(
+      downloadService,
+      historyService,
+      join(directory, 'queue.json')
+    );
+    services.push(service);
+    const addResult = await service.add({
+      metadata: metadata('one'),
+      exportSettings: DEFAULT_EXPORT_SETTINGS,
+      settings
+    });
+    if (!addResult.ok) throw new Error(addResult.error.message);
+
+    service.start({ isDestroyed: () => false } as WebContents);
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().activeItemId).toBe(addResult.data.items[0].id);
+    });
+
+    emitProgress?.({
+      stage: 'downloading',
+      stageLabel: 'Downloading',
+      percentage: 55,
+      logPath: '/logs/one.log'
+    });
+    service.pause();
+    broadcastTarget.send.mockClear();
+
+    resolveDownload?.({
+      ok: false,
+      error: {
+        code: 'CANCELLED',
+        message: 'Cancelled by user.',
+        details: '/logs/one.log'
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(service.getSnapshot().items[0]?.status).toBe('paused');
+    });
+
+    expect(service.getSnapshot().items[0]?.progress).toBeUndefined();
+    expect(
+      broadcastTarget.send.mock.calls.some(([channel, event]) => {
+        return (
+          channel === IPC_CHANNELS.queue.progress &&
+          event.itemId === addResult.data.items[0].id &&
+          event.cleared === true &&
+          event.logPath === '/logs/one.log'
+        );
+      })
+    ).toBe(true);
   });
 
   it('skips the active item, preserves cancelled history, and continues to the next item', async () => {
@@ -317,6 +648,7 @@ describe('QueueService export settings updates', () => {
       historyService,
       join(directory, 'queue.json')
     );
+    services.push(service);
     const firstAddResult = await service.add({
       metadata: metadata('one'),
       exportSettings: DEFAULT_EXPORT_SETTINGS,
@@ -403,6 +735,7 @@ describe('QueueService export settings updates', () => {
       historyService,
       join(directory, 'queue.json')
     );
+    services.push(service);
     const addResult = await service.add({
       metadata: metadata('one'),
       exportSettings: DEFAULT_EXPORT_SETTINGS,
@@ -475,6 +808,7 @@ describe('QueueService export settings updates', () => {
       historyService,
       join(directory, 'queue.json')
     );
+    services.push(service);
     const firstAddResult = await service.add({
       metadata: metadata('one'),
       exportSettings: DEFAULT_EXPORT_SETTINGS,

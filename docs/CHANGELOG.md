@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.1.0
+
+### Added
+
+- Added a shared buffered JSON persistence utility for queue, history, and settings data.
+- Added corrupt-file backup recovery for persisted queue, history, and settings files.
+- Added a dedicated queue progress IPC event for lightweight per-item runtime updates.
+
+### Changed
+
+- Changed queue persistence so live download progress is kept in memory instead of being written to `queue.json`.
+- Changed queue snapshots to carry structural queue state only, while runtime progress is tracked separately in the renderer.
+- Changed queue, history, and settings writes to use batched async persistence with immediate flushes for critical state transitions and app shutdown.
+
+### Fixed
+
+- Fixed excessive queue disk writes and full queue snapshot broadcasts during active downloads.
+- Fixed unnecessary queue rerenders by applying per-item runtime progress deltas instead of replacing the full queue state on every progress tick.
+- Fixed preview download state so queued download progress no longer overrides standalone preview progress tracking.
+
 ## v1.0.9
 
 ### Added

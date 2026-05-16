@@ -1,6 +1,5 @@
 import { app, webContents, type WebContents } from 'electron';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { IPC_CHANNELS } from '../../shared/ipc';
 import { mergeExportSettings } from '../../shared/defaults';
@@ -14,6 +13,7 @@ import type {
   QueueItem,
   QueueMoveManyRequest,
   QueueMoveRequest,
+  QueueProgressEvent,
   QueueReorderRequest,
   QueueSnapshot
 } from '../../shared/types';
@@ -21,8 +21,23 @@ import { DownloadService } from './downloadService';
 import { HistoryService } from './historyService';
 import { movePendingItem, movePendingItems, removeManyQueueItems } from '../../shared/queueModel';
 import { fail, ok } from '../utils/ipcResult';
+import { BufferedJsonFile, loadJsonFileState } from '../utils/jsonFileState';
 
 const QUEUE_FILE = 'queue.json';
+
+type LoadedQueueItems = {
+  items: QueueItem[];
+  needsRewrite: boolean;
+};
+
+const QUEUE_STATUSES = new Set<QueueItem['status']>([
+  'pending',
+  'active',
+  'paused',
+  'completed',
+  'failed',
+  'cancelled'
+]);
 
 function now(): string {
   return new Date().toISOString();
@@ -32,32 +47,82 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
-function readItems(filePath: string): QueueItem[] {
-  if (!existsSync(filePath)) {
-    return [];
+function createQueueSnapshotItem(item: QueueItem): QueueItem {
+  const { progress: _progress, ...snapshotItem } = item;
+  return { ...snapshotItem };
+}
+
+function deserializeItems(value: unknown): LoadedQueueItems {
+  if (!Array.isArray(value)) {
+    return { items: [], needsRewrite: true };
   }
 
-  try {
-    const parsed = JSON.parse(readFileSync(filePath, 'utf8')) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
+  let needsRewrite = false;
+  const items: QueueItem[] = [];
+
+  for (const item of value) {
+    if (!(isRecord(item) && typeof item.id === 'string' && isRecord(item.metadata))) {
+      needsRewrite = true;
+      continue;
     }
 
-    return parsed
-      .filter((item): item is QueueItem => {
-        return isRecord(item) && typeof item.id === 'string' && isRecord(item.metadata);
-      })
-      .map((item) => ({
-        ...item,
-        exportSettings: mergeExportSettings(item.exportSettings),
-        ...(item.status === 'active'
-          ? { status: 'paused' as const, updatedAt: now(), progress: undefined }
-          : {})
-      }))
-      .filter((item) => item.status !== 'completed' && item.status !== 'cancelled');
-  } catch {
-    return [];
+    const status = QUEUE_STATUSES.has(item.status as QueueItem['status'])
+      ? (item.status as QueueItem['status'])
+      : 'pending';
+    const exportSettings = mergeExportSettings(item.exportSettings);
+    const hadRuntimeProgress = item.progress != null;
+
+    if (status !== item.status || hadRuntimeProgress) {
+      needsRewrite = true;
+    }
+
+    if (status === 'completed' || status === 'cancelled') {
+      needsRewrite = true;
+      continue;
+    }
+
+    const normalizedStatus = status === 'active' ? 'paused' : status;
+    if (normalizedStatus !== status) {
+      needsRewrite = true;
+    }
+
+    if (JSON.stringify(exportSettings) !== JSON.stringify(item.exportSettings ?? null)) {
+      needsRewrite = true;
+    }
+
+    items.push({
+      id: item.id,
+      metadata: item.metadata as QueueItem['metadata'],
+      exportSettings,
+      settings: item.settings as QueueItem['settings'],
+      status: normalizedStatus,
+      createdAt: typeof item.createdAt === 'string' ? item.createdAt : now(),
+      progress: undefined,
+      updatedAt:
+        normalizedStatus !== status
+          ? now()
+          : typeof item.updatedAt === 'string'
+            ? item.updatedAt
+            : typeof item.createdAt === 'string'
+              ? item.createdAt
+              : now(),
+      outputPath: typeof item.outputPath === 'string' ? item.outputPath : undefined,
+      requestedOutputPath:
+        typeof item.requestedOutputPath === 'string' ? item.requestedOutputPath : undefined,
+      logPath: typeof item.logPath === 'string' ? item.logPath : undefined,
+      error: typeof item.error === 'string' ? item.error : undefined,
+      historyEntryId: typeof item.historyEntryId === 'string' ? item.historyEntryId : undefined
+    });
   }
+
+  return { items, needsRewrite };
+}
+
+function loadItems(filePath: string): ReturnType<typeof loadJsonFileState<LoadedQueueItems>> {
+  return loadJsonFileState(filePath, {
+    createFallback: () => ({ items: [], needsRewrite: false }),
+    deserialize: deserializeItems
+  });
 }
 
 export class QueueService {
@@ -68,19 +133,27 @@ export class QueueService {
   private cancelRequested = false;
   private skipRequested = false;
   private activeWebContents: WebContents | null = null;
+  private readonly persistence: BufferedJsonFile<QueueItem[]>;
 
   constructor(
     private readonly downloadService: DownloadService,
     private readonly historyService: HistoryService,
     private readonly filePath: string = join(app.getPath('userData'), QUEUE_FILE)
   ) {
-    this.items = readItems(filePath);
-    this.write();
+    const loaded = loadItems(filePath);
+    this.items = loaded.value.items;
+    this.persistence = new BufferedJsonFile(this.filePath, {
+      getValue: () => this.items.map((item) => createQueueSnapshotItem(item))
+    });
+
+    if (loaded.needsRewrite || loaded.wasMissing || loaded.value.needsRewrite) {
+      void this.persistence.flushNow();
+    }
   }
 
   getSnapshot(): QueueSnapshot {
     return {
-      items: this.items,
+      items: this.items.map((item) => createQueueSnapshotItem(item)),
       activeItemId: this.items.find((item) => item.status === 'active')?.id,
       paused: this.paused
     };
@@ -109,7 +182,7 @@ export class QueueService {
     };
 
     this.items.push(item);
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
@@ -126,26 +199,27 @@ export class QueueService {
       createdAt: timestamp,
       updatedAt: timestamp
     });
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
-  start(webContents: WebContents): IpcResult<QueueSnapshot> {
-    this.activeWebContents = webContents;
+  start(sender: WebContents): IpcResult<QueueSnapshot> {
+    this.activeWebContents = sender;
     this.paused = false;
+    this.broadcastSnapshot();
     void this.startNext();
-    this.writeAndBroadcast();
     return ok(this.getSnapshot());
   }
 
-  resume(webContents: WebContents): IpcResult<QueueSnapshot> {
-    this.activeWebContents = webContents;
+  resume(sender: WebContents): IpcResult<QueueSnapshot> {
+    this.activeWebContents = sender;
     this.paused = false;
+    const timestamp = now();
     this.items = this.items.map((item) =>
-      item.status === 'paused' ? { ...item, status: 'pending', updatedAt: now() } : item
+      item.status === 'paused' ? { ...item, status: 'pending', updatedAt: timestamp } : item
     );
+    this.schedulePersistAndBroadcast();
     void this.startNext();
-    this.writeAndBroadcast();
     return ok(this.getSnapshot());
   }
 
@@ -158,7 +232,7 @@ export class QueueService {
       this.skipRequested = false;
       this.downloadService.cancel();
     }
-    this.writeAndBroadcast();
+    this.broadcastSnapshot();
     return ok(this.getSnapshot());
   }
 
@@ -171,7 +245,7 @@ export class QueueService {
       this.skipRequested = false;
       this.downloadService.cancel();
     }
-    this.writeAndBroadcast();
+    this.broadcastSnapshot();
     return ok(this.getSnapshot());
   }
 
@@ -183,7 +257,7 @@ export class QueueService {
       this.skipRequested = true;
       this.downloadService.cancel();
     }
-    this.writeAndBroadcast();
+    this.broadcastSnapshot();
     return ok(this.getSnapshot());
   }
 
@@ -194,31 +268,32 @@ export class QueueService {
     }
 
     this.items = this.items.filter((candidate) => candidate.id !== itemId);
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
   removeMany(request: QueueBulkRequest): IpcResult<QueueSnapshot> {
     this.items = removeManyQueueItems(this.items, request.itemIds);
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
-  retry(itemId: string): IpcResult<QueueSnapshot> {
-    this.items = this.items.map((item) =>
-      item.id === itemId && ['failed', 'cancelled', 'paused'].includes(item.status)
-        ? {
-            ...item,
-            status: 'pending',
-            progress: undefined,
-            error: undefined,
-            logPath: undefined,
-            outputPath: undefined,
-            updatedAt: now()
-          }
-        : item
-    );
-    this.writeAndBroadcast();
+  async retry(itemId: string): Promise<IpcResult<QueueSnapshot>> {
+    const item = this.items.find((candidate) => candidate.id === itemId);
+    if (!item || !['failed', 'cancelled', 'paused'].includes(item.status)) {
+      return ok(this.getSnapshot());
+    }
+
+    Object.assign(item, {
+      status: 'pending' as const,
+      progress: undefined,
+      error: undefined,
+      logPath: undefined,
+      outputPath: undefined,
+      updatedAt: now()
+    });
+    this.emitQueueProgress(item.id, undefined, undefined, true);
+    await this.flushPersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
@@ -241,7 +316,7 @@ export class QueueService {
     const [item] = nextItems.splice(index, 1);
     nextItems.splice(nextIndex, 0, item);
     this.items = nextItems;
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
@@ -255,7 +330,7 @@ export class QueueService {
     }
 
     this.items = movedItems;
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
@@ -269,7 +344,7 @@ export class QueueService {
     }
 
     this.items = movedItems;
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
@@ -286,14 +361,18 @@ export class QueueService {
     item.exportSettings = mergeExportSettings(request.exportSettings);
     item.requestedOutputPath = item.exportSettings.savePath;
     item.updatedAt = now();
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
   }
 
   clear(): IpcResult<QueueSnapshot> {
     this.items = this.items.filter((item) => item.status === 'active');
-    this.writeAndBroadcast();
+    this.schedulePersistAndBroadcast();
     return ok(this.getSnapshot());
+  }
+
+  async dispose(): Promise<void> {
+    await this.persistence.flushPendingOnDispose();
   }
 
   private async startNext(): Promise<void> {
@@ -311,37 +390,15 @@ export class QueueService {
     this.pauseRequested = false;
     this.cancelRequested = false;
     this.skipRequested = false;
-    this.updateItem(item.id, { status: 'active', progress: undefined, error: undefined });
+
+    item.status = 'active';
+    item.progress = undefined;
+    item.error = undefined;
+    item.updatedAt = now();
     const historyEntry = this.historyService.addStarted({ ...item, status: 'active' });
-    this.updateItem(item.id, { historyEntryId: historyEntry.id });
-
-    if (this.pauseRequested || this.cancelRequested || this.skipRequested) {
-      if (this.pauseRequested) {
-        this.updateItem(item.id, { status: 'paused', progress: undefined, updatedAt: now() });
-        this.historyService.update(historyEntry.id, 'cancelled', { error: 'Paused.' });
-      } else if (this.cancelRequested) {
-        this.updateItem(
-          item.id,
-          { status: 'cancelled', progress: undefined, updatedAt: now() },
-          false
-        );
-        this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' });
-        this.pruneTerminalItems();
-      } else {
-        this.historyService.update(historyEntry.id, 'cancelled', { error: 'Cancelled.' });
-        this.items = this.items.filter((candidate) => candidate.id !== item.id);
-      }
-
-      this.running = false;
-      this.pauseRequested = false;
-      this.cancelRequested = false;
-      this.skipRequested = false;
-      this.writeAndBroadcast();
-      if (!this.paused) {
-        void this.startNext();
-      }
-      return;
-    }
+    item.historyEntryId = historyEntry.id;
+    item.updatedAt = now();
+    this.schedulePersistAndBroadcast();
 
     const decorateProgress = (progress: DownloadProgress): DownloadProgress => {
       const currentIndex = this.items.findIndex((candidate) => candidate.id === item.id);
@@ -370,79 +427,71 @@ export class QueueService {
     const resultLogPath = result.ok ? result.data.logPath : result.error.details;
 
     if (this.pauseRequested) {
-      this.updateItem(item.id, {
-        status: 'paused',
-        progress: undefined,
-        logPath: resultLogPath,
-        updatedAt: now()
-      });
-      this.historyService.update(historyEntry.id, 'cancelled', {
+      item.status = 'paused';
+      item.progress = undefined;
+      item.logPath = resultLogPath;
+      item.updatedAt = now();
+      this.emitQueueProgress(item.id, undefined, resultLogPath, true);
+      await this.historyService.update(historyEntry.id, 'cancelled', {
         error: 'Paused.',
         logPath: resultLogPath
       });
+      await this.flushPersistAndBroadcast();
     } else if (this.cancelRequested) {
-      this.updateItem(
-        item.id,
-        {
-          status: 'cancelled',
-          logPath: resultLogPath,
-          progress: result.ok ? result.data : undefined
-        },
-        false
-      );
-      this.historyService.update(historyEntry.id, 'cancelled', {
+      item.status = 'cancelled';
+      item.progress = undefined;
+      item.logPath = resultLogPath;
+      item.updatedAt = now();
+      this.emitQueueProgress(item.id, undefined, resultLogPath, true);
+      await this.historyService.update(historyEntry.id, 'cancelled', {
         error: 'Cancelled.',
         logPath: resultLogPath
       });
       this.pruneTerminalItems();
+      await this.flushPersistAndBroadcast();
     } else if (this.skipRequested) {
-      this.historyService.update(historyEntry.id, 'cancelled', {
+      this.emitQueueProgress(item.id, undefined, resultLogPath, true);
+      await this.historyService.update(historyEntry.id, 'cancelled', {
         error: 'Cancelled.',
         logPath: resultLogPath
       });
       this.items = this.items.filter((candidate) => candidate.id !== item.id);
+      await this.flushPersistAndBroadcast();
     } else if (result.ok) {
-      this.updateItem(
-        item.id,
-        {
-          status: 'completed',
-          outputPath: result.data.outputPath,
-          logPath: result.data.logPath,
-          progress: result.data
-        },
-        false
-      );
-      this.historyService.update(historyEntry.id, 'completed', {
+      item.status = 'completed';
+      item.progress = undefined;
+      item.outputPath = result.data.outputPath;
+      item.logPath = result.data.logPath;
+      item.updatedAt = now();
+      this.emitQueueProgress(item.id, undefined, result.data.logPath, true);
+      await this.historyService.update(historyEntry.id, 'completed', {
         outputPath: result.data.outputPath,
         logPath: result.data.logPath
       });
       this.pruneTerminalItems();
+      await this.flushPersistAndBroadcast();
     } else {
       const status = result.error.code === 'CANCELLED' ? 'cancelled' : 'failed';
-      this.updateItem(
-        item.id,
-        {
-          status,
-          error: result.error.message,
-          logPath: result.error.details,
-          progress: undefined
-        },
-        status !== 'cancelled'
-      );
-      this.historyService.update(historyEntry.id, status, {
+      item.status = status;
+      item.progress = undefined;
+      item.error = result.error.message;
+      item.logPath = result.error.details;
+      item.updatedAt = now();
+      this.emitQueueProgress(item.id, undefined, result.error.details, true);
+      await this.historyService.update(historyEntry.id, status, {
         error: result.error.message,
         logPath: result.error.details
       });
       if (status === 'cancelled') {
         this.pruneTerminalItems();
       }
+      await this.flushPersistAndBroadcast();
     }
 
     this.running = false;
     this.pauseRequested = false;
     this.cancelRequested = false;
     this.skipRequested = false;
-    this.writeAndBroadcast();
 
     if (!this.paused) {
       void this.startNext();
@@ -450,8 +499,15 @@ export class QueueService {
   }
 
   private handleProgress(itemId: string, progress: DownloadProgress): void {
-    this.updateItem(itemId, { progress, logPath: progress.logPath, updatedAt: now() }, false);
-    this.writeAndBroadcast();
+    const item = this.items.find((candidate) => candidate.id === itemId);
+    if (!item) {
+      return;
+    }
+
+    item.progress = progress;
+    item.logPath = progress.logPath ?? item.logPath;
+    item.updatedAt = now();
+    this.emitQueueProgress(item.id, progress, item.logPath, false);
   }
 
   private getActiveItem(): QueueItem | undefined {
@@ -464,43 +520,47 @@ export class QueueService {
     );
   }
 
-  private updateItem(
+  private emitQueueProgress(
     itemId: string,
-    update: Partial<QueueItem>,
-    broadcast = true
-  ): QueueItem | undefined {
-    const item = this.items.find((candidate) => candidate.id === itemId);
-    if (!item) {
-      return undefined;
-    }
+    progress: DownloadProgress | undefined,
+    logPath: string | undefined,
+    cleared: boolean
+  ): void {
+    const event: QueueProgressEvent = {
+      itemId,
+      progress,
+      logPath,
+      updatedAt: now(),
+      cleared
+    };
 
-    Object.assign(item, update, { updatedAt: now() });
-    if (broadcast) {
-      this.writeAndBroadcast();
+    for (const contents of webContents.getAllWebContents()) {
+      if (!contents.isDestroyed()) {
+        contents.send(IPC_CHANNELS.queue.progress, event);
+      }
     }
-    return item;
   }
 
   private resolveRequestedOutputPath(request: QueueAddRequest): string | undefined {
     return request.outputPath ?? request.exportSettings.savePath;
   }
 
-  private writeAndBroadcast(): void {
-    this.write();
-    this.broadcast();
+  private schedulePersistAndBroadcast(): void {
+    this.persistence.scheduleWrite();
+    this.broadcastSnapshot();
   }
 
-  private broadcast(): void {
+  private async flushPersistAndBroadcast(): Promise<void> {
+    this.broadcastSnapshot();
+    await this.persistence.flushNow();
+  }
+
+  private broadcastSnapshot(): void {
     const snapshot = this.getSnapshot();
     for (const contents of webContents.getAllWebContents()) {
       if (!contents.isDestroyed()) {
         contents.send(IPC_CHANNELS.queue.snapshot, snapshot);
       }
     }
-  }
-
-  private write(): void {
-    mkdirSync(dirname(this.filePath), { recursive: true });
-    writeFileSync(this.filePath, `${JSON.stringify(this.items, null, 2)}\n`, 'utf8');
   }
 }

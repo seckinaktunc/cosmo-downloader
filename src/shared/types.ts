@@ -269,6 +269,14 @@ export type QueueSnapshot = {
   paused: boolean;
 };
 
+export type QueueProgressEvent = {
+  itemId: string;
+  progress?: DownloadProgress;
+  logPath?: string;
+  updatedAt: string;
+  cleared: boolean;
+};
+
 export type QueueAddRequest = DownloadStartRequest;
 
 export type QueueReorderRequest = {

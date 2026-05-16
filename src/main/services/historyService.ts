@@ -1,7 +1,7 @@
 import { app, clipboard, shell, webContents } from 'electron';
 import { randomUUID } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import type {
   DownloadHistoryEntry,
   HistoryChangedEvent,
@@ -13,8 +13,23 @@ import type {
 } from '../../shared/types';
 import { IPC_CHANNELS } from '../../shared/ipc';
 import { mergeExportSettings } from '../../shared/defaults';
+import { BufferedJsonFile, loadJsonFileState } from '../utils/jsonFileState';
 
 const HISTORY_FILE = 'history.json';
+
+const HISTORY_STATUSES = new Set<DownloadHistoryEntry['status']>([
+  'fetched',
+  'fetch_failed',
+  'started',
+  'completed',
+  'failed',
+  'cancelled'
+]);
+
+type LoadedHistoryEntries = {
+  entries: DownloadHistoryEntry[];
+  needsRewrite: boolean;
+};
 
 function now(): string {
   return new Date().toISOString();
@@ -24,38 +39,78 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
-function readEntries(filePath: string): DownloadHistoryEntry[] {
-  if (!existsSync(filePath)) {
-    return [];
+function deserializeEntries(value: unknown): LoadedHistoryEntries {
+  if (!Array.isArray(value)) {
+    return { entries: [], needsRewrite: true };
   }
 
-  try {
-    const parsed = JSON.parse(readFileSync(filePath, 'utf8')) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
+  let needsRewrite = false;
+  const entries: DownloadHistoryEntry[] = [];
+
+  for (const entry of value) {
+    if (!(isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.metadata))) {
+      needsRewrite = true;
+      continue;
     }
 
-    return parsed
-      .filter((entry): entry is DownloadHistoryEntry => {
-        return isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.metadata);
-      })
-      .map((entry) => ({
-        ...entry,
-        exportSettings: mergeExportSettings(entry.exportSettings)
-      }));
-  } catch {
-    return [];
+    const exportSettings = mergeExportSettings(entry.exportSettings);
+    if (JSON.stringify(exportSettings) !== JSON.stringify(entry.exportSettings ?? null)) {
+      needsRewrite = true;
+    }
+
+    if (!HISTORY_STATUSES.has(entry.status as DownloadHistoryEntry['status'])) {
+      needsRewrite = true;
+    }
+
+    entries.push({
+      id: entry.id,
+      queueItemId: typeof entry.queueItemId === 'string' ? entry.queueItemId : undefined,
+      metadata: entry.metadata as DownloadHistoryEntry['metadata'],
+      exportSettings,
+      settings: entry.settings as DownloadHistoryEntry['settings'],
+      status: HISTORY_STATUSES.has(entry.status as DownloadHistoryEntry['status'])
+        ? (entry.status as DownloadHistoryEntry['status'])
+        : 'completed',
+      createdAt: typeof entry.createdAt === 'string' ? entry.createdAt : now(),
+      updatedAt:
+        typeof entry.updatedAt === 'string'
+          ? entry.updatedAt
+          : typeof entry.createdAt === 'string'
+            ? entry.createdAt
+            : now(),
+      outputPath: typeof entry.outputPath === 'string' ? entry.outputPath : undefined,
+      logPath: typeof entry.logPath === 'string' ? entry.logPath : undefined,
+      error: typeof entry.error === 'string' ? entry.error : undefined
+    });
   }
+
+  return { entries, needsRewrite };
+}
+
+function loadEntries(filePath: string): ReturnType<typeof loadJsonFileState<LoadedHistoryEntries>> {
+  return loadJsonFileState(filePath, {
+    createFallback: () => ({ entries: [], needsRewrite: false }),
+    deserialize: deserializeEntries
+  });
 }
 
 export class HistoryService {
   private entries: DownloadHistoryEntry[];
+  private readonly persistence: BufferedJsonFile<DownloadHistoryEntry[]>;
 
   constructor(
     private readonly filePath: string = join(app.getPath('userData'), HISTORY_FILE),
     private readonly getHistoryLimitItems: () => number = () => Number.POSITIVE_INFINITY
   ) {
-    this.entries = readEntries(filePath);
+    const loaded = loadEntries(filePath);
+    this.entries = loaded.value.entries;
+    this.persistence = new BufferedJsonFile(this.filePath, {
+      getValue: () => this.entries
+    });
+
+    if (loaded.needsRewrite || loaded.wasMissing || loaded.value.needsRewrite) {
+      void this.persistence.flushNow();
+    }
   }
 
   get(): DownloadHistoryEntry[] {
@@ -131,18 +186,18 @@ export class HistoryService {
     return entry;
   }
 
-  update(
+  async update(
     entryId: string,
     status: DownloadHistoryStatus,
     update: Partial<Pick<DownloadHistoryEntry, 'outputPath' | 'logPath' | 'error'>>
-  ): DownloadHistoryEntry | undefined {
+  ): Promise<DownloadHistoryEntry | undefined> {
     const entry = this.entries.find((candidate) => candidate.id === entryId);
     if (!entry) {
       return undefined;
     }
 
     Object.assign(entry, update, { status, updatedAt: now() });
-    this.writeAndBroadcast();
+    await this.flushAndBroadcast();
     return entry;
   }
 
@@ -221,9 +276,8 @@ export class HistoryService {
     return trimmed;
   }
 
-  private write(): void {
-    mkdirSync(dirname(this.filePath), { recursive: true });
-    writeFileSync(this.filePath, `${JSON.stringify(this.entries, null, 2)}\n`, 'utf8');
+  async dispose(): Promise<void> {
+    await this.persistence.flushPendingOnDispose();
   }
 
   private trimToLimit(): boolean {
@@ -247,7 +301,16 @@ export class HistoryService {
   }
 
   private writeAndBroadcast(): void {
-    this.write();
+    this.persistence.scheduleWrite();
+    this.broadcast();
+  }
+
+  private async flushAndBroadcast(): Promise<void> {
+    this.broadcast();
+    await this.persistence.flushNow();
+  }
+
+  private broadcast(): void {
     const event: HistoryChangedEvent = { totalCount: this.entries.length };
     for (const contents of webContents.getAllWebContents()) {
       if (!contents.isDestroyed()) {

@@ -90,8 +90,22 @@ export function registerIpcHandlers(): RegisteredServices {
     isMediaBusy: () => downloadService.isActive() || queueService.hasActiveItem()
   });
   metadataCoordinator.startClipboardWatcher();
-  app.once('before-quit', () => {
+  let isFlushingOnQuit = false;
+  app.on('before-quit', (event) => {
+    if (isFlushingOnQuit) {
+      return;
+    }
+
+    isFlushingOnQuit = true;
+    event.preventDefault();
     metadataCoordinator.dispose();
+    void Promise.allSettled([
+      queueService.dispose(),
+      historyService.dispose(),
+      settingsService.dispose()
+    ]).finally(() => {
+      app.quit();
+    });
   });
 
   ipcMain.handle(IPC_CHANNELS.app.environment, () => {
@@ -107,8 +121,8 @@ export function registerIpcHandlers(): RegisteredServices {
 
   ipcMain.handle(IPC_CHANNELS.settings.get, () => ok(settingsService.get()));
 
-  ipcMain.handle(IPC_CHANNELS.settings.update, (_event, update: SettingsUpdate) => {
-    const settings = settingsService.update(update);
+  ipcMain.handle(IPC_CHANNELS.settings.update, async (_event, update: SettingsUpdate) => {
+    const settings = await settingsService.update(update);
     if (update.cacheLimitMb != null) {
       cacheBudgetCoordinator.setLimitBytes(settings.cacheLimitMb * 1024 * 1024);
     }

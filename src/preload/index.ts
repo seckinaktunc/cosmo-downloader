@@ -31,6 +31,7 @@ import type {
   QueueItemRequest,
   QueueMoveManyRequest,
   QueueMoveRequest,
+  QueueProgressEvent,
   QueueReorderRequest,
   QueueSnapshot,
   RecordFetchHistoryRequest,
@@ -109,6 +110,7 @@ export type CosmoApi = {
     retry: (request: QueueItemRequest) => Promise<IpcResult<QueueSnapshot>>;
     clear: () => Promise<IpcResult<QueueSnapshot>>;
     onSnapshot: (listener: (snapshot: QueueSnapshot) => void) => Unsubscribe;
+    onProgress: (listener: (event: QueueProgressEvent) => void) => Unsubscribe;
   };
   history: {
     get: (request: HistoryListRequest) => Promise<IpcResult<HistoryListResult>>;
@@ -226,7 +228,8 @@ const api: CosmoApi = {
       invoke<QueueSnapshot>(IPC_CHANNELS.queue.updateExportSettings, request),
     retry: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.queue.retry, request),
     clear: () => invoke<QueueSnapshot>(IPC_CHANNELS.queue.clear),
-    onSnapshot: (listener) => subscribe<QueueSnapshot>(IPC_CHANNELS.queue.snapshot, listener)
+    onSnapshot: (listener) => subscribe<QueueSnapshot>(IPC_CHANNELS.queue.snapshot, listener),
+    onProgress: (listener) => subscribe<QueueProgressEvent>(IPC_CHANNELS.queue.progress, listener)
   },
   history: {
     get: (request) => invoke<HistoryListResult>(IPC_CHANNELS.history.get, request),

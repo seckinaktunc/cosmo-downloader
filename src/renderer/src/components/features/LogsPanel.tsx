@@ -14,6 +14,7 @@ import Icon from '../miscellaneous/Icon';
 export function LogsPanel(): React.JSX.Element {
   const { t } = useTranslation();
   const queueItems = useQueueStore((state) => state.items);
+  const queueProgressById = useQueueStore((state) => state.progressById);
   const historyEntries = useHistoryStore((state) => state.entries);
   const activeExportTarget = useUiStore((state) => state.activeExportTarget);
   const previewFetchLog = useVideoStore((state) => state.activeFetchLog);
@@ -24,17 +25,26 @@ export function LogsPanel(): React.JSX.Element {
   const [autoFollow, setAutoFollow] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const queueItemsWithRuntimeProgress = useMemo(
+    () =>
+      queueItems.map((item) =>
+        queueProgressById[item.id] != null
+          ? { ...item, progress: queueProgressById[item.id] }
+          : item
+      ),
+    [queueItems, queueProgressById]
+  );
 
   const selectedSource = useMemo(
     () =>
       resolveDisplayedLogSource({
         activeExportTarget,
-        queueItems,
+        queueItems: queueItemsWithRuntimeProgress,
         historyEntries,
         previewFetchLog,
         titleFallback: t('logs.unknownDownload')
       }),
-    [activeExportTarget, historyEntries, previewFetchLog, queueItems, t]
+    [activeExportTarget, historyEntries, previewFetchLog, queueItemsWithRuntimeProgress, t]
   );
   const selectedLogPath = selectedSource?.logPath ?? null;
   const selectedLogResult = logResult?.logPath === selectedLogPath ? logResult : null;

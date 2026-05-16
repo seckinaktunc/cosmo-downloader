@@ -1,35 +1,35 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 import type {
   AppSettings,
   DownloadProgress,
   DownloadStage,
   ExportSettings,
   VideoMetadata
-} from '../../../shared/types'
+} from '../../../shared/types';
 
 type DownloadState = {
-  stage: DownloadStage
-  progress: DownloadProgress | null
-  error?: string
-  isSubscribed: boolean
-  trackedPreviewQueueItemId?: string
-  trackedPreviewUrl?: string
-  completedPreviewUrl?: string
-  subscribe: () => void
+  stage: DownloadStage;
+  progress: DownloadProgress | null;
+  error?: string;
+  isSubscribed: boolean;
+  trackedPreviewQueueItemId?: string;
+  trackedPreviewUrl?: string;
+  completedPreviewUrl?: string;
+  subscribe: () => void;
   start: (
     metadata: VideoMetadata,
     exportSettings: ExportSettings,
     settings: AppSettings
-  ) => Promise<void>
-  cancel: () => Promise<void>
-  reset: () => void
-  resetForNewPreview: () => void
-  trackPreviewDownload: (queueItemId: string, sourceUrl: string) => void
-  markTrackedPreviewCompleted: (queueItemId: string) => void
-  clearPreviewDownloadState: () => void
-}
+  ) => Promise<void>;
+  cancel: () => Promise<void>;
+  reset: () => void;
+  resetForNewPreview: () => void;
+  trackPreviewDownload: (queueItemId: string, sourceUrl: string) => void;
+  markTrackedPreviewCompleted: (queueItemId: string) => void;
+  clearPreviewDownloadState: () => void;
+};
 
-const ACTIVE_STAGES: DownloadStage[] = ['downloading', 'processing']
+const ACTIVE_STAGES: DownloadStage[] = ['downloading', 'processing'];
 
 export const useDownloadStore = create<DownloadState>((set, get) => ({
   stage: 'idle',
@@ -38,56 +38,72 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
 
   subscribe: () => {
     if (get().isSubscribed) {
-      return
+      return;
     }
 
     window.cosmo.download.onProgress((progress) => {
-      set((state) => ({
-        stage: progress.stage,
-        progress,
-        error: progress.stage === 'failed' ? progress.message : undefined,
-        ...(progress.stage === 'completed' &&
-        progress.queuedItemId != null &&
-        progress.queuedItemId === state.trackedPreviewQueueItemId &&
-        state.trackedPreviewUrl
-          ? {
+      if (progress.queuedItemId != null) {
+        set((state) => {
+          if (progress.queuedItemId !== state.trackedPreviewQueueItemId) {
+            return {};
+          }
+
+          if (progress.stage === 'completed' && state.trackedPreviewUrl) {
+            return {
               completedPreviewUrl: state.trackedPreviewUrl,
               trackedPreviewQueueItemId: undefined,
               trackedPreviewUrl: undefined
-            }
-          : {})
-      }))
-    })
-    set({ isSubscribed: true })
+            };
+          }
+
+          if (progress.stage === 'failed' || progress.stage === 'cancelled') {
+            return {
+              trackedPreviewQueueItemId: undefined,
+              trackedPreviewUrl: undefined
+            };
+          }
+
+          return {};
+        });
+        return;
+      }
+
+      set({
+        stage: progress.stage,
+        progress,
+        error: progress.stage === 'failed' ? progress.message : undefined
+      });
+    });
+    set({ isSubscribed: true });
   },
 
   start: async (metadata, exportSettings, settings) => {
     if (ACTIVE_STAGES.includes(get().stage)) {
-      await get().cancel()
-      return
+      await get().cancel();
+      return;
     }
 
     set({
       stage: 'downloading',
       progress: { stage: 'downloading', stageLabel: 'Downloading', percentage: 0 },
       error: undefined
-    })
+    });
 
-    const result = await window.cosmo.download.start({ metadata, exportSettings, settings })
+    const result = await window.cosmo.download.start({ metadata, exportSettings, settings });
     if (!result.ok) {
       set({
         stage: result.error.code === 'CANCELLED' ? 'cancelled' : 'failed',
         error: result.error.message
-      })
-      return
+      });
+      return;
     }
 
-    set({ stage: result.data.stage, progress: result.data })
+    set({ stage: result.data.stage, progress: result.data });
   },
 
   cancel: async () => {
-    await window.cosmo.download.cancel()
-    set({ stage: 'cancelled', progress: { stage: 'cancelled', stageLabel: 'Cancelled' } })
+    await window.cosmo.download.cancel();
+    set({ stage: 'cancelled', progress: { stage: 'cancelled', stageLabel: 'Cancelled' } });
   },
 
   reset: () => set({ stage: 'idle', progress: null, error: undefined }),
@@ -99,7 +115,7 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
           trackedPreviewQueueItemId: undefined,
           trackedPreviewUrl: undefined,
           completedPreviewUrl: undefined
-        }
+        };
       }
 
       return {
@@ -109,7 +125,7 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
         trackedPreviewQueueItemId: undefined,
         trackedPreviewUrl: undefined,
         completedPreviewUrl: undefined
-      }
+      };
     }),
 
   trackPreviewDownload: (queueItemId, sourceUrl) =>
@@ -122,14 +138,14 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
   markTrackedPreviewCompleted: (queueItemId) =>
     set((state) => {
       if (state.trackedPreviewQueueItemId !== queueItemId || !state.trackedPreviewUrl) {
-        return {}
+        return {};
       }
 
       return {
         completedPreviewUrl: state.trackedPreviewUrl,
         trackedPreviewQueueItemId: undefined,
         trackedPreviewUrl: undefined
-      }
+      };
     }),
 
   clearPreviewDownloadState: () =>
@@ -138,4 +154,4 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
       trackedPreviewUrl: undefined,
       completedPreviewUrl: undefined
     })
-}))
+}));

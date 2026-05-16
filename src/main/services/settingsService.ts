@@ -1,8 +1,8 @@
 import { app } from 'electron';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { join } from 'path';
 import { createDefaultSettings } from '../../shared/defaults';
 import type { AppSettings, PreferencesSectionsExpanded, SettingsUpdate } from '../../shared/types';
+import { BufferedJsonFile, loadJsonFileState } from '../utils/jsonFileState';
 
 const SETTINGS_FILE = 'settings.json';
 
@@ -100,78 +100,75 @@ export function mergeSettings(defaults: AppSettings, saved: unknown): AppSetting
   };
 }
 
+function getSettingsPath(userDataPath: string): string {
+  return join(userDataPath, SETTINGS_FILE);
+}
+
+function loadSettingsStateFromFile(
+  filePath: string,
+  downloadsPath: string
+): ReturnType<typeof loadJsonFileState<AppSettings>> {
+  const defaults = createDefaultSettings(downloadsPath);
+  return loadJsonFileState(filePath, {
+    createFallback: () => defaults,
+    deserialize: (saved) => mergeSettings(defaults, saved)
+  });
+}
+
+function loadSettingsState(
+  userDataPath: string,
+  downloadsPath: string
+): ReturnType<typeof loadJsonFileState<AppSettings>> {
+  return loadSettingsStateFromFile(getSettingsPath(userDataPath), downloadsPath);
+}
+
 export class SettingsService {
   private settings: AppSettings | null = null;
+  private readonly persistence: BufferedJsonFile<AppSettings>;
 
-  constructor(private readonly filePath: string = join(app.getPath('userData'), SETTINGS_FILE)) {}
+  constructor(private readonly filePath: string = getSettingsPath(app.getPath('userData'))) {
+    this.persistence = new BufferedJsonFile(this.filePath, {
+      getValue: () => this.get(),
+      delayMs: 0
+    });
+  }
 
   get(): AppSettings {
     if (this.settings == null) {
-      this.settings = this.read();
+      const loaded = loadSettingsStateFromFile(this.filePath, app.getPath('downloads'));
+      this.settings = loaded.value;
+      if (loaded.needsRewrite || loaded.wasMissing) {
+        void this.persistence.flushNow();
+      }
     }
 
     return this.settings;
   }
 
-  update(update: SettingsUpdate): AppSettings {
+  async update(update: SettingsUpdate): Promise<AppSettings> {
     this.settings = mergeSettings(this.get(), { ...this.get(), ...update });
-    this.write(this.settings);
+    await this.persistence.flushNow();
     return this.settings;
   }
 
-  private read(): AppSettings {
-    const defaults = createDefaultSettings(app.getPath('downloads'));
-    if (!existsSync(this.filePath)) {
-      this.write(defaults);
-      return defaults;
-    }
-
-    try {
-      const parsed = JSON.parse(readFileSync(this.filePath, 'utf8')) as unknown;
-      return mergeSettings(defaults, parsed);
-    } catch {
-      return defaults;
-    }
-  }
-
-  private write(settings: AppSettings): void {
-    mkdirSync(dirname(this.filePath), { recursive: true });
-    writeFileSync(this.filePath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+  async dispose(): Promise<void> {
+    await this.persistence.flushPendingOnDispose();
   }
 }
 
 export function readStartupHardwareAcceleration(): boolean {
   try {
-    const settingsPath = join(app.getPath('userData'), SETTINGS_FILE);
-    if (!existsSync(settingsPath)) {
-      return true;
-    }
-
-    const parsed = JSON.parse(readFileSync(settingsPath, 'utf8')) as unknown;
-    if (isRecord(parsed) && typeof parsed.hardwareAcceleration === 'boolean') {
-      return parsed.hardwareAcceleration;
-    }
+    return loadSettingsState(app.getPath('userData'), app.getPath('downloads')).value
+      .hardwareAcceleration;
   } catch {
     return true;
   }
-
-  return true;
 }
 
 export function readStartupAlwaysOnTop(): boolean {
   try {
-    const settingsPath = join(app.getPath('userData'), SETTINGS_FILE);
-    if (!existsSync(settingsPath)) {
-      return false;
-    }
-
-    const parsed = JSON.parse(readFileSync(settingsPath, 'utf8')) as unknown;
-    if (isRecord(parsed) && typeof parsed.alwaysOnTop === 'boolean') {
-      return parsed.alwaysOnTop;
-    }
+    return loadSettingsState(app.getPath('userData'), app.getPath('downloads')).value.alwaysOnTop;
   } catch {
     return false;
   }
-
-  return false;
 }

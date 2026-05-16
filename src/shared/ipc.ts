@@ -56,7 +56,8 @@ export const IPC_CHANNELS = {
     updateExportSettings: 'queue:update-export-settings',
     retry: 'queue:retry',
     clear: 'queue:clear',
-    snapshot: 'queue:snapshot'
+    snapshot: 'queue:snapshot',
+    progress: 'queue:progress'
   },
   history: {
     get: 'history:get',

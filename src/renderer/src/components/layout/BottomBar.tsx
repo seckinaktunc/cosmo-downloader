@@ -37,6 +37,7 @@ export function BottomBar(): React.JSX.Element {
   const clearPreviewDownloadState = useDownloadStore((state) => state.clearPreviewDownloadState);
   const queueItems = useQueueStore((state) => state.items);
   const activeQueueItemId = useQueueStore((state) => state.activeItemId);
+  const queueProgressById = useQueueStore((state) => state.progressById);
   const queuePaused = useQueueStore((state) => state.paused);
   const addToQueue = useQueueStore((state) => state.add);
   const startQueue = useQueueStore((state) => state.start);
@@ -44,6 +45,13 @@ export function BottomBar(): React.JSX.Element {
   const cancelActive = useQueueStore((state) => state.cancelActive);
   const flushExportSettingsSaves = useQueueStore((state) => state.flushExportSettingsSaves);
   const activeItem = queueItems.find((item) => item.id === activeQueueItemId);
+  const activeQueueProgress = activeItem ? queueProgressById[activeItem.id] : undefined;
+  const activeQueueItem = activeItem
+    ? {
+        ...activeItem,
+        progress: activeQueueProgress
+      }
+    : undefined;
   const summaryMetadata = activeItem?.metadata ?? displayMetadata ?? metadata;
   const canDownload = metadata != null && settings != null && videoStage === 'ready';
   const pendingItems = queueItems.filter((item) => item.status === 'pending');
@@ -66,7 +74,7 @@ export function BottomBar(): React.JSX.Element {
         )
       : undefined;
   const buttonText = getBottomButtonState({
-    activeItem,
+    activeItem: activeQueueItem,
     queueItems,
     downloadStage,
     progress,
@@ -84,7 +92,7 @@ export function BottomBar(): React.JSX.Element {
         t('bottom.queueProgress', { index, total, percent: progressPercent })
     }
   });
-  const activeProgress = activeItem?.progress ?? completedPreviewItem?.progress ?? progress;
+  const activeProgress = activeQueueProgress ?? completedPreviewItem?.progress ?? progress;
   const isActive = buttonText.mode === 'cancel';
   const percent =
     isActive || currentPreviewCompleted

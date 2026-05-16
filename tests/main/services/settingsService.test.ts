@@ -1,6 +1,32 @@
-import { describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultSettings } from '@shared/defaults';
-import { mergeSettings } from '@main/services/settingsService';
+import { mergeSettings, SettingsService } from '@main/services/settingsService';
+
+const tempDirs: string[] = [];
+
+vi.mock('electron', () => ({
+  app: {
+    getPath: (name: string) => (name === 'downloads' ? '/downloads' : '')
+  }
+}));
+
+function createTempSettingsPath(): string {
+  const directory = mkdtempSync(join(tmpdir(), 'cosmo-settings-'));
+  tempDirs.push(directory);
+  return join(directory, 'settings.json');
+}
+
+afterEach(() => {
+  while (tempDirs.length > 0) {
+    const directory = tempDirs.pop();
+    if (directory) {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }
+});
 
 describe('mergeSettings', () => {
   it('keeps defaults when saved settings are invalid', () => {
@@ -105,5 +131,22 @@ describe('mergeSettings', () => {
     const defaults = createDefaultSettings('/downloads');
 
     expect(mergeSettings(defaults, {}).lastNotifiedAppVersion).toBeUndefined();
+  });
+});
+
+describe('SettingsService persistence', () => {
+  it('flushes updates immediately so the next service instance sees them', async () => {
+    const filePath = createTempSettingsPath();
+    const service = new SettingsService(filePath);
+
+    await service.update({ alwaysOnTop: true, interfaceLanguage: 'tr_TR' });
+
+    const reloaded = new SettingsService(filePath);
+    expect(reloaded.get()).toMatchObject({
+      alwaysOnTop: true,
+      interfaceLanguage: 'tr_TR'
+    });
+
+    await Promise.all([service.dispose(), reloaded.dispose()]);
   });
 });

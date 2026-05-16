@@ -11,6 +11,7 @@ import { InteractiveItemPanel } from '../ui/InteractiveItemPanel';
 export function QueuePanel(): React.JSX.Element {
   const { t } = useTranslation();
   const items = useQueueStore((state) => state.items);
+  const progressById = useQueueStore((state) => state.progressById);
   const skipActive = useQueueStore((state) => state.skipActive);
   const remove = useQueueStore((state) => state.remove);
   const removeMany = useQueueStore((state) => state.removeMany);
@@ -22,6 +23,9 @@ export function QueuePanel(): React.JSX.Element {
   const setActiveExportTarget = useUiStore((state) => state.setActiveExportTarget);
   const setActiveContent = useUiStore((state) => state.setActiveContent);
   const closeMediaPanel = useUiStore((state) => state.closeMediaPanel);
+  const itemsWithRuntimeProgress = items.map((item) =>
+    progressById[item.id] != null ? { ...item, progress: progressById[item.id] } : item
+  );
 
   const getActions = (item: QueueItem): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [];
@@ -64,7 +68,7 @@ export function QueuePanel(): React.JSX.Element {
       subtitle={
         items.length === 0 ? t('queue.empty') : t('queue.itemCount', { count: items.length })
       }
-      items={items}
+      items={itemsWithRuntimeProgress}
       getId={(item) => item.id}
       getStatus={(item) => item.status}
       getTitle={(item) => item.metadata.title}

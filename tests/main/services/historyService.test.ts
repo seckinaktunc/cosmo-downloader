@@ -23,6 +23,7 @@ vi.mock('electron', () => ({
 }));
 
 const tempDirs: string[] = [];
+const services: HistoryService[] = [];
 
 const settings: AppSettings = {
   hardwareAcceleration: true,
@@ -86,11 +87,14 @@ function createHistoryService(getLimit: () => number = () => Number.POSITIVE_INF
   const directory = mkdtempSync(join(tmpdir(), 'cosmo-history-'));
   tempDirs.push(directory);
   const filePath = join(directory, 'history.json');
-  return { service: new HistoryService(filePath, getLimit), filePath };
+  const service = new HistoryService(filePath, getLimit);
+  services.push(service);
+  return { service, filePath };
 }
 
-afterEach(() => {
+afterEach(async () => {
   vi.clearAllMocks();
+  await Promise.allSettled(services.splice(0).map((service) => service.dispose()));
   while (tempDirs.length > 0) {
     const directory = tempDirs.pop();
     if (directory) {
@@ -128,6 +132,7 @@ describe('HistoryService', () => {
     );
 
     const service = new HistoryService(filePath);
+    services.push(service);
 
     expect(service.get()[0].exportSettings.videoBitrate).toBe('auto');
     expect(service.get()[0].exportSettings.trimStartSeconds).toBe(0);
@@ -220,7 +225,7 @@ describe('HistoryService', () => {
     expect(service.get().some((entry) => entry.id === one.id)).toBe(false);
   });
 
-  it('trims immediately when the saved limit is lowered and persists the reduced history', () => {
+  it('trims immediately when the saved limit is lowered and persists the reduced history', async () => {
     let historyLimitItems = 3;
     const { service, filePath } = createHistoryService(() => historyLimitItems);
 
@@ -231,8 +236,10 @@ describe('HistoryService', () => {
     historyLimitItems = 1;
     expect(service.enforceLimit()).toBe(true);
     expect(service.get().map((entry) => entry.id)).toEqual([three.id]);
+    await service.dispose();
 
     const reloaded = new HistoryService(filePath);
+    services.push(reloaded);
     expect(reloaded.get().map((entry) => entry.id)).toEqual([three.id]);
   });
 
@@ -242,8 +249,9 @@ describe('HistoryService', () => {
     const outputPath = join(directory, 'video.mp4');
     writeFileSync(outputPath, 'media');
     const service = new HistoryService(join(directory, 'history.json'));
+    services.push(service);
     const entry = service.addStarted(queueItem('one'));
-    service.update(entry.id, 'completed', { outputPath });
+    await service.update(entry.id, 'completed', { outputPath });
 
     await expect(service.openMedia(entry.id)).resolves.toBe(true);
     expect(vi.mocked(shell.openPath)).toHaveBeenCalledWith(outputPath);
@@ -255,8 +263,9 @@ describe('HistoryService', () => {
     const outputPath = join(directory, 'video.mp4');
     writeFileSync(outputPath, 'media');
     const service = new HistoryService(join(directory, 'history.json'));
+    services.push(service);
     const entry = service.addStarted(queueItem('one'));
-    service.update(entry.id, 'completed', { outputPath });
+    await service.update(entry.id, 'completed', { outputPath });
 
     await expect(service.openFolder(entry.id)).resolves.toBe(true);
     expect(vi.mocked(shell.showItemInFolder)).toHaveBeenCalledWith(outputPath);

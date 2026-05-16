@@ -121,7 +121,7 @@ function maybeNotifyOfUpdate(settingsService: SettingsService): void {
   }
 
   if (settings.lastNotifiedAppVersion !== currentVersion) {
-    settingsService.update({ lastNotifiedAppVersion: currentVersion });
+    void settingsService.update({ lastNotifiedAppVersion: currentVersion });
   }
 }
 
