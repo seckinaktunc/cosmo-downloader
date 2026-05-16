@@ -14,7 +14,8 @@ import {
 
 const settings: ExportSettings = {
   ...DEFAULT_EXPORT_SETTINGS,
-  outputFormat: 'mkv'
+  outputFormat: 'mkv',
+  savePath: '/downloads/example.webm'
 };
 
 function metadata(title: string): VideoMetadata {
@@ -90,6 +91,8 @@ describe('exportSettingsResolver', () => {
     });
 
     expect(resolved.exportSettings).toBe(settings);
+    expect(resolved.locationDisplayPath).toBe(settings.savePath);
+    expect(resolved.locationDisplayMode).toBe('effective');
     expect(resolved.readOnly).toBe(false);
     expect(resolved.metadata?.title).toBe('preview');
   });
@@ -105,11 +108,16 @@ describe('exportSettingsResolver', () => {
     });
 
     expect(resolved.exportSettings).toBe(settings);
+    expect(resolved.locationDisplayPath).toBe(settings.savePath);
+    expect(resolved.locationDisplayMode).toBe('effective');
     expect(resolved.readOnly).toBe(false);
   });
 
-  it('resolves read-only settings for history entries', () => {
-    const entry = historyEntry('history');
+  it('prefers the stored output path for history location display', () => {
+    const entry = {
+      ...historyEntry('history'),
+      outputPath: '/downloads/history/final export.mp4'
+    };
     const resolved = resolveExportSettingsTarget({
       activeTarget: { type: 'history', entryId: entry.id },
       previewMetadata: metadata('preview'),
@@ -119,6 +127,48 @@ describe('exportSettingsResolver', () => {
     });
 
     expect(resolved.exportSettings).toBe(settings);
+    expect(resolved.locationDisplayPath).toBe(entry.outputPath);
+    expect(resolved.locationDisplayMode).toBe('raw');
+    expect(resolved.readOnly).toBe(true);
+  });
+
+  it('falls back to the saved export path when history output path is unavailable', () => {
+    const entry = {
+      ...historyEntry('history'),
+      outputPath: undefined
+    };
+    const resolved = resolveExportSettingsTarget({
+      activeTarget: { type: 'history', entryId: entry.id },
+      previewMetadata: metadata('preview'),
+      previewExportSettings: DEFAULT_EXPORT_SETTINGS,
+      queueItems: [],
+      historyEntries: [entry]
+    });
+
+    expect(resolved.locationDisplayPath).toBe(settings.savePath);
+    expect(resolved.locationDisplayMode).toBe('effective');
+    expect(resolved.readOnly).toBe(true);
+  });
+
+  it('keeps the placeholder state when history has no output path or save path', () => {
+    const entry = {
+      ...historyEntry('history'),
+      outputPath: undefined,
+      exportSettings: {
+        ...settings,
+        savePath: undefined
+      }
+    };
+    const resolved = resolveExportSettingsTarget({
+      activeTarget: { type: 'history', entryId: entry.id },
+      previewMetadata: metadata('preview'),
+      previewExportSettings: DEFAULT_EXPORT_SETTINGS,
+      queueItems: [],
+      historyEntries: [entry]
+    });
+
+    expect(resolved.locationDisplayPath).toBeUndefined();
+    expect(resolved.locationDisplayMode).toBe('effective');
     expect(resolved.readOnly).toBe(true);
   });
 });

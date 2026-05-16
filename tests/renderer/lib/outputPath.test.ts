@@ -4,6 +4,7 @@ import {
   getEditableSavePathParts,
   getEffectiveSavePath,
   getOutputDirectory,
+  getStoredSavePathParts,
   resetOutputBasename,
   replaceOutputBasename,
   replaceOutputExtension,
@@ -101,6 +102,14 @@ describe('output path helpers', () => {
   it('derives editable save path parts for folder-per-download paths', () => {
     expect(getEditableSavePathParts('/Users/me/Downloads/myVideo1.mp4', 'mp4', true)).toEqual({
       leadingPath: '/Users/me/Downloads/myVideo1/',
+      basename: 'myVideo1',
+      trailingSuffix: '.mp4'
+    });
+  });
+
+  it('derives stored save path parts without folder-per-download expansion', () => {
+    expect(getStoredSavePathParts('/Users/me/Downloads/myVideo1.mp4')).toEqual({
+      leadingPath: '/Users/me/Downloads/',
       basename: 'myVideo1',
       trailingSuffix: '.mp4'
     });

@@ -20,6 +20,7 @@ import { useActiveExportSettings } from '../../hooks/useActiveExportSettings';
 import {
   buildOutputPath,
   getEditableSavePathParts,
+  getStoredSavePathParts,
   resetOutputBasename,
   replaceOutputBasename,
   replaceOutputExtension,
@@ -44,7 +45,15 @@ export function ExportSettingsPanel({
   onMetricsChange
 }: ExportSettingsPanelProps = {}): React.JSX.Element {
   const { t } = useTranslation();
-  const { metadata, exportSettings, readOnly, updateExportSettings } = useActiveExportSettings();
+  const {
+    target,
+    metadata,
+    exportSettings,
+    locationDisplayPath,
+    locationDisplayMode,
+    readOnly,
+    updateExportSettings
+  } = useActiveExportSettings();
   const settings = useSettingsStore((state) => state.settings);
   const chooseOutputPath = useSettingsStore((state) => state.chooseOutputPath);
   const [savePathBasenameDraft, setSavePathBasenameDraft] = useState<{
@@ -59,11 +68,14 @@ export function ExportSettingsPanel({
     exportSettings.trimEndSeconds,
     durationSeconds
   );
-  const savePathParts = getEditableSavePathParts(
-    exportSettings.savePath,
-    exportSettings.outputFormat,
-    Boolean(settings?.createFolderPerDownload)
-  );
+  const savePathParts =
+    locationDisplayMode === 'raw'
+      ? getStoredSavePathParts(locationDisplayPath)
+      : getEditableSavePathParts(
+          locationDisplayPath,
+          exportSettings.outputFormat,
+          Boolean(settings?.createFolderPerDownload)
+        );
   const activeSavePathBasenameDraft =
     exportSettings.savePath != null && savePathBasenameDraft?.sourcePath === exportSettings.savePath
       ? savePathBasenameDraft.value
@@ -457,6 +469,7 @@ export function ExportSettingsPanel({
                 suffix={savePathParts && savePathParts.trailingSuffix}
                 placeholder={t('exportSettings.noSavePath')}
                 chooseLabel={t('actions.choose')}
+                displayWhenDisabled={target?.type === 'history'}
                 onChange={(event) => {
                   if (!exportSettings.savePath) return;
 

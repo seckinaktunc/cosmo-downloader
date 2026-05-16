@@ -144,3 +144,11 @@ export function getEditableSavePathParts(
 
   return splitOutputPath(effectivePath);
 }
+
+export function getStoredSavePathParts(filePath?: string): EditableSavePathParts | undefined {
+  if (!filePath) {
+    return undefined;
+  }
+
+  return splitOutputPath(filePath);
+}

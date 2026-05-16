@@ -20,6 +20,7 @@
 - Fixed excessive queue disk writes and full queue snapshot broadcasts during active downloads.
 - Fixed unnecessary queue rerenders by applying per-item runtime progress deltas instead of replacing the full queue state on every progress tick.
 - Fixed preview download state so queued download progress no longer overrides standalone preview progress tracking.
+- Fixed history selection so the location selector shows the saved path and filename in read-only mode.
 
 ## v1.0.9
 

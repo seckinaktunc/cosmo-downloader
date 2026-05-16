@@ -10,6 +10,7 @@ type LocationSelectorProps = React.ComponentProps<'input'> & {
   path?: string;
   fileName?: string;
   suffix?: string;
+  displayWhenDisabled?: boolean;
   onChoose: () => void;
   onOpen: () => void;
   onReset?: () => void;
@@ -24,6 +25,7 @@ export function LocationSelector({
   labelClassName,
   path,
   suffix,
+  displayWhenDisabled = false,
   onChange,
   onChoose,
   onOpen,
@@ -31,6 +33,10 @@ export function LocationSelector({
   onBlur
 }: LocationSelectorProps): React.JSX.Element {
   const { t } = useTranslation();
+  const shouldShowDisabledValue = disabled && displayWhenDisabled;
+  const displayedPath =
+    shouldShowDisabledValue || !disabled ? path : t('exportSettings.noSavePath');
+  const displayedValue = shouldShowDisabledValue || !disabled ? value : '';
 
   return (
     <div className={cn('flex items-center justify-between w-full gap-16 min-w-0', className)}>
@@ -46,7 +52,7 @@ export function LocationSelector({
             variant="ghost"
             icon="folderOpen"
             className="h-full justify-start"
-            label={disabled ? t('exportSettings.noSavePath') : path}
+            label={displayedPath ?? t('exportSettings.noSavePath')}
             size="full-xs"
             iconSize={18}
             onClick={onOpen}
@@ -64,7 +70,7 @@ export function LocationSelector({
           />
           <InputField
             className="text-white"
-            value={disabled ? '' : value}
+            value={displayedValue}
             placeholder={t('exportSettings.fileNamePlaceholder')}
             disabled={disabled}
             onChange={onChange}

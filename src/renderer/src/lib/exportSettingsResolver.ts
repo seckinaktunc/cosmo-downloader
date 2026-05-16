@@ -12,6 +12,8 @@ export type ResolvedExportSettingsTarget = {
   target: ActiveExportTarget | null;
   metadata: VideoMetadata | null;
   exportSettings: ExportSettings;
+  locationDisplayPath?: string;
+  locationDisplayMode: 'effective' | 'raw';
   readOnly: boolean;
   editable: boolean;
 };
@@ -52,6 +54,8 @@ export function resolveExportSettingsTarget({
         target: activeTarget,
         metadata: item.metadata,
         exportSettings: item.exportSettings,
+        locationDisplayPath: item.exportSettings.savePath,
+        locationDisplayMode: 'effective',
         readOnly: !editable,
         editable
       };
@@ -65,6 +69,8 @@ export function resolveExportSettingsTarget({
         target: activeTarget,
         metadata: entry.metadata,
         exportSettings: entry.exportSettings,
+        locationDisplayPath: entry.outputPath ?? entry.exportSettings.savePath,
+        locationDisplayMode: entry.outputPath ? 'raw' : 'effective',
         readOnly: true,
         editable: false
       };
@@ -76,6 +82,8 @@ export function resolveExportSettingsTarget({
       target: { type: 'preview' },
       metadata: previewMetadata,
       exportSettings: previewExportSettings,
+      locationDisplayPath: previewExportSettings.savePath,
+      locationDisplayMode: 'effective',
       readOnly: false,
       editable: true
     };
@@ -85,6 +93,8 @@ export function resolveExportSettingsTarget({
     target: null,
     metadata: null,
     exportSettings: DEFAULT_EXPORT_SETTINGS,
+    locationDisplayPath: undefined,
+    locationDisplayMode: 'effective',
     readOnly: true,
     editable: false
   };
