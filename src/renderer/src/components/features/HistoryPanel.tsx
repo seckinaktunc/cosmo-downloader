@@ -63,10 +63,7 @@ export function HistoryPanel({ isActive }: HistoryPanelProps): React.JSX.Element
         ? [
             {
               id: queueAction,
-              label:
-                queueAction === 'download'
-                  ? t('history.actions.download')
-                  : t('history.actions.requeue'),
+              label: queueAction === 'download' ? t('queue.add') : t('history.actions.requeue'),
               icon: 'add',
               onSelect: () => void requeue(entry.id)
             } satisfies ActionMenuItem

@@ -202,10 +202,11 @@ export function MetadataPanel(): React.JSX.Element {
           activeHistoryQueueAction ? (
             <div className="shrink-0">
               <Button
+                variant="secondary"
                 icon="add"
                 label={
                   activeHistoryQueueAction === 'download'
-                    ? t('history.actions.download')
+                    ? t('queue.add')
                     : t('history.actions.requeue')
                 }
                 size="lg"
