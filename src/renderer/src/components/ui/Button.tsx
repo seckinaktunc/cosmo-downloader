@@ -38,7 +38,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-white text-black',
+        primary: 'bg-white text-black hover:bg-white/90',
         secondary:
           'bg-gray-850 [&_[data-slot=label]]:text-white/50 [&_[data-slot=icon]]:opacity-50 border border-white/10 hover:bg-gray-800 not-disabled:hover:[&_[data-slot=icon]]:opacity-100',
         ghost:

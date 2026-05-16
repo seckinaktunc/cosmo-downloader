@@ -1,3 +1,5 @@
+import Button from './Button';
+
 type ConfirmDialogProps = {
   title: string;
   message: string;
@@ -16,32 +18,35 @@ export function ConfirmDialog({
   onCancel
 }: ConfirmDialogProps): React.JSX.Element {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs"
+      onClick={onCancel}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
-        className="w-full max-w-sm rounded-lg border border-white/10 bg-black p-4 text-white shadow-2xl"
+        className="w-full max-w-sm rounded-lg border border-white/25 bg-black text-white shadow-2xl shadow-black overflow-hidden"
+        onClick={(event) => event.stopPropagation()}
       >
-        <h2 id="confirm-dialog-title" className="text-lg font-bold">
-          {title}
-        </h2>
-        <p className="mt-2 text-sm text-white/60">{message}</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            className="no-drag rounded-lg bg-white/5 px-4 py-2 text-sm font-bold text-white outline-none transition hover:bg-gray-900 focus-visible:ring-2 focus-visible:ring-white/70"
-            onClick={onCancel}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className="no-drag rounded-lg bg-white px-4 py-2 text-sm font-bold text-black outline-none transition hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-white/70"
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </button>
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <h2 id="confirm-dialog-title" className="font-bold">
+              {title}
+            </h2>
+            <Button
+              variant="ghost"
+              icon="close"
+              size="icon"
+              className="size-4"
+              onClick={onCancel}
+            />
+          </div>
+          <p className="text-sm text-white/60 p-4">{message}</p>
+        </div>
+        <div className="flex justify-end gap-2 p-4 pt-0">
+          <Button variant="secondary" label={cancelLabel} onClick={onCancel} size="sm" />
+          <Button variant="primary" label={confirmLabel} onClick={onConfirm} size="sm" ripple />
         </div>
       </div>
     </div>
