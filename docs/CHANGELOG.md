@@ -7,6 +7,7 @@
 - Added a shared buffered JSON persistence utility for queue, history, and settings data.
 - Added corrupt-file backup recovery for persisted queue, history, and settings files.
 - Added a dedicated queue progress IPC event for lightweight per-item runtime updates.
+- Added remove button on hover for history items.
 
 ### Changed
 

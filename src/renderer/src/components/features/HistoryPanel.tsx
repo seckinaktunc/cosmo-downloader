@@ -134,6 +134,11 @@ export function HistoryPanel({ isActive }: HistoryPanelProps): React.JSX.Element
       }
       getMetaLabel={(entry) => new Date(entry.createdAt).toLocaleString()}
       getActions={getActions}
+      getTopRightAction={(entry) => ({
+        icon: 'close',
+        label: t('queue.actions.remove'),
+        onSelect: () => void remove(entry.id)
+      })}
       activeItemId={activeExportTarget?.type === 'history' ? activeExportTarget.entryId : undefined}
       onActivateItem={(entry) => {
         setActiveExportTarget({ type: 'history', entryId: entry.id });
