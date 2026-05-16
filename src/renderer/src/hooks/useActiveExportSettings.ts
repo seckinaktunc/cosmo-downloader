@@ -21,6 +21,9 @@ export function useActiveExportSettings(): ReturnType<typeof resolveExportSettin
     (state) => state.updateExportSettingsDebounced
   )
   const historyEntries = useHistoryStore((state) => state.entries)
+  const updateHistoryExportSettingsDebounced = useHistoryStore(
+    (state) => state.updateExportSettingsDebounced
+  )
 
   const resolved = useMemo(
     () =>
@@ -63,14 +66,31 @@ export function useActiveExportSettings(): ReturnType<typeof resolveExportSettin
         return
       }
 
+      if (target?.type === 'history') {
+        const entry = historyEntries.find((candidate) => candidate.id === target.entryId)
+        if (!entry) {
+          return
+        }
+
+        const nextSettings = {
+          ...entry.exportSettings,
+          ...update
+        }
+        updateHistoryExportSettingsDebounced(entry.id, nextSettings)
+        setLastEditableExportSettings(nextSettings)
+        return
+      }
+
       const nextSettings = updatePreviewExportSettings(update)
       setLastEditableExportSettings(nextSettings)
     },
     [
+      historyEntries,
       queueItems,
       resolved.editable,
       resolved.target,
       setLastEditableExportSettings,
+      updateHistoryExportSettingsDebounced,
       updatePreviewExportSettings,
       updateQueueExportSettingsDebounced
     ]

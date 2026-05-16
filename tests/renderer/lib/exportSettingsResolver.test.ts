@@ -113,7 +113,7 @@ describe('exportSettingsResolver', () => {
     expect(resolved.readOnly).toBe(false);
   });
 
-  it('prefers the stored output path for history location display', () => {
+  it('keeps completed history entries read-only', () => {
     const entry = {
       ...historyEntry('history'),
       outputPath: '/downloads/history/final export.mp4'
@@ -130,6 +130,7 @@ describe('exportSettingsResolver', () => {
     expect(resolved.locationDisplayPath).toBe(entry.outputPath);
     expect(resolved.locationDisplayMode).toBe('raw');
     expect(resolved.readOnly).toBe(true);
+    expect(resolved.editable).toBe(false);
   });
 
   it('falls back to the saved export path when history output path is unavailable', () => {
@@ -171,4 +172,44 @@ describe('exportSettingsResolver', () => {
     expect(resolved.locationDisplayMode).toBe('effective');
     expect(resolved.readOnly).toBe(true);
   });
+
+  it.each(['fetched', 'failed', 'cancelled'] as const)(
+    'resolves %s history entries as editable',
+    (status) => {
+      const entry = {
+        ...historyEntry(`history-${status}`),
+        status
+      };
+      const resolved = resolveExportSettingsTarget({
+        activeTarget: { type: 'history', entryId: entry.id },
+        previewMetadata: metadata('preview'),
+        previewExportSettings: DEFAULT_EXPORT_SETTINGS,
+        queueItems: [],
+        historyEntries: [entry]
+      });
+
+      expect(resolved.readOnly).toBe(false);
+      expect(resolved.editable).toBe(true);
+    }
+  );
+
+  it.each(['fetch_failed', 'started', 'completed'] as const)(
+    'resolves %s history entries as read-only',
+    (status) => {
+      const entry = {
+        ...historyEntry(`history-${status}`),
+        status
+      };
+      const resolved = resolveExportSettingsTarget({
+        activeTarget: { type: 'history', entryId: entry.id },
+        previewMetadata: metadata('preview'),
+        previewExportSettings: DEFAULT_EXPORT_SETTINGS,
+        queueItems: [],
+        historyEntries: [entry]
+      });
+
+      expect(resolved.readOnly).toBe(true);
+      expect(resolved.editable).toBe(false);
+    }
+  );
 });

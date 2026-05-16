@@ -3,12 +3,14 @@ import { DEFAULT_EXPORT_SETTINGS } from '@shared/defaults';
 import type {
   AppSettings,
   DownloadHistoryEntry,
+  ExportSettings,
   HistoryChangedEvent,
   HistoryListRequest,
   HistoryListResult,
   IpcResult,
   VideoMetadata
 } from '@shared/types';
+import { useDownloadStore } from '@renderer/stores/downloadStore';
 import { useHistoryStore } from '@renderer/stores/historyStore';
 import { useUiStore } from '@renderer/stores/uiStore';
 
@@ -69,6 +71,7 @@ function flushAsyncWork(): Promise<void> {
 
 function installHistoryMock(initialEntries: DownloadHistoryEntry[]): {
   getMock: ReturnType<typeof vi.fn>;
+  updateExportSettingsMock: ReturnType<typeof vi.fn>;
   emitChanged: () => void;
   prependEntries: (...entries: DownloadHistoryEntry[]) => void;
   replaceEntries: (entries: DownloadHistoryEntry[]) => void;
@@ -87,12 +90,27 @@ function installHistoryMock(initialEntries: DownloadHistoryEntry[]): {
     entries = entries.filter((entry) => entry.id !== entryId);
     return ok<null>(null);
   });
+  const updateExportSettingsMock = vi.fn(
+    async ({
+      entryId,
+      exportSettings
+    }: {
+      entryId: string;
+      exportSettings: ExportSettings;
+    }) => {
+      entries = entries.map((entry) =>
+        entry.id === entryId ? { ...entry, exportSettings } : entry
+      );
+      return ok(entries.find((entry) => entry.id === entryId) ?? entries[0]);
+    }
+  );
 
   vi.stubGlobal('window', {
     cosmo: {
       history: {
         get: getMock,
         remove: removeMock,
+        updateExportSettings: updateExportSettingsMock,
         removeMany: vi.fn(async ({ entryIds }: { entryIds: string[] }) => {
           const selectedIds = new Set(entryIds);
           entries = entries.filter((entry) => !selectedIds.has(entry.id));
@@ -104,6 +122,12 @@ function installHistoryMock(initialEntries: DownloadHistoryEntry[]): {
         }),
         recordFetch: vi.fn(),
         requeue: vi.fn(async () => ok(null)),
+        startDownload: vi.fn(async () =>
+          ok({
+            stage: 'completed',
+            stageLabel: 'Completed'
+          })
+        ),
         openOutput: vi.fn(async () => ok(null)),
         openMedia: vi.fn(async () => ok(null)),
         openFolder: vi.fn(async () => ok(null)),
@@ -120,6 +144,7 @@ function installHistoryMock(initialEntries: DownloadHistoryEntry[]): {
 
   return {
     getMock,
+    updateExportSettingsMock,
     emitChanged: () => onChanged?.({ totalCount: entries.length }),
     prependEntries: (...nextEntries) => {
       entries = [...nextEntries, ...entries];
@@ -150,6 +175,15 @@ beforeEach(() => {
     previewExportSettings: DEFAULT_EXPORT_SETTINGS,
     lastEditableExportSettings: DEFAULT_EXPORT_SETTINGS,
     mediaOverviewWidthPercent: 30
+  });
+  useDownloadStore.setState({
+    stage: 'idle',
+    progress: null,
+    error: undefined,
+    isSubscribed: false,
+    trackedPreviewQueueItemId: undefined,
+    trackedPreviewUrl: undefined,
+    completedPreviewUrl: undefined
   });
 });
 
@@ -237,5 +271,75 @@ describe('useHistoryStore paging', () => {
 
     expect(useUiStore.getState().activeExportTarget).toBeNull();
     expect(useHistoryStore.getState().entries).toHaveLength(5);
+  });
+
+  it('persists edited export settings onto the selected history entry', async () => {
+    const initialEntry = {
+      ...historyEntry('editable-item', 0),
+      status: 'fetched' as const
+    };
+    const historyMock = installHistoryMock([initialEntry]);
+    useHistoryStore.setState({
+      entries: [initialEntry],
+      totalCount: 1,
+      loadedCount: 1,
+      isSubscribed: false,
+      isLoadingInitial: false,
+      isLoadingMore: false,
+      hasOpenedPanel: true,
+      error: undefined
+    });
+
+    const nextSettings: ExportSettings = {
+      ...DEFAULT_EXPORT_SETTINGS,
+      outputFormat: 'mkv'
+    };
+
+    await useHistoryStore.getState().updateExportSettings(initialEntry.id, nextSettings);
+
+    expect(historyMock.updateExportSettingsMock).toHaveBeenCalledWith({
+      entryId: initialEntry.id,
+      exportSettings: nextSettings
+    });
+    expect(useHistoryStore.getState().entries[0]?.exportSettings.outputFormat).toBe('mkv');
+  });
+
+  it('flushes debounced history export settings before starting a direct history download', async () => {
+    const initialEntry = {
+      ...historyEntry('direct-download-item', 0),
+      status: 'fetched' as const
+    };
+    const historyMock = installHistoryMock([initialEntry]);
+    const startHistoryMock = vi.fn(async () => true);
+    useHistoryStore.setState({
+      entries: [initialEntry],
+      totalCount: 1,
+      loadedCount: 1,
+      isSubscribed: false,
+      isLoadingInitial: false,
+      isLoadingMore: false,
+      hasOpenedPanel: true,
+      error: undefined
+    });
+    useDownloadStore.setState({
+      startHistory: startHistoryMock
+    });
+
+    const nextSettings: ExportSettings = {
+      ...DEFAULT_EXPORT_SETTINGS,
+      outputFormat: 'webm'
+    };
+
+    useHistoryStore.getState().updateExportSettingsDebounced(initialEntry.id, nextSettings);
+    await useHistoryStore.getState().startDownload(initialEntry.id);
+
+    expect(historyMock.updateExportSettingsMock).toHaveBeenCalledWith({
+      entryId: initialEntry.id,
+      exportSettings: nextSettings
+    });
+    expect(startHistoryMock).toHaveBeenCalledWith(initialEntry.id);
+    expect(historyMock.updateExportSettingsMock.mock.invocationCallOrder[0]).toBeLessThan(
+      startHistoryMock.mock.invocationCallOrder[0]
+    );
   });
 });

@@ -334,6 +334,11 @@ export type HistoryItemRequest = {
   entryId: string;
 };
 
+export type HistoryExportSettingsUpdateRequest = {
+  entryId: string;
+  exportSettings: ExportSettings;
+};
+
 export type HistoryBulkRequest = {
   entryIds: string[];
 };

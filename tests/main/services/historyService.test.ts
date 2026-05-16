@@ -3,7 +3,14 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { shell } from 'electron';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ExportSettings, QueueItem, VideoMetadata } from '@shared/types';
+import type {
+  AppSettings,
+  DownloadProgress,
+  ExportSettings,
+  QueueItem,
+  VideoMetadata
+} from '@shared/types';
+import type { DownloadService } from '@main/services/downloadService';
 import { HistoryService } from '@main/services/historyService';
 
 vi.mock('electron', () => ({
@@ -188,6 +195,31 @@ describe('HistoryService', () => {
     expect(service.get()[0]?.id).toBe(entry.id);
   });
 
+  it('updates export settings only for editable history entries', async () => {
+    const { service } = createHistoryService();
+    const fetchedEntry = service.recordFetch({
+      metadata: metadata('fetched'),
+      exportSettings,
+      settings,
+      status: 'fetched',
+      logPath: '/logs/fetched.log'
+    });
+    const completedEntry = service.addStarted(queueItem('completed'));
+
+    const updated = await service.updateExportSettings(fetchedEntry.id, {
+      ...exportSettings,
+      outputFormat: 'mkv'
+    });
+    const rejected = await service.updateExportSettings(completedEntry.id, {
+      ...exportSettings,
+      outputFormat: 'webm'
+    });
+
+    expect(updated.ok).toBe(true);
+    expect(updated.ok && updated.data.exportSettings.outputFormat).toBe('mkv');
+    expect(rejected.ok).toBe(false);
+  });
+
   it('reuses fetched entries when a matching request starts downloading', () => {
     const { service } = createHistoryService();
     const fetchedEntry = service.recordFetch({
@@ -211,6 +243,95 @@ describe('HistoryService', () => {
     expect(reusedEntry.queueItemId).toBe('queued');
     expect(reusedEntry.logPath).toBeUndefined();
     expect(service.get()).toHaveLength(1);
+  });
+
+  it('reuses the same entry id for direct history downloads and marks it started immediately', async () => {
+    let emitProgress: ((progress: DownloadProgress) => void) | undefined;
+    let resolveDownload:
+      | ((value: { ok: true; data: DownloadProgress }) => void)
+      | undefined;
+    const downloadService = {
+      isActive: vi.fn(() => false),
+      start: vi.fn().mockImplementation(
+        async (
+          _sender,
+          _request,
+          options?: { onProgress?: (progress: DownloadProgress) => void }
+        ) =>
+          new Promise((resolve) => {
+            emitProgress = options?.onProgress;
+            resolveDownload = resolve;
+          })
+      )
+    } as unknown as Pick<DownloadService, 'isActive' | 'start'>;
+    const { service } = createHistoryService();
+    const entry = service.recordFetch({
+      metadata: metadata('direct-history'),
+      exportSettings,
+      settings,
+      status: 'fetched',
+      logPath: '/logs/fetched.log'
+    });
+
+    const resultPromise = service.startDownload(
+      { isDestroyed: () => false } as never,
+      downloadService,
+      entry.id
+    );
+
+    await vi.waitFor(() => {
+      expect(service.find(entry.id)?.status).toBe('started');
+    });
+    await vi.waitFor(() => {
+      expect(emitProgress).toBeTypeOf('function');
+    });
+
+    emitProgress?.({
+      stage: 'downloading',
+      stageLabel: 'Downloading',
+      percentage: 25,
+      logPath: '/logs/direct-history.log'
+    });
+    await vi.waitFor(() => {
+      expect(service.find(entry.id)?.logPath).toBe('/logs/direct-history.log');
+    });
+
+    resolveDownload?.({
+      ok: true,
+      data: {
+        stage: 'completed',
+        stageLabel: 'Completed',
+        percentage: 100,
+        outputPath: '/downloads/direct-history.mp4',
+        logPath: '/logs/direct-history.log'
+      }
+    });
+
+    const result = await resultPromise;
+
+    expect(result.ok).toBe(true);
+    expect(service.find(entry.id)?.status).toBe('completed');
+    expect(service.find(entry.id)?.outputPath).toBe('/downloads/direct-history.mp4');
+    expect(service.get()).toHaveLength(1);
+  });
+
+  it('rejects direct history downloads for non-startable statuses', async () => {
+    const { service } = createHistoryService();
+    const entry = service.addStarted(queueItem('completed'));
+    await service.update(entry.id, 'completed', { outputPath: '/downloads/completed.mp4' });
+    const downloadService = {
+      isActive: vi.fn(() => false),
+      start: vi.fn()
+    } as unknown as Pick<DownloadService, 'isActive' | 'start'>;
+
+    const result = await service.startDownload(
+      { isDestroyed: () => false } as never,
+      downloadService,
+      entry.id
+    );
+
+    expect(result.ok).toBe(false);
+    expect(downloadService.start).not.toHaveBeenCalled();
   });
 
   it('trims the oldest entries when the limit is exceeded', () => {

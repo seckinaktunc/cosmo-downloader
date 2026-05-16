@@ -8,12 +8,15 @@
 - Added corrupt-file backup recovery for persisted queue, history, and settings files.
 - Added a dedicated queue progress IPC event for lightweight per-item runtime updates.
 - Added remove button on hover for history items.
+- Added direct bottom-bar downloads for editable history items when no queue work is pending.
 
 ### Changed
 
 - Changed queue persistence so live download progress is kept in memory instead of being written to `queue.json`.
 - Changed queue snapshots to carry structural queue state only, while runtime progress is tracked separately in the renderer.
 - Changed queue, history, and settings writes to use batched async persistence with immediate flushes for critical state transitions and app shutdown.
+- Changed fetched, failed, and cancelled history items to persist editable export settings for both direct downloads and queue requeues.
+- Changed bottom-bar queue starts to append the selected editable history item before starting when queue work is already pending.
 
 ### Fixed
 
@@ -21,6 +24,7 @@
 - Fixed unnecessary queue rerenders by applying per-item runtime progress deltas instead of replacing the full queue state on every progress tick.
 - Fixed preview download state so queued download progress no longer overrides standalone preview progress tracking.
 - Fixed history selection so the location selector shows the saved path and filename in read-only mode.
+- Fixed fetched-only history items so their export settings can be edited without first adding them to the queue.
 
 ## v1.0.9
 

@@ -9,6 +9,7 @@ import type {
   ChooseOutputPathResult,
   HistoryListRequest,
   HistoryBulkRequest,
+  HistoryExportSettingsUpdateRequest,
   HistoryItemRequest,
   OpenPathRequest,
   QueueAddRequest,
@@ -314,6 +315,12 @@ export function registerIpcHandlers(): RegisteredServices {
     ok(historyService.recordFetch(request))
   );
 
+  ipcMain.handle(
+    IPC_CHANNELS.history.updateExportSettings,
+    (_event, request: HistoryExportSettingsUpdateRequest) =>
+      historyService.updateExportSettings(request.entryId, request.exportSettings)
+  );
+
   ipcMain.handle(IPC_CHANNELS.history.requeue, (_event, request: HistoryItemRequest) => {
     const entry = historyService.find(request.entryId);
     if (!entry) {
@@ -326,6 +333,10 @@ export function registerIpcHandlers(): RegisteredServices {
 
     return queueService.addFromHistory(entry);
   });
+
+  ipcMain.handle(IPC_CHANNELS.history.startDownload, (event, request: HistoryItemRequest) =>
+    historyService.startDownload(event.sender, downloadService, request.entryId)
+  );
 
   ipcMain.handle(IPC_CHANNELS.history.openOutput, (_event, request: HistoryItemRequest) => {
     return historyService.openOutput(request.entryId)

@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isHistoryEntryEditable } from '../../../../shared/historyEntryCapabilities';
 import { useDisplayMetadata } from '../../hooks/useDisplayMetadata';
 import { getBottomButtonState } from '../../lib/bottomButtonState';
 import { useDownloadStore } from '../../stores/downloadStore';
+import { useHistoryStore } from '../../stores/historyStore';
 import { useQueueStore } from '../../stores/queueStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUiStore } from '../../stores/uiStore';
@@ -20,6 +22,7 @@ export function BottomBar(): React.JSX.Element {
   const clearVideo = useVideoStore((state) => state.clear);
   const settings = useSettingsStore((state) => state.settings);
   const previewExportSettings = useUiStore((state) => state.previewExportSettings);
+  const activeExportTarget = useUiStore((state) => state.activeExportTarget);
   const activePanel = useUiStore((state) => state.activePanel);
   const openMediaPanel = useUiStore((state) => state.openMediaPanel);
   const toggleMediaPanel = useUiStore((state) => state.toggleMediaPanel);
@@ -35,6 +38,12 @@ export function BottomBar(): React.JSX.Element {
     (state) => state.markTrackedPreviewCompleted
   );
   const clearPreviewDownloadState = useDownloadStore((state) => state.clearPreviewDownloadState);
+  const historyEntries = useHistoryStore((state) => state.entries);
+  const requeueHistoryEntry = useHistoryStore((state) => state.requeue);
+  const startHistoryDownload = useHistoryStore((state) => state.startDownload);
+  const flushHistoryExportSettingsSaves = useHistoryStore(
+    (state) => state.flushExportSettingsSaves
+  );
   const queueItems = useQueueStore((state) => state.items);
   const activeQueueItemId = useQueueStore((state) => state.activeItemId);
   const queueProgressById = useQueueStore((state) => state.progressById);
@@ -52,20 +61,32 @@ export function BottomBar(): React.JSX.Element {
         progress: activeQueueProgress
       }
     : undefined;
+  const activeHistoryEntry =
+    activeExportTarget?.type === 'history'
+      ? historyEntries.find((entry) => entry.id === activeExportTarget.entryId)
+      : undefined;
+  const canDownloadHistorySelection = Boolean(
+    activeHistoryEntry && isHistoryEntryEditable(activeHistoryEntry.status)
+  );
+  const historySelectionActive = activeExportTarget?.type === 'history';
   const summaryMetadata = activeItem?.metadata ?? displayMetadata ?? metadata;
-  const canDownload = metadata != null && settings != null && videoStage === 'ready';
+  const canDownload =
+    metadata != null && settings != null && videoStage === 'ready' && !historySelectionActive;
   const pendingItems = queueItems.filter((item) => item.status === 'pending');
   const hasPendingQueueItems = pendingItems.length > 0;
   const currentSourceUrl = metadata ? getSourceUrl(metadata) : undefined;
   const isDuplicate =
     metadata != null &&
+    !historySelectionActive &&
     queueItems.some((item) => getSourceUrl(item.metadata) === getSourceUrl(metadata));
   const currentPreviewCompleted = Boolean(
-    currentSourceUrl && completedPreviewUrl === currentSourceUrl
+    !historySelectionActive && currentSourceUrl && completedPreviewUrl === currentSourceUrl
   );
-  const willAddPreviewToQueue = canDownload && !currentPreviewCompleted && !isDuplicate;
+  const willAddHistoryToQueue = hasPendingQueueItems && canDownloadHistorySelection;
+  const willAddPreviewToQueue =
+    !willAddHistoryToQueue && canDownload && !currentPreviewCompleted && !isDuplicate;
   const queueStartCount = hasPendingQueueItems
-    ? queueItems.length + (willAddPreviewToQueue ? 1 : 0)
+    ? queueItems.length + (willAddHistoryToQueue || willAddPreviewToQueue ? 1 : 0)
     : undefined;
   const completedPreviewItem =
     currentSourceUrl && currentPreviewCompleted
@@ -74,14 +95,15 @@ export function BottomBar(): React.JSX.Element {
         )
       : undefined;
   const buttonText = getBottomButtonState({
-    activeItem: activeQueueItem,
-    queueItems,
-    downloadStage,
-    progress,
-    videoStage,
-    canDownloadPreview: canDownload,
-    currentPreviewCompleted,
-    hasPendingQueueItems,
+        activeItem: activeQueueItem,
+        queueItems,
+        downloadStage,
+        progress,
+        videoStage,
+        canDownloadHistorySelection,
+        canDownloadPreview: canDownload,
+        currentPreviewCompleted,
+        hasPendingQueueItems,
     queueStartCount,
     labels: {
       startDownload: t('bottom.startDownload'),
@@ -127,9 +149,39 @@ export function BottomBar(): React.JSX.Element {
     }
   };
 
+  const startOrResumeQueue = async (): Promise<void> => {
+    await (queuePaused ? resumeQueue() : startQueue());
+  };
+
+  const addHistoryToQueueAndStart = async (): Promise<void> => {
+    if (!activeHistoryEntry) {
+      return;
+    }
+
+    await Promise.all([flushExportSettingsSaves(), flushHistoryExportSettingsSaves()]);
+    const added = await requeueHistoryEntry(activeHistoryEntry.id);
+    if (!added) {
+      return;
+    }
+
+    await startOrResumeQueue();
+    openMediaPanel('queue');
+  };
+
+  const startSelectedHistoryDownload = async (): Promise<void> => {
+    if (!activeHistoryEntry) {
+      return;
+    }
+
+    const started = await startHistoryDownload(activeHistoryEntry.id);
+    if (!started) {
+      return;
+    }
+  };
+
   const startExistingQueue = async (): Promise<void> => {
     await flushExportSettingsSaves();
-    await (queuePaused ? resumeQueue() : startQueue());
+    await startOrResumeQueue();
   };
 
   const handleMainClick = (): void => {
@@ -144,12 +196,22 @@ export function BottomBar(): React.JSX.Element {
     }
 
     if (buttonText.mode === 'start' && hasPendingQueueItems) {
+      if (canDownloadHistorySelection) {
+        void addHistoryToQueueAndStart();
+        return;
+      }
+
       if (canDownload && !currentPreviewCompleted && !isDuplicate) {
         void addPreviewAndStart();
         return;
       }
 
       void startExistingQueue();
+      return;
+    }
+
+    if (buttonText.mode === 'start' && canDownloadHistorySelection) {
+      void startSelectedHistoryDownload();
       return;
     }
 

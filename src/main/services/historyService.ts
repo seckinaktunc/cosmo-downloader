@@ -1,19 +1,25 @@
-import { app, clipboard, shell, webContents } from 'electron';
+import { app, clipboard, shell, type WebContents, webContents } from 'electron';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import type {
   DownloadHistoryEntry,
+  DownloadProgress,
   HistoryChangedEvent,
   HistoryListRequest,
   HistoryListResult,
   DownloadHistoryStatus,
+  ExportSettings,
+  IpcResult,
   QueueItem,
   RecordFetchHistoryRequest
 } from '../../shared/types';
 import { IPC_CHANNELS } from '../../shared/ipc';
 import { mergeExportSettings } from '../../shared/defaults';
+import { canStartHistoryDirectDownload, isHistoryEntryEditable } from '../../shared/historyEntryCapabilities';
 import { BufferedJsonFile, loadJsonFileState } from '../utils/jsonFileState';
+import { fail, ok } from '../utils/ipcResult';
+import type { DownloadService } from './downloadService';
 
 const HISTORY_FILE = 'history.json';
 
@@ -186,6 +192,28 @@ export class HistoryService {
     return entry;
   }
 
+  async updateExportSettings(
+    entryId: string,
+    exportSettings: ExportSettings
+  ): Promise<IpcResult<DownloadHistoryEntry>> {
+    const entry = this.entries.find((candidate) => candidate.id === entryId);
+    if (!entry) {
+      return fail('NOT_FOUND', 'History entry not found.');
+    }
+
+    if (!isHistoryEntryEditable(entry.status)) {
+      return fail(
+        'VALIDATION_ERROR',
+        'Export settings can only be edited for fetched, failed, or cancelled history entries.'
+      );
+    }
+
+    entry.exportSettings = mergeExportSettings(exportSettings);
+    entry.updatedAt = now();
+    await this.flushAndBroadcast();
+    return ok(entry);
+  }
+
   async update(
     entryId: string,
     status: DownloadHistoryStatus,
@@ -199,6 +227,67 @@ export class HistoryService {
     Object.assign(entry, update, { status, updatedAt: now() });
     await this.flushAndBroadcast();
     return entry;
+  }
+
+  async startDownload(
+    sender: WebContents,
+    downloadService: Pick<DownloadService, 'isActive' | 'start'>,
+    entryId: string
+  ): Promise<IpcResult<DownloadProgress>> {
+    const entry = this.entries.find((candidate) => candidate.id === entryId);
+    if (!entry) {
+      return fail('NOT_FOUND', 'History entry not found.');
+    }
+
+    if (!canStartHistoryDirectDownload(entry.status)) {
+      return fail(
+        'VALIDATION_ERROR',
+        'Only fetched, failed, or cancelled history entries can be downloaded directly.'
+      );
+    }
+
+    if (downloadService.isActive()) {
+      return fail('BUSY', 'A download is already running.');
+    }
+
+    this.promoteToStarted(entry);
+    await this.flushAndBroadcast();
+
+    let recordedLogPath: string | undefined;
+    const result = await downloadService.start(
+      sender,
+      {
+        metadata: entry.metadata,
+        exportSettings: entry.exportSettings,
+        settings: entry.settings,
+        outputPath: entry.exportSettings.savePath
+      },
+      {
+        onProgress: (progress) => {
+          if (recordedLogPath || !progress.logPath) {
+            return;
+          }
+
+          recordedLogPath = progress.logPath;
+          void this.attachLogPath(entry.id, progress.logPath);
+        }
+      }
+    );
+
+    if (result.ok) {
+      await this.update(entry.id, 'completed', {
+        outputPath: result.data.outputPath,
+        logPath: result.data.logPath
+      });
+      return result;
+    }
+
+    const status = result.error.code === 'CANCELLED' ? 'cancelled' : 'failed';
+    await this.update(entry.id, status, {
+      error: result.error.message,
+      logPath: result.error.details
+    });
+    return result;
   }
 
   remove(entryId: string): void {
@@ -293,6 +382,28 @@ export class HistoryService {
 
     this.entries = sortedEntries.slice(0, limit);
     return true;
+  }
+
+  private promoteToStarted(entry: DownloadHistoryEntry): void {
+    Object.assign(entry, {
+      queueItemId: undefined,
+      status: 'started' as const,
+      outputPath: undefined,
+      logPath: undefined,
+      error: undefined,
+      updatedAt: now()
+    });
+  }
+
+  private async attachLogPath(entryId: string, logPath: string): Promise<void> {
+    const entry = this.entries.find((candidate) => candidate.id === entryId);
+    if (!entry || entry.logPath === logPath) {
+      return;
+    }
+
+    entry.logPath = logPath;
+    entry.updatedAt = now();
+    await this.flushAndBroadcast();
   }
 
   private writeTrimmedAndBroadcast(): void {

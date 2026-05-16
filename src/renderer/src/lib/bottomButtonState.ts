@@ -11,6 +11,7 @@ export type BottomButtonStateInput = {
   downloadStage: DownloadStage
   progress: DownloadProgress | null
   videoStage: DownloadStage
+  canDownloadHistorySelection: boolean
   canDownloadPreview: boolean
   currentPreviewCompleted: boolean
   hasPendingQueueItems: boolean
@@ -36,6 +37,7 @@ export function getBottomButtonState({
   downloadStage,
   progress,
   videoStage,
+  canDownloadHistorySelection,
   canDownloadPreview,
   currentPreviewCompleted,
   hasPendingQueueItems,
@@ -68,6 +70,10 @@ export function getBottomButtonState({
 
   if (hasPendingQueueItems) {
     return { mode: 'start', primary: labels.startQueue(queueStartCount ?? queueItems.length) }
+  }
+
+  if (canDownloadHistorySelection) {
+    return { mode: 'start', primary: labels.startDownload }
   }
 
   if (currentPreviewCompleted) {

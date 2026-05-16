@@ -56,6 +56,7 @@ describe('getBottomButtonState', () => {
         downloadStage: 'idle',
         progress: null,
         videoStage: 'ready',
+        canDownloadHistorySelection: false,
         canDownloadPreview: true,
         currentPreviewCompleted: false,
         hasPendingQueueItems: false
@@ -70,6 +71,7 @@ describe('getBottomButtonState', () => {
         downloadStage: 'idle',
         progress: null,
         videoStage: 'idle',
+        canDownloadHistorySelection: false,
         canDownloadPreview: false,
         currentPreviewCompleted: false,
         hasPendingQueueItems: true
@@ -84,6 +86,7 @@ describe('getBottomButtonState', () => {
         downloadStage: 'idle',
         progress: null,
         videoStage: 'ready',
+        canDownloadHistorySelection: false,
         canDownloadPreview: true,
         currentPreviewCompleted: false,
         hasPendingQueueItems: true,
@@ -99,6 +102,7 @@ describe('getBottomButtonState', () => {
         downloadStage: 'completed',
         progress: null,
         videoStage: 'ready',
+        canDownloadHistorySelection: false,
         canDownloadPreview: true,
         currentPreviewCompleted: true,
         hasPendingQueueItems: true
@@ -113,10 +117,42 @@ describe('getBottomButtonState', () => {
         downloadStage: 'completed',
         progress: null,
         videoStage: 'ready',
+        canDownloadHistorySelection: false,
         canDownloadPreview: true,
         currentPreviewCompleted: true,
         hasPendingQueueItems: false
       })
     ).toMatchObject({ mode: 'new_video', primary: 'New Video' });
+  });
+
+  it('shows direct download when an editable history item is selected without pending queue work', () => {
+    expect(
+      getBottomButtonState({
+        queueItems: [],
+        downloadStage: 'idle',
+        progress: null,
+        videoStage: 'ready',
+        canDownloadHistorySelection: true,
+        canDownloadPreview: false,
+        currentPreviewCompleted: false,
+        hasPendingQueueItems: false
+      })
+    ).toMatchObject({ mode: 'start', primary: 'Start Download' });
+  });
+
+  it('still shows the queue count when an editable history item will be added before start', () => {
+    expect(
+      getBottomButtonState({
+        queueItems: [queueItem],
+        downloadStage: 'idle',
+        progress: null,
+        videoStage: 'ready',
+        canDownloadHistorySelection: true,
+        canDownloadPreview: false,
+        currentPreviewCompleted: false,
+        hasPendingQueueItems: true,
+        queueStartCount: 2
+      })
+    ).toMatchObject({ mode: 'start', primary: 'Start Queue (2)' });
   });
 });

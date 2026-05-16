@@ -4,6 +4,7 @@ import type {
   DownloadProgress,
   DownloadStage,
   ExportSettings,
+  IpcResult,
   VideoMetadata
 } from '../../../shared/types';
 
@@ -21,6 +22,7 @@ type DownloadState = {
     exportSettings: ExportSettings,
     settings: AppSettings
   ) => Promise<void>;
+  startHistory: (entryId: string) => Promise<boolean>;
   cancel: () => Promise<void>;
   reset: () => void;
   resetForNewPreview: () => void;
@@ -30,6 +32,45 @@ type DownloadState = {
 };
 
 const ACTIVE_STAGES: DownloadStage[] = ['downloading', 'processing'];
+
+async function startStandaloneDownload(
+  set: (
+    partial: Partial<DownloadState> | ((state: DownloadState) => Partial<DownloadState>)
+  ) => void,
+  get: () => DownloadState,
+  request: () => Promise<IpcResult<DownloadProgress>>,
+  options: {
+    clearPreviewTracking?: boolean;
+  } = {}
+): Promise<boolean> {
+  if (ACTIVE_STAGES.includes(get().stage)) {
+    await get().cancel();
+    return false;
+  }
+
+  set((state) => ({
+    stage: 'downloading',
+    progress: { stage: 'downloading', stageLabel: 'Downloading', percentage: 0 },
+    error: undefined,
+    trackedPreviewQueueItemId: options.clearPreviewTracking
+      ? undefined
+      : state.trackedPreviewQueueItemId,
+    trackedPreviewUrl: options.clearPreviewTracking ? undefined : state.trackedPreviewUrl,
+    completedPreviewUrl: options.clearPreviewTracking ? undefined : state.completedPreviewUrl
+  }));
+
+  const result = await request();
+  if (!result.ok) {
+    set({
+      stage: result.error.code === 'CANCELLED' ? 'cancelled' : 'failed',
+      error: result.error.message
+    });
+    return false;
+  }
+
+  set({ stage: result.data.stage, progress: result.data });
+  return true;
+}
 
 export const useDownloadStore = create<DownloadState>((set, get) => ({
   stage: 'idle',
@@ -78,28 +119,20 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
   },
 
   start: async (metadata, exportSettings, settings) => {
-    if (ACTIVE_STAGES.includes(get().stage)) {
-      await get().cancel();
-      return;
-    }
-
-    set({
-      stage: 'downloading',
-      progress: { stage: 'downloading', stageLabel: 'Downloading', percentage: 0 },
-      error: undefined
-    });
-
-    const result = await window.cosmo.download.start({ metadata, exportSettings, settings });
-    if (!result.ok) {
-      set({
-        stage: result.error.code === 'CANCELLED' ? 'cancelled' : 'failed',
-        error: result.error.message
-      });
-      return;
-    }
-
-    set({ stage: result.data.stage, progress: result.data });
+    await startStandaloneDownload(
+      set,
+      get,
+      () => window.cosmo.download.start({ metadata, exportSettings, settings })
+    );
   },
+
+  startHistory: async (entryId) =>
+    startStandaloneDownload(
+      set,
+      get,
+      () => window.cosmo.history.startDownload({ entryId }),
+      { clearPreviewTracking: true }
+    ),
 
   cancel: async () => {
     await window.cosmo.download.cancel();

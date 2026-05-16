@@ -8,6 +8,7 @@ import type {
   QueueSnapshot,
   VideoMetadata
 } from '../../../shared/types';
+import { createExportSettingsSaveBuffer } from '../lib/exportSettingsSaveBuffer';
 import { useUiStore } from './uiStore';
 
 type QueueState = {
@@ -40,13 +41,6 @@ type QueueState = {
   flushExportSettingsSaves: () => Promise<void>;
   clear: () => Promise<void>;
 };
-
-type PendingExportSettingsSave = {
-  timer: number;
-  exportSettings: ExportSettings;
-};
-
-const pendingExportSettingsSaves = new Map<string, PendingExportSettingsSave>();
 
 function applySnapshot(
   set: (state: Partial<QueueState> | ((state: QueueState) => Partial<QueueState>)) => void,
@@ -120,6 +114,11 @@ async function saveExportSettings(
   if (result.ok) applySnapshot(set, result.data);
   else set({ error: result.error.message });
 }
+
+const queueExportSettingsSaveBuffer = createExportSettingsSaveBuffer<QueueState, string>({
+  applyOptimistic: optimisticallyApplyExportSettings,
+  persist: saveExportSettings
+});
 
 export const useQueueStore = create<QueueState>((set, get) => ({
   items: [],
@@ -231,40 +230,14 @@ export const useQueueStore = create<QueueState>((set, get) => ({
   },
 
   updateExportSettings: async (itemId, exportSettings) => {
-    const pending = pendingExportSettingsSaves.get(itemId);
-    if (pending) {
-      window.clearTimeout(pending.timer);
-      pendingExportSettingsSaves.delete(itemId);
-    }
-
-    optimisticallyApplyExportSettings(set, itemId, exportSettings);
-    await saveExportSettings(set, itemId, exportSettings);
+    await queueExportSettingsSaveBuffer.save(set, itemId, exportSettings);
   },
 
   updateExportSettingsDebounced: (itemId, exportSettings) => {
-    const pending = pendingExportSettingsSaves.get(itemId);
-    if (pending) {
-      window.clearTimeout(pending.timer);
-    }
-
-    optimisticallyApplyExportSettings(set, itemId, exportSettings);
-    const timer = window.setTimeout(() => {
-      pendingExportSettingsSaves.delete(itemId);
-      void saveExportSettings(set, itemId, exportSettings);
-    }, 300);
-    pendingExportSettingsSaves.set(itemId, { timer, exportSettings });
+    queueExportSettingsSaveBuffer.saveDebounced(set, itemId, exportSettings);
   },
 
-  flushExportSettingsSaves: async () => {
-    const saves = Array.from(pendingExportSettingsSaves.entries());
-    pendingExportSettingsSaves.clear();
-    await Promise.all(
-      saves.map(([itemId, pending]) => {
-        window.clearTimeout(pending.timer);
-        return saveExportSettings(set, itemId, pending.exportSettings);
-      })
-    );
-  },
+  flushExportSettingsSaves: async () => queueExportSettingsSaveBuffer.flush(set),
 
   clear: async () => {
     const result = await window.cosmo.queue.clear();

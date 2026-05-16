@@ -1,4 +1,5 @@
 import { DEFAULT_EXPORT_SETTINGS } from '../../../shared/defaults';
+import { isHistoryEntryEditable } from '../../../shared/historyEntryCapabilities';
 import type {
   DownloadHistoryEntry,
   ExportSettings,
@@ -65,14 +66,15 @@ export function resolveExportSettingsTarget({
   if (activeTarget?.type === 'history') {
     const entry = historyEntries.find((candidate) => candidate.id === activeTarget.entryId);
     if (entry) {
+      const editable = isHistoryEntryEditable(entry.status);
       return {
         target: activeTarget,
         metadata: entry.metadata,
         exportSettings: entry.exportSettings,
         locationDisplayPath: entry.outputPath ?? entry.exportSettings.savePath,
         locationDisplayMode: entry.outputPath ? 'raw' : 'effective',
-        readOnly: true,
-        editable: false
+        readOnly: !editable,
+        editable
       };
     }
   }

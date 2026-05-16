@@ -12,6 +12,7 @@ import type {
   DownloadLogReadRequest,
   DownloadLogReadResult,
   HistoryChangedEvent,
+  HistoryExportSettingsUpdateRequest,
   HistoryListRequest,
   HistoryListResult,
   DownloadHistoryEntry,
@@ -118,7 +119,11 @@ export type CosmoApi = {
     removeMany: (request: HistoryBulkRequest) => Promise<IpcResult<null>>;
     clear: () => Promise<IpcResult<null>>;
     recordFetch: (request: RecordFetchHistoryRequest) => Promise<IpcResult<DownloadHistoryEntry>>;
+    updateExportSettings: (
+      request: HistoryExportSettingsUpdateRequest
+    ) => Promise<IpcResult<DownloadHistoryEntry>>;
     requeue: (request: HistoryItemRequest) => Promise<IpcResult<QueueSnapshot>>;
+    startDownload: (request: HistoryItemRequest) => Promise<IpcResult<DownloadProgress>>;
     openOutput: (request: HistoryItemRequest) => Promise<IpcResult<null>>;
     openMedia: (request: HistoryItemRequest) => Promise<IpcResult<null>>;
     openFolder: (request: HistoryItemRequest) => Promise<IpcResult<null>>;
@@ -238,7 +243,11 @@ const api: CosmoApi = {
     clear: () => invoke<null>(IPC_CHANNELS.history.clear),
     recordFetch: (request) =>
       invoke<DownloadHistoryEntry>(IPC_CHANNELS.history.recordFetch, request),
+    updateExportSettings: (request) =>
+      invoke<DownloadHistoryEntry>(IPC_CHANNELS.history.updateExportSettings, request),
     requeue: (request) => invoke<QueueSnapshot>(IPC_CHANNELS.history.requeue, request),
+    startDownload: (request) =>
+      invoke<DownloadProgress>(IPC_CHANNELS.history.startDownload, request),
     openOutput: (request) => invoke<null>(IPC_CHANNELS.history.openOutput, request),
     openMedia: (request) => invoke<null>(IPC_CHANNELS.history.openMedia, request),
     openFolder: (request) => invoke<null>(IPC_CHANNELS.history.openFolder, request),

@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 import type {
   DownloadHistoryEntry,
+  ExportSettings,
   HistoryChangedEvent,
   HistoryListResult
 } from '../../../shared/types';
+import { createExportSettingsSaveBuffer } from '../lib/exportSettingsSaveBuffer';
+import { useDownloadStore } from './downloadStore';
 import { useUiStore } from './uiStore';
 
 const HISTORY_PAGE_SIZE = 10;
@@ -32,7 +35,11 @@ type HistoryState = {
   remove: (entryId: string) => Promise<void>;
   removeMany: (entryIds: string[]) => Promise<void>;
   clear: () => Promise<void>;
-  requeue: (entryId: string) => Promise<void>;
+  requeue: (entryId: string) => Promise<boolean>;
+  startDownload: (entryId: string) => Promise<boolean>;
+  updateExportSettings: (entryId: string, exportSettings: ExportSettings) => Promise<void>;
+  updateExportSettingsDebounced: (entryId: string, exportSettings: ExportSettings) => void;
+  flushExportSettingsSaves: () => Promise<void>;
   openOutput: (entryId: string) => Promise<void>;
   openMedia: (entryId: string) => Promise<boolean>;
   openFolder: (entryId: string) => Promise<boolean>;
@@ -58,6 +65,39 @@ function applyPage(set: (state: Partial<HistoryState>) => void, page: HistoryLis
   });
   syncActiveExportTarget(page.entries);
 }
+
+function optimisticallyApplyExportSettings(
+  set: (state: Partial<HistoryState> | ((state: HistoryState) => Partial<HistoryState>)) => void,
+  entryId: string,
+  exportSettings: ExportSettings
+): void {
+  set((state) => ({
+    entries: state.entries.map((entry) =>
+      entry.id === entryId ? { ...entry, exportSettings } : entry
+    )
+  }));
+}
+
+async function saveExportSettings(
+  set: (state: Partial<HistoryState> | ((state: HistoryState) => Partial<HistoryState>)) => void,
+  entryId: string,
+  exportSettings: ExportSettings
+): Promise<void> {
+  const result = await window.cosmo.history.updateExportSettings({ entryId, exportSettings });
+  if (result.ok) {
+    set((state) => ({
+      entries: state.entries.map((entry) => (entry.id === entryId ? result.data : entry)),
+      error: undefined
+    }));
+  } else {
+    set({ error: result.error.message });
+  }
+}
+
+const historyExportSettingsSaveBuffer = createExportSettingsSaveBuffer<HistoryState, string>({
+  applyOptimistic: optimisticallyApplyExportSettings,
+  persist: saveExportSettings
+});
 
 async function loadVisibleRange(
   set: (state: Partial<HistoryState>) => void,
@@ -190,7 +230,27 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     const result = await window.cosmo.history.requeue({ entryId });
     if (!result.ok) {
       set({ error: result.error.message });
+      return false;
     }
+
+    return true;
+  },
+
+  startDownload: async (entryId) => {
+    await historyExportSettingsSaveBuffer.flush(set);
+    return useDownloadStore.getState().startHistory(entryId);
+  },
+
+  updateExportSettings: async (entryId, exportSettings) => {
+    await historyExportSettingsSaveBuffer.save(set, entryId, exportSettings);
+  },
+
+  updateExportSettingsDebounced: (entryId, exportSettings) => {
+    historyExportSettingsSaveBuffer.saveDebounced(set, entryId, exportSettings);
+  },
+
+  flushExportSettingsSaves: async () => {
+    await historyExportSettingsSaveBuffer.flush(set);
   },
 
   openOutput: async (entryId) => {
