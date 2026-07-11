@@ -16,7 +16,10 @@ import type {
 } from '../../shared/types';
 import { IPC_CHANNELS } from '../../shared/ipc';
 import { mergeExportSettings } from '../../shared/defaults';
-import { canStartHistoryDirectDownload, isHistoryEntryEditable } from '../../shared/historyEntryCapabilities';
+import {
+  canStartHistoryDirectDownload,
+  isHistoryEntryEditable
+} from '../../shared/historyEntryCapabilities';
 import { BufferedJsonFile, loadJsonFileState } from '../utils/jsonFileState';
 import { fail, ok } from '../utils/ipcResult';
 import type { DownloadService } from './downloadService';

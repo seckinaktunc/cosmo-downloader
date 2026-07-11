@@ -1,7 +1,7 @@
-import type { IpcErrorCode, IpcResult } from '../../shared/types'
+import type { IpcErrorCode, IpcResult } from '../../shared/types';
 
 export function ok<T>(data: T): IpcResult<T> {
-  return { ok: true, data }
+  return { ok: true, data };
 }
 
 export function fail<T = never>(
@@ -9,13 +9,13 @@ export function fail<T = never>(
   message: string,
   details?: string
 ): IpcResult<T> {
-  return { ok: false, error: { code, message, details } }
+  return { ok: false, error: { code, message, details } };
 }
 
 export function errorMessage(error: unknown): string {
   if (error instanceof Error) {
-    return error.message
+    return error.message;
   }
 
-  return String(error)
+  return String(error);
 }

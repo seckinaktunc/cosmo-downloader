@@ -1,4 +1,4 @@
-import { app, Notification, WebContents, webContents as allWebContents } from 'electron';
+import { app, Notification, WebContents, webContents as allWebContents, shell } from 'electron';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import {
   createWriteStream,
@@ -761,7 +761,7 @@ export class DownloadService {
       silent: false
     })
       .on('click', () => {
-        void import('electron').then(({ shell }) => shell.showItemInFolder(outputPath));
+        shell.showItemInFolder(outputPath);
       })
       .show();
   }

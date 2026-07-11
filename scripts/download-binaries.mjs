@@ -19,8 +19,8 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const resourcesDir = join(root, 'resources', 'bin');
 
-const YTDLP_VERSION = '2026.03.17';
-const DENO_VERSION = '2.7.13';
+const YTDLP_VERSION = '2026.07.04';
+const DENO_VERSION = '2.9.2';
 const DOWNLOAD_TIMEOUT_MS = 60_000;
 
 const ytdlpBase = `https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}`;
