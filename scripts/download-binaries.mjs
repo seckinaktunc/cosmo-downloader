@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {
   copyFileSync,
+  closeSync,
   createWriteStream,
   existsSync,
+  openSync,
   mkdirSync,
+  readSync,
   readdirSync,
   renameSync,
   rmSync,
@@ -11,6 +14,7 @@ import {
 } from 'node:fs';
 import { chmod, mkdtemp } from 'node:fs/promises';
 import { get } from 'node:https';
+import { pipeline } from 'node:stream/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -22,6 +26,8 @@ const resourcesDir = join(root, 'resources', 'bin');
 const YTDLP_VERSION = '2026.07.04';
 const DENO_VERSION = '2.9.2';
 const DOWNLOAD_TIMEOUT_MS = 60_000;
+const DOWNLOAD_ATTEMPTS = 3;
+const MAX_REDIRECTS = 10;
 
 const ytdlpBase = `https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}`;
 const denoBase = `https://github.com/denoland/deno/releases/download/v${DENO_VERSION}`;
@@ -169,10 +175,13 @@ function isExistingBinary(filePath) {
   return existsSync(filePath) && statSync(filePath).isFile() && statSync(filePath).size > 0;
 }
 
-function download(url, destination) {
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function downloadOnce(url, destination, redirectsRemaining = MAX_REDIRECTS) {
   return new Promise((resolve, reject) => {
     mkdirSync(dirname(destination), { recursive: true });
-    let settled = false;
     const request = get(url, (response) => {
       if (
         response.statusCode &&
@@ -181,7 +190,12 @@ function download(url, destination) {
         response.headers.location
       ) {
         response.resume();
-        download(response.headers.location, destination).then(resolve, reject);
+        if (redirectsRemaining === 0) {
+          reject(new Error(`Too many redirects downloading ${url}`));
+          return;
+        }
+        const redirectUrl = new URL(response.headers.location, url).toString();
+        downloadOnce(redirectUrl, destination, redirectsRemaining - 1).then(resolve, reject);
         return;
       }
 
@@ -191,18 +205,7 @@ function download(url, destination) {
         return;
       }
 
-      const file = createWriteStream(destination);
-      response.pipe(file);
-      file.on('finish', () => {
-        file.close(() => {
-          settled = true;
-          resolve();
-        });
-      });
-      file.on('error', (error) => {
-        settled = true;
-        reject(error);
-      });
+      pipeline(response, createWriteStream(destination)).then(resolve, reject);
     });
 
     request.setTimeout(DOWNLOAD_TIMEOUT_MS, () => {
@@ -210,13 +213,63 @@ function download(url, destination) {
         new Error(`Timed out downloading ${url} after ${DOWNLOAD_TIMEOUT_MS / 1000} seconds.`)
       );
     });
-    request.on('error', (error) => {
-      if (!settled) {
-        rmSync(destination, { force: true });
-        reject(error);
-      }
-    });
+    request.on('error', reject);
   });
+}
+
+export function isArchiveSignatureValid(archiveName, header) {
+  const lowerName = archiveName.toLowerCase();
+  if (lowerName.endsWith('.tar.xz') || lowerName.endsWith('.xz')) {
+    return Buffer.from(header)
+      .subarray(0, 6)
+      .equals(Buffer.from([0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00]));
+  }
+  if (lowerName.endsWith('.zip')) {
+    const signature = Buffer.from(header).subarray(0, 4).toString('hex');
+    return signature === '504b0304' || signature === '504b0506' || signature === '504b0708';
+  }
+  return true;
+}
+
+function validateArchive(archivePath) {
+  const header = Buffer.alloc(6);
+  const descriptor = openSync(archivePath, 'r');
+  let bytesRead;
+  try {
+    bytesRead = readSync(descriptor, header, 0, header.length, 0);
+  } finally {
+    closeSync(descriptor);
+  }
+
+  if (!isArchiveSignatureValid(archivePath, header.subarray(0, bytesRead))) {
+    throw new Error(
+      `Downloaded ${basename(archivePath)} is not a valid ${archivePath.toLowerCase().endsWith('.zip') ? 'ZIP' : 'XZ'} archive`
+    );
+  }
+}
+
+async function download(url, destination, validate = null) {
+  let lastError;
+  for (let attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; attempt += 1) {
+    rmSync(destination, { force: true });
+    try {
+      await downloadOnce(url, destination);
+      validate?.(destination);
+      return;
+    } catch (error) {
+      lastError = error;
+      rmSync(destination, { force: true });
+      if (attempt < DOWNLOAD_ATTEMPTS) {
+        console.warn(
+          `Download attempt ${attempt}/${DOWNLOAD_ATTEMPTS} failed for ${url}: ${error instanceof Error ? error.message : String(error)}. Retrying...`
+        );
+        await wait(attempt * 1_000);
+      }
+    }
+  }
+  throw new Error(
+    `Failed to download ${url} after ${DOWNLOAD_ATTEMPTS} attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+  );
 }
 
 function normalizeArchivePath(value) {
@@ -421,7 +474,7 @@ async function downloadPlatform(platformKey) {
     console.log(`Downloading Deno ${DENO_VERSION} for ${platformKey}`);
     const archivePath = archivePathForAsset(targetDir, manifest.deno);
     if (!downloadedArchives.has(manifest.deno.url)) {
-      await download(manifest.deno.url, archivePath);
+      await download(manifest.deno.url, archivePath, validateArchive);
       downloadedArchives.set(manifest.deno.url, archivePath);
     }
     await extractArchive(archivePath, manifest.deno.binary, denoPath, manifest.deno.sourcePath);
@@ -442,7 +495,7 @@ async function downloadPlatform(platformKey) {
     } else {
       const archivePath = archivePathForAsset(targetDir, asset);
       if (!downloadedArchives.has(asset.url)) {
-        await download(asset.url, archivePath);
+        await download(asset.url, archivePath, validateArchive);
         downloadedArchives.set(asset.url, archivePath);
       }
       await extractArchive(archivePath, asset.binary, destination, asset.sourcePath);

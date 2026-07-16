@@ -1,8 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
   getArchiveExtractionInvocation,
+  isArchiveSignatureValid,
   resolveRequestedPlatforms
 } from '../../scripts/download-binaries.mjs';
+
+describe('isArchiveSignatureValid', () => {
+  it('recognizes XZ and ZIP archive signatures', () => {
+    expect(
+      isArchiveSignatureValid('ffmpeg.tar.xz', Buffer.from([0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00]))
+    ).toBe(true);
+    expect(isArchiveSignatureValid('deno.zip', Buffer.from('504b0304', 'hex'))).toBe(true);
+  });
+
+  it('rejects HTML error responses saved as archives', () => {
+    expect(isArchiveSignatureValid('ffmpeg.tar.xz', Buffer.from('<html>'))).toBe(false);
+    expect(isArchiveSignatureValid('deno.zip', Buffer.from('<html>'))).toBe(false);
+  });
+});
 
 describe('getArchiveExtractionInvocation', () => {
   it('uses PowerShell for zip extraction on Windows', () => {
